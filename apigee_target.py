@@ -1,17 +1,23 @@
+import asyncio
+import json
+import logging
+import os
+import threading
+import time
+
+import jwt
 import uvicorn
 from fastapi import FastAPI, BackgroundTasks, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
-import logging
-import time
-import jwt
-import os
-import json
 
+import run_store
+from chain_writer import chain_status, verify_decision_on_chain
 from main import run_pipeline
 
-KB_PATH = "insurance_kb.json"
+KB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "insurance_kb.json")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Apigee.Target")
@@ -19,79 +25,188 @@ logger = logging.getLogger("Apigee.Target")
 app = FastAPI(
     title="Atlas Insurance GenAI Target",
     description="Backend API intended to be placed behind Google Cloud Apigee API Gateway.",
-    version="1.0.0"
+    version="1.1.0",
 )
 
-# --- CORS Middleware (黑客松 Demo 本地連線必備) ---
+# Next.js 開發伺服器跨網域呼叫
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # 允許所有來源 (如 http://localhost:3000)
-    allow_credentials=True,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- 1. Rate Limiting Middleware (簡易 IP 限流) ---
-RATE_LIMIT = 5  # 每分鐘最多 5 次請求
-rate_limit_records = {}
+
+@app.on_event("startup")
+def _warmup_embeddings():
+    """伺服器啟動時在背景載入 embedding 模型，避免第一次 demo 卡 30 秒。"""
+    if os.getenv("ATLAS_SKIP_WARMUP"):
+        return
+    from product_analyzer import warmup
+    threading.Thread(target=warmup, name="embedding-warmup", daemon=True).start()
+
+
+# --- 1. Rate Limiting Middleware (簡易 IP 限流；儀表板端點不計) ---
+RATE_LIMIT = 30  # 每分鐘最多 30 次觸發型請求
+rate_limit_records: dict[str, list[float]] = {}
+
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
-    client_ip = request.client.host
+    if request.url.path.startswith("/api/v1/runs") or request.method == "OPTIONS":
+        return await call_next(request)
+
+    client_ip = request.client.host if request.client else "unknown"
     now = time.time()
-    
-    # 清理超過一分鐘的舊紀錄
-    if client_ip in rate_limit_records:
-        rate_limit_records[client_ip] = [t for t in rate_limit_records[client_ip] if now - t < 60]
-    else:
-        rate_limit_records[client_ip] = []
-        
+    rate_limit_records[client_ip] = [t for t in rate_limit_records.get(client_ip, []) if now - t < 60]
     if len(rate_limit_records[client_ip]) >= RATE_LIMIT:
-        from fastapi.responses import JSONResponse
         logger.warning(f"IP {client_ip} 觸發限流防護 (Rate Limit Exceeded)")
         return JSONResponse(status_code=429, content={"error": "Too Many Requests. Apigee quota exceeded."})
-        
     rate_limit_records[client_ip].append(now)
-    response = await call_next(request)
-    return response
+    return await call_next(request)
+
 
 # --- 2. JWT Authentication (企業級資安認證) ---
 security = HTTPBearer()
-SECRET_KEY = "SUPER_SECRET_HACKATHON_KEY" # 僅供 Demo 使用
+SECRET_KEY = "SUPER_SECRET_HACKATHON_KEY"  # 僅供 Demo 使用
+
 
 def verify_jwt(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
     try:
         # 在實際情況下，這裡會對接 Apigee 的 JWKS 端點進行驗證
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        return payload
+        return jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token 已經過期 (Token Expired)")
     except jwt.InvalidTokenError:
-        # 為了黑客松方便測試，我們允許一個萬用 Dummy Token "MOCK_APIGEE_TOKEN" 也能通關
+        # 為了黑客松方便測試，允許一個萬用 Dummy Token 也能通關
         if token == "MOCK_APIGEE_TOKEN":
             return {"role": "admin"}
         raise HTTPException(status_code=401, detail="無效的 JWT Token (Invalid Token)")
+
 
 class TriggerResponse(BaseModel):
     message: str
     status: str
 
+
 @app.post("/api/v1/generate_insurance", response_model=TriggerResponse, dependencies=[Depends(verify_jwt)])
 async def trigger_insurance_generation(background_tasks: BackgroundTasks):
-    """
-    這個 Endpoint 提供給 Apigee Proxy 呼叫。
-    Apigee 可以透過這個接口，讓企業主管手動觸發保險發明 Agent。
-    """
+    """Apigee Proxy 呼叫用：企業主管手動觸發保險發明 Agent（不串流）。"""
     logger.info("收到來自 API Gateway 的觸發請求。")
-    # 將 pipeline 放入背景執行，避免 API 超時 (Timeout)
     background_tasks.add_task(run_pipeline)
     return {"message": "商品開發 Agent 已在背景啟動", "status": "processing"}
+
+
+# --- 3. 儀表板用：執行、串流、歷史、驗證 ---
+
+def _execute_run(run_id: str):
+    def emit(stage, data):
+        run_store.append_event(run_id, stage, data)
+
+    try:
+        run_pipeline(emit=emit)
+        run_store.mark_finished(run_id, "finished")
+    except Exception as e:
+        logger.exception(f"Run {run_id} 失敗")
+        emit("error", str(e))
+        run_store.mark_finished(run_id, "error")
+
+
+@app.post("/api/v1/runs")
+async def start_run(background_tasks: BackgroundTasks):
+    """啟動一次完整 pipeline，回傳 run_id；用 GET /api/v1/runs/{run_id}/events 追進度。"""
+    run_id = run_store.create_run()
+    background_tasks.add_task(_execute_run, run_id)
+    return {"run_id": run_id, "status": "running"}
+
+
+def _sse(stage: str, data) -> str:
+    return f"event: {stage}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+@app.get("/api/v1/runs/{run_id}/events")
+async def stream_run_events(run_id: str):
+    """Server-Sent Events：依序送出 news_fetched … chain_done, done（或 error）。"""
+    if run_store.get_active(run_id) is None:
+        raise HTTPException(status_code=404, detail="run not found")
+
+    async def generator():
+        sent = 0
+        while True:
+            events = run_store.get_events(run_id, since=sent)
+            for ev in events:
+                yield _sse(ev["stage"], ev["data"])
+            sent += len(events)
+            if any(ev["stage"] in ("done", "error") for ev in events):
+                return
+            if run_store.is_finished(run_id) and not run_store.get_events(run_id, since=sent):
+                return
+            await asyncio.sleep(0.25)
+
+    return StreamingResponse(generator(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.get("/api/v1/runs")
+async def list_runs(limit: int = 50):
+    """歷史執行紀錄摘要，最新在前。"""
+    return [run_store.summarize(r) for r in run_store.load_runs()[:limit]]
+
+
+@app.get("/api/v1/runs/{decision_id}")
+async def get_run(decision_id: str):
+    """單筆完整紀錄（含辯論全文、比對商品、精算、鏈上收據），供重播與驗證。"""
+    record = run_store.get_run(decision_id)
+    if record is not None:
+        return record
+    active = run_store.get_active(decision_id)
+    if active is not None:
+        return {"run_id": decision_id, "status": active["status"], "events": active["events"]}
+    raise HTTPException(status_code=404, detail="run not found")
+
+
+class VerifyRequest(BaseModel):
+    tampered: dict | None = None
+
+
+@app.post("/api/v1/runs/{decision_id}/verify")
+async def verify_run(decision_id: str, body: VerifyRequest | None = None):
+    """
+    用儲存的 payload 重新計算雜湊並與鏈上比對。
+    傳入 tampered 可覆寫任意欄位，示範竄改後驗證不符。
+    """
+    record = run_store.get_run(decision_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    receipt = record.get("blockchain_receipt") or {}
+    payload = dict(receipt.get("payload") or {})
+    tampered = (body.tampered if body else None) or {}
+    payload.update(tampered)
+
+    result = verify_decision_on_chain(receipt.get("decision_id", decision_id), payload)
+    result.update({
+        "tampered_fields": sorted(tampered.keys()),
+        "payload": payload,
+        "stored_hash": receipt.get("data_hash"),
+        "tx_hash": receipt.get("blockchain_tx_hash"),
+        "verification_url": receipt.get("verification_url"),
+    })
+    return result
+
+
+@app.get("/api/v1/chain/status")
+async def get_chain_status():
+    return chain_status()
+
+
+# --- 4. 知識庫 ---
 
 class KBItem(BaseModel):
     name: str
     category: str
     description: str
+
 
 @app.get("/api/v1/knowledge_base")
 async def get_knowledge_base():
@@ -105,6 +220,7 @@ async def get_knowledge_base():
         logger.error(f"讀取 KB 失敗: {e}")
         return {"error": "無法讀取知識庫"}
 
+
 @app.post("/api/v1/knowledge_base")
 async def add_knowledge_base(item: KBItem):
     """允許新增未來的保險商品到知識庫中"""
@@ -113,53 +229,14 @@ async def add_knowledge_base(item: KBItem):
         if os.path.exists(KB_PATH):
             with open(KB_PATH, "r", encoding="utf-8") as f:
                 kb = json.load(f)
-        
         kb.append(item.model_dump())
-        
         with open(KB_PATH, "w", encoding="utf-8") as f:
             json.dump(kb, f, ensure_ascii=False, indent=4)
-            
         return {"message": "新增成功", "item": item}
     except Exception as e:
         logger.error(f"寫入 KB 失敗: {e}")
         return {"error": "無法新增知識庫"}
 
-@app.post("/api/v1/decisions/{decision_id}/finalize")
-async def finalize_decision_endpoint(decision_id: str, background_tasks: BackgroundTasks):
-    """
-    7.3 整合到現有的決策流程 (黑客松 Demo 版本)
-    這是一個示意用的端點，展示如何用 BackgroundTasks 非同步上鏈。
-    """
-    logger.info(f"收到決策完成請求: {decision_id}")
-    
-    # 這裡放一個假的決策資料，模擬原本 AI 產出的最終決策
-    final_decision = {
-        "decision_id": decision_id,
-        "product_type": "颱風停班停課補償險",
-        "agent_pipeline_version": "v1.3.0"
-    }
-    
-    # 匯入 chain_writer (放在這裡延遲載入避免循環相依)
-    from chain_writer import record_decision_on_chain
-    
-    def background_chain_write():
-        try:
-            logger.info(f"背景任務開始上鏈: {decision_id}")
-            chain_result = record_decision_on_chain(decision_id, final_decision)
-            # 在真實系統中，這裡會將 tx_hash 寫回 DB
-            logger.info(f"背景任務上鏈完成: {chain_result['tx_hash']}")
-        except Exception as e:
-            logger.error(f"背景上鏈失敗: {e}")
-
-    # NEW: 上鏈存證 (非同步/背景執行,避免拖慢 API 回應)
-    background_tasks.add_task(background_chain_write)
-
-    # 瞬間回傳 200 OK，讓前端秒收回應
-    return {
-        "decision_id": decision_id,
-        "decision": final_decision,
-        "message": "決策已確立，正在背景寫入區塊鏈存證..."
-    }
 
 @app.get("/api/v1/all_reports")
 async def get_all_reports():
@@ -214,7 +291,8 @@ async def run_agent_synchronous():
 
 @app.get("/api/v1/health")
 async def health_check():
-    return {"status": "ok", "timestamp": time.time()}
+    return {"status": "ok", "timestamp": time.time(), "chain": chain_status()["mode"]}
+
 
 if __name__ == "__main__":
     logger.info("啟動 Backend Server (Port: 8080) 等待 Apigee 連線...")

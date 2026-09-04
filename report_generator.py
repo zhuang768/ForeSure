@@ -79,31 +79,7 @@ def generate_report(proposal_data: dict, output_dir: str = "reports") -> str:
     filename = f"{timestamp}_{safe_title.replace(' ', '_')}.docx"
     filepath = os.path.join(output_dir, filename)
     doc.save(filepath)
-    
-    # 進行區塊鏈存證 (Trustworthy AI Audit)
-    from chain_writer import audit_proposal_on_chain
-    blockchain_receipt = audit_proposal_on_chain(proposal_data)
-    
-    # 寫入 Audit Log
-    import json
-    audit_log_path = os.path.join(output_dir, "audit_log.json")
-    audit_record = {
-        "timestamp": timestamp,
-        "filename": filename,
-        "blockchain_receipt": blockchain_receipt,
-        "proposal_data": proposal_data
-    }
-    
-    try:
-        logs = []
-        if os.path.exists(audit_log_path):
-            with open(audit_log_path, "r", encoding="utf-8") as f:
-                logs = json.load(f)
-        logs.append(audit_record)
-        with open(audit_log_path, "w", encoding="utf-8") as f:
-            json.dump(logs, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        logger.error(f"寫入 Audit Log 失敗: {e}")
-    
+
+    # 上鏈存證與 audit log 寫入由 main.run_pipeline 負責（見 chain_writer / run_store）。
     logger.info(f"報告已生成並儲存至：{filepath}")
     return filepath
