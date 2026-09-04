@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import OnChainBadge from '@/components/OnChainBadge';
 
 export default function Home() {
   const [news, setNews] = useState<any[]>([]);
@@ -16,6 +17,7 @@ export default function Home() {
       ]);
       setProposals([
         {
+          id: "atlas-2026-mock",
           name: "氣候巨災參數型保證險",
           target: "容易受極端氣候影響之農漁業及運輸業。",
           gap: "現有保險需人工勘損，耗時數月。此商品結合大數據，觸發參數即刻理賠。",
@@ -74,22 +76,8 @@ export default function Home() {
               {proposals.map((p, idx) => (
                 <div key={idx} className="glass-card p-8 relative overflow-hidden">
                   
-                  {/* 區塊鏈存證浮水印/徽章 */}
-                  {p.blockchain_tx && (
-                    <a href={`https://sepolia.etherscan.io/tx/${p.blockchain_tx}`} target="_blank" rel="noreferrer" 
-                       className="absolute top-6 right-6 flex flex-col items-end group cursor-pointer z-10">
-                      <div className="flex items-center gap-1.5 bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm group-hover:bg-indigo-500/30 transition-all">
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                        </span>
-                        Verified on Sepolia
-                      </div>
-                      <div className="text-[10px] text-slate-500 font-mono mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        Tx: {p.blockchain_tx.substring(0, 10)}...{p.blockchain_tx.substring(p.blockchain_tx.length - 8)}
-                      </div>
-                    </a>
-                  )}
+                  {/* 區塊鏈存證浮水印/徽章 (動態唯讀查詢) */}
+                  <OnChainBadge decisionId={p.id} txHash={p.blockchain_tx} />
 
                   <div className="flex justify-between items-start mb-8">
                     <div>
