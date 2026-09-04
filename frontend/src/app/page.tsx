@@ -21,7 +21,8 @@ export default function Home() {
           gap: "現有保險需人工勘損，耗時數月。此商品結合大數據，觸發參數即刻理賠。",
           probability: "15.4%",
           loss: "USD 500,000",
-          premium: "USD 9,000 ~ 15,000"
+          premium: "USD 9,000 ~ 15,000",
+          blockchain_tx: "0x8f2a9b4e3c1d7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a"
         }
       ]);
       setLoading(false);
@@ -71,13 +72,31 @@ export default function Home() {
               </h2>
               
               {proposals.map((p, idx) => (
-                <div key={idx} className="glass-card p-8">
+                <div key={idx} className="glass-card p-8 relative overflow-hidden">
+                  
+                  {/* 區塊鏈存證浮水印/徽章 */}
+                  {p.blockchain_tx && (
+                    <a href={`https://sepolia.etherscan.io/tx/${p.blockchain_tx}`} target="_blank" rel="noreferrer" 
+                       className="absolute top-6 right-6 flex flex-col items-end group cursor-pointer z-10">
+                      <div className="flex items-center gap-1.5 bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm group-hover:bg-indigo-500/30 transition-all">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                        </span>
+                        Verified on Sepolia
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-mono mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        Tx: {p.blockchain_tx.substring(0, 10)}...{p.blockchain_tx.substring(p.blockchain_tx.length - 8)}
+                      </div>
+                    </a>
+                  )}
+
                   <div className="flex justify-between items-start mb-8">
                     <div>
                       <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-medium mb-3 inline-block">
                         AI 提案通過
                       </span>
-                      <h3 className="text-3xl font-bold text-white">{p.name}</h3>
+                      <h3 className="text-3xl font-bold text-white max-w-md">{p.name}</h3>
                     </div>
                     <div className="text-right">
                       <div className="text-sm text-slate-400 mb-1">風險發生機率</div>

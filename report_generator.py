@@ -80,12 +80,17 @@ def generate_report(proposal_data: dict, output_dir: str = "reports") -> str:
     filepath = os.path.join(output_dir, filename)
     doc.save(filepath)
     
+    # 進行區塊鏈存證 (Trustworthy AI Audit)
+    from chain_writer import audit_proposal_on_chain
+    blockchain_receipt = audit_proposal_on_chain(proposal_data)
+    
     # 寫入 Audit Log
     import json
     audit_log_path = os.path.join(output_dir, "audit_log.json")
     audit_record = {
         "timestamp": timestamp,
         "filename": filename,
+        "blockchain_receipt": blockchain_receipt,
         "proposal_data": proposal_data
     }
     

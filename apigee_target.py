@@ -112,6 +112,43 @@ async def add_knowledge_base(item: KBItem):
         logger.error(f"寫入 KB 失敗: {e}")
         return {"error": "無法新增知識庫"}
 
+@app.post("/api/v1/decisions/{decision_id}/finalize")
+async def finalize_decision_endpoint(decision_id: str, background_tasks: BackgroundTasks):
+    """
+    7.3 整合到現有的決策流程 (黑客松 Demo 版本)
+    這是一個示意用的端點，展示如何用 BackgroundTasks 非同步上鏈。
+    """
+    logger.info(f"收到決策完成請求: {decision_id}")
+    
+    # 這裡放一個假的決策資料，模擬原本 AI 產出的最終決策
+    final_decision = {
+        "decision_id": decision_id,
+        "product_type": "颱風停班停課補償險",
+        "agent_pipeline_version": "v1.3.0"
+    }
+    
+    # 匯入 chain_writer (放在這裡延遲載入避免循環相依)
+    from chain_writer import record_decision_on_chain
+    
+    def background_chain_write():
+        try:
+            logger.info(f"背景任務開始上鏈: {decision_id}")
+            chain_result = record_decision_on_chain(decision_id, final_decision)
+            # 在真實系統中，這裡會將 tx_hash 寫回 DB
+            logger.info(f"背景任務上鏈完成: {chain_result['tx_hash']}")
+        except Exception as e:
+            logger.error(f"背景上鏈失敗: {e}")
+
+    # NEW: 上鏈存證 (非同步/背景執行,避免拖慢 API 回應)
+    background_tasks.add_task(background_chain_write)
+
+    # 瞬間回傳 200 OK，讓前端秒收回應
+    return {
+        "decision_id": decision_id,
+        "decision": final_decision,
+        "message": "決策已確立，正在背景寫入區塊鏈存證..."
+    }
+
 @app.get("/api/v1/health")
 async def health_check():
     return {"status": "ok", "timestamp": time.time()}
