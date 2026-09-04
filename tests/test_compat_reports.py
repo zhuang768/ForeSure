@@ -84,9 +84,3 @@ def test_run_agent_reports_failure_without_leaking_details(client, monkeypatch):
 
     assert "error" in body and "secret path" not in body["error"]
 
-
-def test_cors_allows_cloudflare_pages_origin(client):
-    resp = client.options("/api/v1/all_reports", headers={
-        "Origin": "https://atlas-demo.pages.dev", "Access-Control-Request-Method": "GET"})
-
-    assert resp.headers.get("access-control-allow-origin") == "https://atlas-demo.pages.dev"

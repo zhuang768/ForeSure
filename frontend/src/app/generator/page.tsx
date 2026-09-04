@@ -34,8 +34,9 @@ export default function GeneratorPage() {
     try {
       const res = await fetch("http://localhost:8080/api/v1/run_agent", {
         method: "POST",
-        // 後端所有 POST 端點都需要 Bearer token（Demo 用萬用 token，正式環境由 Apigee 簽發 JWT）
-        headers: { Authorization: "Bearer MOCK_APIGEE_TOKEN" }
+        // 後端所有 POST 端點都需要 Bearer token。Demo 用萬用 token（非機密，後端刻意接受）；
+        // 正式環境改由登入流程取得 Apigee 簽發的 JWT，並以 NEXT_PUBLIC_API_TOKEN 注入。
+        headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN || "MOCK_APIGEE_TOKEN"}` }
       });
       const data = await res.json();
       

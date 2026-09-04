@@ -29,11 +29,15 @@ app = FastAPI(
     version="1.1.0",
 )
 
-# Next.js 開發伺服器與 Cloudflare Pages 部署的前端跨網域呼叫
+# 允許的前端來源：預設本機開發伺服器；部署到 Cloudflare Pages 時用 ATLAS_ALLOWED_ORIGINS 列出精確網址
+# （逗號分隔）。不要用萬用字元，任何人都能註冊 *.pages.dev 子網域。
+ALLOWED_ORIGINS = [
+    o.strip() for o in os.getenv("ATLAS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+    if o.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_origin_regex=r"https://.*\.pages\.dev",
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -71,7 +75,7 @@ async def rate_limit_middleware(request: Request, call_next):
 
 # --- 2. JWT Authentication (企業級資安認證) ---
 security = HTTPBearer()
-SECRET_KEY = "SUPER_SECRET_HACKATHON_KEY"  # 僅供 Demo 使用
+SECRET_KEY = os.getenv("ATLAS_JWT_SECRET", "SUPER_SECRET_HACKATHON_KEY")  # 預設值僅供 Demo，正式環境由環境變數覆寫
 
 
 def verify_jwt(credentials: HTTPAuthorizationCredentials = Depends(security)):

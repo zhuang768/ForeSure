@@ -1,7 +1,9 @@
 # Atlas 後端 API 契約（給前端）
 
 後端：`./venv/bin/uvicorn apigee_target:app --port 8080`
-前端讀 `NEXT_PUBLIC_API_BASE`（預設 `http://localhost:8080`），CORS 已允許 `localhost:3000`。
+前端讀 `NEXT_PUBLIC_API_BASE`（預設 `http://localhost:8080`）。
+CORS 預設只允許 `localhost:3000`；前端部署到 Cloudflare Pages 後，在後端 `.env` 設
+`ATLAS_ALLOWED_ORIGINS=http://localhost:3000,https://你的專案.pages.dev`（精確網址，不接受萬用字元）。
 
 ## 授權
 
