@@ -15,7 +15,6 @@ export default function GeneratorPage() {
     setReport(null);
     setError("");
     
-    // 模擬 AI 處理過程的狀態文字更新
     const statuses = [
       "啟動多代理人辯論引擎...",
       "正在爬取全球最新重大新聞...",
@@ -55,94 +54,96 @@ export default function GeneratorPage() {
   };
 
   return (
-    <main className="min-h-screen p-8 lg:p-24 relative overflow-hidden">
-      {/* 背景裝飾 */}
-      <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-pink-500/10 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="max-w-7xl mx-auto relative z-10">
-        <header className="mb-12 flex justify-between items-end border-b border-slate-700/50 pb-6">
-          <div>
-            <h1 className="text-4xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-              AI 發電機 (Agent 控制台)
+    <main className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
+      
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div className="max-w-[1200px] mx-auto px-6 h-16 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+              ATLAS
             </h1>
-            <p className="text-slate-400">一鍵調度 Multi-Agent 自動產出保單與精算報告</p>
+            <span className="text-sm text-slate-500 border-l border-slate-200 pl-4">
+              Agent Control Console
+            </span>
           </div>
-          <Link href="/" className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors border border-slate-600">
-            返回戰情室首頁
+          <Link href="/" className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded font-medium text-sm transition-colors">
+            返回戰情室總覽
           </Link>
-        </header>
+        </div>
+      </header>
 
-        <div className="flex flex-col items-center justify-center py-12">
+      <div className="max-w-[800px] mx-auto mt-16 px-6">
+        <div className="bg-white border border-slate-200 rounded-lg p-10 shadow-sm flex flex-col items-center justify-center min-h-[400px]">
+          
           {!loading && !report && (
-            <button 
-              onClick={triggerAgent}
-              className="group relative px-8 py-4 bg-slate-900 rounded-2xl shadow-2xl border border-purple-500/30 hover:border-purple-400 transition-all hover:scale-105 overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 group-hover:opacity-100 opacity-50 transition-opacity"></div>
-              <span className="relative text-2xl font-bold text-white flex items-center gap-3">
-                [START] 啟動 AI 代理人
-              </span>
-            </button>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-slate-800 mb-4">手動調度代理人</h2>
+              <p className="text-slate-500 mb-8 text-sm">此操作將同步觸發新聞分析、產品發想、精算驗證與區塊鏈上鏈流程。</p>
+              <button 
+                onClick={triggerAgent}
+                className="px-8 py-4 bg-slate-900 text-white rounded font-bold text-lg hover:bg-slate-800 transition-colors shadow-sm"
+              >
+                [START] 執行自動化流程
+              </button>
+            </div>
           )}
 
           {loading && (
-            <div className="flex flex-col items-center gap-6 glass-card p-12 w-full max-w-2xl">
-              <div className="relative w-24 h-24">
-                <div className="absolute inset-0 border-4 border-slate-700 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-purple-500 rounded-full border-t-transparent animate-spin"></div>
+            <div className="flex flex-col items-center gap-6 w-full">
+              <div className="relative w-16 h-16">
+                <div className="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
               </div>
-              <div className="text-xl font-mono text-purple-300 animate-pulse text-center h-8">
-                {statusText || "連接大腦中..."}
+              <div className="text-sm font-mono text-slate-600 animate-pulse text-center h-8">
+                {statusText || "INITIALIZING..."}
               </div>
             </div>
           )}
 
           {error && (
-            <div className="glass-card p-8 border-red-500/50 text-red-400 max-w-2xl text-center w-full font-mono">
+            <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded text-sm font-mono text-center w-full">
               [ERROR] {error}
             </div>
           )}
 
           {report && !loading && (
-            <div className="glass-card p-8 relative overflow-hidden w-full max-w-4xl mx-auto mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              {report.blockchain_tx_hash && (
-                <OnChainBadge decisionId={report.decision_id || "atlas-new"} txHash={report.blockchain_tx_hash} />
-              )}
-              
-              <div className="mb-8">
-                <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium mb-3 inline-block">
-                  熱騰騰的 AI 產出
-                </span>
-                <h3 className="text-3xl font-bold text-white">
-                  {report.proposal?.product_name || "新世代參數型保險"}
-                </h3>
+            <div className="w-full text-left">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <span className="px-2 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded text-[10px] font-mono mb-3 inline-block">
+                    STATUS: VERIFIED
+                  </span>
+                  <h3 className="text-2xl font-bold text-slate-900">
+                    {report.proposal?.product_name || "新世代參數型保險"}
+                  </h3>
+                </div>
+                {report.blockchain_tx_hash && (
+                  <OnChainBadge decisionId={report.decision_id || "atlas-new"} txHash={report.blockchain_tx_hash} />
+                )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div>
-                  <h4 className="text-slate-400 text-sm font-semibold mb-2">觸發新聞來源</h4>
-                  <p className="text-slate-200">{report.source_news || "N/A"}</p>
+                  <h4 className="text-slate-500 text-[10px] font-bold tracking-wider mb-2 uppercase">[SOURCE] 觸發新聞</h4>
+                  <p className="text-slate-700 text-sm bg-slate-50 border border-slate-100 p-3 rounded">{report.source_news || "N/A"}</p>
                 </div>
                 <div>
-                  <h4 className="text-slate-400 text-sm font-semibold mb-2">市場缺口分析</h4>
-                  <p className="text-slate-200 text-sm leading-relaxed">{report.proposal?.market_gap || "N/A"}</p>
+                  <h4 className="text-slate-500 text-[10px] font-bold tracking-wider mb-2 uppercase">[GAP] 市場缺口分析</h4>
+                  <p className="text-slate-700 text-sm bg-slate-50 border border-slate-100 p-3 rounded">{report.proposal?.market_gap || "N/A"}</p>
                 </div>
               </div>
 
-              <div className="border-t border-slate-700/50 pt-6 mt-6 bg-slate-800/30 -mx-8 -mb-8 p-8 rounded-b-2xl">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-slate-400 mb-1">預估事故損失</div>
-                    <div className="text-xl font-mono text-white">
-                      USD {report.actuarial_data?.expected_loss_usd?.toLocaleString() || "N/A"}
-                    </div>
+              <div className="bg-slate-50 border border-slate-200 p-6 rounded grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-[10px] text-slate-500 mb-1 uppercase font-bold tracking-wider">Est. Loss (USD)</div>
+                  <div className="text-xl font-mono text-slate-900">
+                    {report.actuarial_data?.expected_loss_usd?.toLocaleString() || "N/A"}
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm text-slate-400 mb-1">風險機率</div>
-                    <div className="text-2xl font-mono text-emerald-400 font-bold">
-                      {(report.actuarial_data?.probability * 100).toFixed(2)}%
-                    </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] text-slate-500 mb-1 uppercase font-bold tracking-wider">Probability</div>
+                  <div className="text-xl font-mono text-slate-900 font-bold">
+                    {(report.actuarial_data?.probability * 100).toFixed(2)}%
                   </div>
                 </div>
               </div>
