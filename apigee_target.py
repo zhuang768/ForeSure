@@ -8,6 +8,7 @@ import time
 import jwt
 import uvicorn
 from fastapi import FastAPI, BackgroundTasks, Request, HTTPException, Depends
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -28,10 +29,11 @@ app = FastAPI(
     version="1.1.0",
 )
 
-# Next.js 開發伺服器跨網域呼叫
+# Next.js 開發伺服器與 Cloudflare Pages 部署的前端跨網域呼叫
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origin_regex=r"https://.*\.pages\.dev",
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -243,56 +245,39 @@ async def add_knowledge_base(item: KBItem):
         return {"error": "無法新增知識庫"}
 
 
+# --- 5. 攤平格式的報告端點（首頁與 /generator 頁使用）---
+
 @app.get("/api/v1/all_reports")
 async def get_all_reports():
-    """回傳所有的保單報告歷史紀錄"""
-    try:
-        if os.path.exists("audit_log.json"):
-            with open("audit_log.json", "r", encoding="utf-8") as f:
-                logs = json.load(f)
-                if isinstance(logs, list):
-                    return logs
-                elif isinstance(logs, dict):
-                    return [logs]
-        return []
-    except Exception as e:
-        logger.error(f"讀取歷史報告失敗: {e}")
-        return []
+    """全部歷史報告，舊到新（前端自行 reverse）。資料來源與 /api/v1/runs 相同。"""
+    return [run_store.flatten_report(r) for r in reversed(run_store.load_runs())]
+
 
 @app.get("/api/v1/latest_report")
 async def get_latest_report():
-    """回傳最新一份生成的保單報告 (讀取 audit_log.json)"""
-    try:
-        if os.path.exists("audit_log.json"):
-            with open("audit_log.json", "r", encoding="utf-8") as f:
-                logs = json.load(f)
-                if isinstance(logs, list) and len(logs) > 0:
-                    return logs[-1] # 取最新一筆
-                elif isinstance(logs, dict):
-                    return logs
+    """最新一份報告。"""
+    runs = run_store.load_runs()
+    if not runs:
         return {"error": "尚未生成任何報告"}
-    except Exception as e:
-        logger.error(f"讀取最新報告失敗: {e}")
-        return {"error": str(e)}
+    return run_store.flatten_report(runs[0])
 
-@app.post("/api/v1/run_agent")
+
+@app.post("/api/v1/run_agent", dependencies=[Depends(verify_jwt)])
 async def run_agent_synchronous():
     """
-    黑客松 Demo 專用端點：
-    同步觸發 Python AI 代理人流程，並等待它跑完，直接將最新的產出與上鏈結果回傳給前端。
+    同步觸發完整 pipeline 並等待完成（約 60 到 100 秒），直接回傳攤平格式的報告。
+    需要即時進度請改用 POST /api/v1/runs 加 SSE。
     """
-    logger.info("前端手動觸發了 AI Agent Pipeline！")
+    logger.info("前端手動觸發了 AI Agent Pipeline（同步模式）。")
     try:
-        # 同步執行 (這會卡住大約 10-20 秒，等待 OpenAI 回應與上鏈)
-        report_path = run_pipeline()
-        if not report_path:
-            return {"error": "Pipeline 執行失敗，未產生報告。請檢查終端機 Log。"}
-        
-        # 讀取剛產生的熱騰騰報告
-        return await get_latest_report()
-    except Exception as e:
-        logger.error(f"執行 Agent 失敗: {e}")
-        return {"error": str(e)}
+        record = await run_in_threadpool(run_pipeline)
+        if not record:
+            return {"error": "Pipeline 執行失敗，未產生報告。"}
+        return run_store.flatten_report(record)
+    except Exception:
+        logger.exception("執行 Agent 失敗")
+        return {"error": "執行失敗，請查看伺服器日誌"}
+
 
 @app.get("/api/v1/health")
 async def health_check():

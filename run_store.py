@@ -63,6 +63,39 @@ def save_run(record: dict) -> None:
             json.dump(records, f, ensure_ascii=False, indent=2)
 
 
+def flatten_report(record: dict) -> dict:
+    """
+    首頁與 /generator 頁使用的攤平格式：proposal、actuarial_data、blockchain_tx_hash 都在頂層。
+    actuarial_data 額外提供 probability（0 到 1 小數），前端以此乘 100 顯示。
+    """
+    proposal_data = record.get("proposal_data") or {}
+    receipt = record.get("blockchain_receipt") or {}
+    news = record.get("news") or {}
+    actuarial = dict(record.get("actuarial_data") or proposal_data.get("actuarial_data") or {})
+    if "probability_pct" in actuarial and "probability" not in actuarial:
+        actuarial["probability"] = round(actuarial["probability_pct"] / 100, 6)
+    return {
+        "decision_id": record_decision_id(record),
+        "timestamp": record.get("timestamp"),
+        "source_news": news.get("title") or proposal_data.get("source_news"),
+        "news_summary": news.get("summary") or proposal_data.get("news_summary"),
+        "news_link": news.get("link") or proposal_data.get("news_link"),
+        "proposal": proposal_data.get("proposal") or {},
+        "debate": proposal_data.get("debate") or {},
+        "is_mock_proposal": proposal_data.get("is_mock"),
+        "model": proposal_data.get("model"),
+        "matched_products": record.get("matched_products") or [],
+        "actuarial_data": actuarial,
+        "blockchain_tx_hash": receipt.get("blockchain_tx_hash"),
+        "block_number": receipt.get("block_number"),
+        "verification_url": receipt.get("verification_url"),
+        "network": receipt.get("network"),
+        "data_hash": receipt.get("data_hash"),
+        "chain_is_mock": receipt.get("is_mock"),
+        "report_path": record.get("report_path"),
+    }
+
+
 def summarize(record: dict) -> dict:
     """列表用摘要，不含整份提案內容。"""
     receipt = record.get("blockchain_receipt", {}) or {}

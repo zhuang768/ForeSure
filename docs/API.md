@@ -84,6 +84,15 @@ POST 端點每個 IP 每分鐘限 30 次。
 
 建議畫面：「驗證」按鈕呼叫不帶 body → 顯示 matched 與鏈上時間戳；「竄改測試」把 `probability_pct` 改成任意值再呼叫 → `matched: false`，把 `tampered_fields` 標紅。
 
+## 攤平格式端點（首頁與 /generator 頁目前在用）
+
+資料來源與上面相同，只是把 `proposal`、`actuarial_data`、`blockchain_tx_hash`、`source_news` 攤到頂層，
+且 `actuarial_data.probability` 是 0 到 1 的小數（`probability_pct` 也保留）。
+
+- `GET /api/v1/all_reports` → 全部報告，**舊到新**（前端自行 reverse）
+- `GET /api/v1/latest_report` → 最新一份，沒有時回 `{"error": "..."}`
+- `POST /api/v1/run_agent`（需 token）→ 同步跑完整 pipeline 再回傳報告，約 60 到 100 秒；失敗回 `{"error": "..."}`
+
 ## 其他
 
 - `GET /api/v1/chain/status` → `{mode: "sepolia" | "mock", rpc_url, contract_address, submitter}`
