@@ -29,8 +29,8 @@ export default function OnChainBadge({ decisionId, txHash }: { decisionId: strin
         const contract = new ethers.Contract(CONTRACT_ADDRESS, AuditRegistryABI, provider);
         const record = await contract.getRecord(decisionId);
         
-        // timestamp > 0n 代表這筆資料確實存在於區塊鏈上
-        setStatus(record.timestamp > 0n ? "verified" : "not_found");
+        // timestamp > BigInt(0) 代表這筆資料確實存在於區塊鏈上
+        setStatus(record.timestamp > BigInt(0) ? "verified" : "not_found");
       } catch (e) {
         // 4. 防翻車最後一關：如果 RPC 突然掛掉，依然降級顯示 Verified，保住 Demo
         console.warn("RPC 查詢失敗，降級啟用模擬驗證:", e);
