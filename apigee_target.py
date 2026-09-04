@@ -161,6 +161,22 @@ async def finalize_decision_endpoint(decision_id: str, background_tasks: Backgro
         "message": "決策已確立，正在背景寫入區塊鏈存證..."
     }
 
+@app.get("/api/v1/all_reports")
+async def get_all_reports():
+    """回傳所有的保單報告歷史紀錄"""
+    try:
+        if os.path.exists("audit_log.json"):
+            with open("audit_log.json", "r", encoding="utf-8") as f:
+                logs = json.load(f)
+                if isinstance(logs, list):
+                    return logs
+                elif isinstance(logs, dict):
+                    return [logs]
+        return []
+    except Exception as e:
+        logger.error(f"讀取歷史報告失敗: {e}")
+        return []
+
 @app.get("/api/v1/latest_report")
 async def get_latest_report():
     """回傳最新一份生成的保單報告 (讀取 audit_log.json)"""
