@@ -7,6 +7,7 @@ import apigee_target
 import run_store
 
 STORED_PAYLOAD = {"decision_id": "atlas-x", "product_name": "X", "probability_pct": 4.57}
+AUTH = {"Authorization": "Bearer MOCK_APIGEE_TOKEN"}
 
 
 @pytest.fixture
@@ -42,7 +43,7 @@ def test_post_run_then_stream_events_until_done(isolated_store, monkeypatch):
     monkeypatch.setattr(apigee_target, "run_pipeline", _fake_pipeline)
     client = TestClient(apigee_target.app)
 
-    run_id = client.post("/api/v1/runs").json()["run_id"]
+    run_id = client.post("/api/v1/runs", headers=AUTH).json()["run_id"]
 
     with client.stream("GET", f"/api/v1/runs/{run_id}/events") as resp:
         assert resp.headers["content-type"].startswith("text/event-stream")
@@ -83,8 +84,8 @@ def test_verify_recomputes_from_stored_payload_and_applies_tampering(isolated_st
     monkeypatch.setattr(apigee_target, "verify_decision_on_chain", fake_verify)
     client = TestClient(apigee_target.app)
 
-    ok = client.post("/api/v1/runs/atlas-x/verify").json()
-    bad = client.post("/api/v1/runs/atlas-x/verify", json={"tampered": {"probability_pct": 9.99}}).json()
+    ok = client.post("/api/v1/runs/atlas-x/verify", headers=AUTH).json()
+    bad = client.post("/api/v1/runs/atlas-x/verify", headers=AUTH, json={"tampered": {"probability_pct": 9.99}}).json()
 
     assert ok["matched"] is True
     assert bad["matched"] is False

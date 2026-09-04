@@ -46,14 +46,15 @@ def _warmup_embeddings():
     threading.Thread(target=warmup, name="embedding-warmup", daemon=True).start()
 
 
-# --- 1. Rate Limiting Middleware (簡易 IP 限流；儀表板端點不計) ---
-RATE_LIMIT = 30  # 每分鐘最多 30 次觸發型請求
+# --- 1. Rate Limiting Middleware (簡易 IP 限流) ---
+# 只放行儀表板的唯讀輪詢與 SSE（GET）與 CORS 預檢；所有會觸發 LLM 或上鏈的 POST 都計數。
+RATE_LIMIT = 30  # 每分鐘最多 30 次
 rate_limit_records: dict[str, list[float]] = {}
 
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
-    if request.url.path.startswith("/api/v1/runs") or request.method == "OPTIONS":
+    if request.method == "OPTIONS" or (request.method == "GET" and request.url.path.startswith("/api/v1/runs")):
         return await call_next(request)
 
     client_ip = request.client.host if request.client else "unknown"
@@ -107,15 +108,16 @@ def _execute_run(run_id: str):
     try:
         run_pipeline(emit=emit)
         run_store.mark_finished(run_id, "finished")
-    except Exception as e:
+    except Exception:
+        # 細節只進伺服器日誌，不把例外文字（可能含路徑、金鑰片段）送給客戶端
         logger.exception(f"Run {run_id} 失敗")
-        emit("error", str(e))
+        emit("error", "執行失敗，請查看伺服器日誌")
         run_store.mark_finished(run_id, "error")
 
 
-@app.post("/api/v1/runs")
+@app.post("/api/v1/runs", dependencies=[Depends(verify_jwt)])
 async def start_run(background_tasks: BackgroundTasks):
-    """啟動一次完整 pipeline，回傳 run_id；用 GET /api/v1/runs/{run_id}/events 追進度。"""
+    """啟動一次完整 pipeline（需 Bearer token），回傳 run_id；用 GET /api/v1/runs/{run_id}/events 追進度。"""
     run_id = run_store.create_run()
     background_tasks.add_task(_execute_run, run_id)
     return {"run_id": run_id, "status": "running"}
@@ -170,10 +172,10 @@ class VerifyRequest(BaseModel):
     tampered: dict | None = None
 
 
-@app.post("/api/v1/runs/{decision_id}/verify")
+@app.post("/api/v1/runs/{decision_id}/verify", dependencies=[Depends(verify_jwt)])
 async def verify_run(decision_id: str, body: VerifyRequest | None = None):
     """
-    用儲存的 payload 重新計算雜湊並與鏈上比對。
+    用儲存的 payload 重新計算雜湊並與鏈上比對（需 Bearer token）。
     傳入 tampered 可覆寫任意欄位，示範竄改後驗證不符。
     """
     record = run_store.get_run(decision_id)
@@ -185,6 +187,9 @@ async def verify_run(decision_id: str, body: VerifyRequest | None = None):
     payload.update(tampered)
 
     result = verify_decision_on_chain(receipt.get("decision_id", decision_id), payload)
+    if "error" in result:
+        logger.error(f"鏈上驗證失敗 {decision_id}: {result['error']}")
+        result["error"] = "鏈上驗證失敗，請稍後重試"
     result.update({
         "tampered_fields": sorted(tampered.keys()),
         "payload": payload,

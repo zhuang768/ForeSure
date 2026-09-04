@@ -3,9 +3,15 @@
 後端：`./venv/bin/uvicorn apigee_target:app --port 8080`
 前端讀 `NEXT_PUBLIC_API_BASE`（預設 `http://localhost:8080`），CORS 已允許 `localhost:3000`。
 
+## 授權
+
+所有 **POST** 端點都要帶 `Authorization: Bearer MOCK_APIGEE_TOKEN`（Demo 用萬用 token；正式環境由 Apigee 簽發 JWT）。
+**GET** 端點（列表、單筆、SSE）不需要，因為瀏覽器的 `EventSource` 無法自訂標頭。
+POST 端點每個 IP 每分鐘限 30 次。
+
 ## 啟動一次執行
 
-`POST /api/v1/runs` → `{"run_id": "9a123da108b4", "status": "running"}`
+`POST /api/v1/runs`（需 token）→ `{"run_id": "9a123da108b4", "status": "running"}`
 
 ## 即時進度（Server-Sent Events）
 
@@ -56,7 +62,7 @@
 
 ## 鏈上驗證（Demo 的關鍵互動）
 
-`POST /api/v1/runs/{decision_id}/verify`，body 可省略或 `{"tampered": {"probability_pct": 9.99}}`。
+`POST /api/v1/runs/{decision_id}/verify`（需 token），body 可省略或 `{"tampered": {"probability_pct": 9.99}}`。
 
 回傳：
 
