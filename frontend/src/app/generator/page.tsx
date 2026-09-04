@@ -6,7 +6,7 @@ import OnChainBadge from '@/components/OnChainBadge';
 
 export default function GeneratorPage() {
   const [loading, setLoading] = useState(false);
-  const [report, setReport] = useState<any>(null);
+  const [report, setReport] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState("");
   const [statusText, setStatusText] = useState("");
 
@@ -45,7 +45,7 @@ export default function GeneratorPage() {
         setStatusText("決策與上鏈已完成！");
         setReport(data);
       }
-    } catch (err: any) {
+    } catch {
       clearInterval(interval);
       setError("無法連線到後端 FastAPI 伺服器，請確認伺服器已啟動於 port 8080");
     } finally {

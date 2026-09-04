@@ -5,8 +5,8 @@ import Link from 'next/link';
 import OnChainBadge from '@/components/OnChainBadge';
 
 export default function Home() {
-  const [news, setNews] = useState<any[]>([]);
-  const [proposals, setProposals] = useState<any[]>([]);
+  const [news, setNews] = useState<{title: string, summary: string}[]>([]);
+  const [proposals, setProposals] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [terminalLogs, setTerminalLogs] = useState<string[]>([]);
   const terminalContainerRef = useRef<HTMLDivElement>(null);
@@ -25,7 +25,7 @@ export default function Home() {
             { title: "極端氣候導致多國農作歉收", summary: "小麥與玉米期貨大漲，食品通膨風險急遽攀升。" }
           ]);
           
-          const formattedProposals = realData.map((item: any, idx: number) => ({
+          const formattedProposals = realData.map((item: Record<string, unknown>, idx: number) => ({
             id: item.decision_id || `atlas-real-${idx}`,
             name: item.proposal?.product_name || "新世代自動化保險",
             target: item.proposal?.target_audience || "受特定風險影響之高風險群體",
