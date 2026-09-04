@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import OnChainBadge from '@/components/OnChainBadge';
 
 export default function Home() {
@@ -8,27 +9,60 @@ export default function Home() {
   const [proposals, setProposals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 模擬載入動畫與假資料 (實務上這裡會 fetch apigee_target.py)
+  // 實作真實的 Backend API Fetch (如果失敗則降級為 Mock 資料)
   useEffect(() => {
-    setTimeout(() => {
-      setNews([
-        { title: "2023 夏威夷茂宜島野火", summary: "強風與乾旱引發毀滅性野火，數千棟建築燒毀，當地旅遊業全面停擺..." },
-        { title: "全球最大雲端服務供應商 12 小時中斷", summary: "電子商務與金融交易全面停擺，預估經濟損失高達數十億美元..." }
-      ]);
-      setProposals([
-        {
-          id: "atlas-2026-mock",
-          name: "氣候巨災參數型保證險",
-          target: "容易受極端氣候影響之農漁業及運輸業。",
-          gap: "現有保險需人工勘損，耗時數月。此商品結合大數據，觸發參數即刻理賠。",
-          probability: "15.4%",
-          loss: "USD 500,000",
-          premium: "USD 9,000 ~ 15,000",
-          blockchain_tx: "0x8f2a9b4e3c1d7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a"
+    async function fetchData() {
+      try {
+        const res = await fetch("http://localhost:8080/api/v1/latest_report");
+        const realData = await res.json();
+        
+        if (realData && !realData.error) {
+          // 將真實資料轉化為畫面需要的格式
+          setNews([
+            { title: realData.source_news || "即時新聞觀測", summary: "由 AI Agent 從外部資料源即時爬取與過濾的核心情報。" }
+          ]);
+          setProposals([
+            {
+              id: realData.decision_id || "atlas-real",
+              name: realData.proposal?.product_name || "新世代自動化保險",
+              target: realData.proposal?.target_audience || "受特定風險影響之高風險群體",
+              gap: realData.proposal?.market_gap || "針對現有市場缺口進行精準打擊",
+              probability: ((realData.actuarial_data?.probability || 0.05) * 100).toFixed(2) + "%",
+              loss: "USD " + (realData.actuarial_data?.expected_loss_usd?.toLocaleString() || "100,000"),
+              premium: "USD " + Math.round(realData.actuarial_data?.expected_loss_usd * 1.8).toLocaleString() + " ~ " + Math.round(realData.actuarial_data?.expected_loss_usd * 3).toLocaleString(),
+              blockchain_tx: realData.blockchain_tx_hash
+            }
+          ]);
+          setLoading(false);
+          return;
         }
-      ]);
-      setLoading(false);
-    }, 1500);
+      } catch (e) {
+        console.warn("無法連線至真實後端，降級顯示 Mock 資料", e);
+      }
+      
+      // 降級：如果後端沒開，顯示超炫的 Mock 資料保住 Demo
+      setTimeout(() => {
+        setNews([
+          { title: "2023 夏威夷茂宜島野火", summary: "強風與乾旱引發毀滅性野火，數千棟建築燒毀，當地旅遊業全面停擺..." },
+          { title: "全球最大雲端服務供應商 12 小時中斷", summary: "電子商務與金融交易全面停擺，預估經濟損失高達數十億美元..." }
+        ]);
+        setProposals([
+          {
+            id: "atlas-2026-mock",
+            name: "氣候巨災參數型保證險",
+            target: "容易受極端氣候影響之農漁業及運輸業。",
+            gap: "現有保險需人工勘損，耗時數月。此商品結合大數據，觸發參數即刻理賠。",
+            probability: "15.4%",
+            loss: "USD 500,000",
+            premium: "USD 9,000 ~ 15,000",
+            blockchain_tx: "0x8f2a9b4e3c1d7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a"
+          }
+        ]);
+        setLoading(false);
+      }, 1500);
+    }
+    
+    fetchData();
   }, []);
 
   return (
@@ -38,11 +72,16 @@ export default function Home() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <header className="mb-16">
-          <h1 className="text-5xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-slate-900 to-slate-500 bg-clip-text text-transparent">
-            AI 智慧保險戰情室
-          </h1>
-          <p className="text-slate-500 text-lg font-medium">企業級自動化市場缺口分析與精算提案系統</p>
+        <header className="mb-16 flex justify-between items-end border-b border-slate-200 pb-6">
+          <div>
+            <h1 className="text-5xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-slate-900 to-slate-500 bg-clip-text text-transparent">
+              AI 智慧保險戰情室
+            </h1>
+            <p className="text-slate-500 text-lg font-medium">企業級自動化市場缺口分析與精算提案系統</p>
+          </div>
+          <Link href="/generator" className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors font-medium shadow-lg shadow-emerald-500/20">
+            切換至 AI 發電機 🚀
+          </Link>
         </header>
 
         {loading ? (

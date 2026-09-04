@@ -1,10 +1,13 @@
 import uvicorn
 from fastapi import FastAPI, BackgroundTasks, Request, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 import logging
 import time
 import jwt
+import os
+import json
 
 from main import run_pipeline
 
@@ -17,6 +20,15 @@ app = FastAPI(
     title="Atlas Insurance GenAI Target",
     description="Backend API intended to be placed behind Google Cloud Apigee API Gateway.",
     version="1.0.0"
+)
+
+# --- CORS Middleware (黑客松 Demo 本地連線必備) ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # 允許所有來源 (如 http://localhost:3000)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- 1. Rate Limiting Middleware (簡易 IP 限流) ---
@@ -148,6 +160,41 @@ async def finalize_decision_endpoint(decision_id: str, background_tasks: Backgro
         "decision": final_decision,
         "message": "決策已確立，正在背景寫入區塊鏈存證..."
     }
+
+@app.get("/api/v1/latest_report")
+async def get_latest_report():
+    """回傳最新一份生成的保單報告 (讀取 audit_log.json)"""
+    try:
+        if os.path.exists("audit_log.json"):
+            with open("audit_log.json", "r", encoding="utf-8") as f:
+                logs = json.load(f)
+                if isinstance(logs, list) and len(logs) > 0:
+                    return logs[-1] # 取最新一筆
+                elif isinstance(logs, dict):
+                    return logs
+        return {"error": "尚未生成任何報告"}
+    except Exception as e:
+        logger.error(f"讀取最新報告失敗: {e}")
+        return {"error": str(e)}
+
+@app.post("/api/v1/run_agent")
+async def run_agent_synchronous():
+    """
+    黑客松 Demo 專用端點：
+    同步觸發 Python AI 代理人流程，並等待它跑完，直接將最新的產出與上鏈結果回傳給前端。
+    """
+    logger.info("前端手動觸發了 AI Agent Pipeline！")
+    try:
+        # 同步執行 (這會卡住大約 10-20 秒，等待 OpenAI 回應與上鏈)
+        report_path = run_pipeline()
+        if not report_path:
+            return {"error": "Pipeline 執行失敗，未產生報告。請檢查終端機 Log。"}
+        
+        # 讀取剛產生的熱騰騰報告
+        return await get_latest_report()
+    except Exception as e:
+        logger.error(f"執行 Agent 失敗: {e}")
+        return {"error": str(e)}
 
 @app.get("/api/v1/health")
 async def health_check():
