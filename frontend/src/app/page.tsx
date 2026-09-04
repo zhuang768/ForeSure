@@ -9,7 +9,7 @@ export default function Home() {
   const [proposals, setProposals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [terminalLogs, setTerminalLogs] = useState<string[]>([]);
-  const terminalEndRef = useRef<HTMLDivElement>(null);
+  const terminalContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -95,7 +95,7 @@ export default function Home() {
       "[SYSTEM] 啟動 Atlas 企業保險開發 Agent...",
       "[Market_Observer] 發現新興風險：2026 台灣東部外海強震",
       "[PM_Agent] 提議：開發『半導體供應鏈中斷參數險』",
-      "[Underwriter_Agent] ⚠️ 警告：需防範供應鏈轉移的道德風險，建議加入嚴格的震度參數閾值。",
+      "[Underwriter_Agent] [WARNING] 需防範供應鏈轉移的道德風險，建議加入嚴格的震度參數閾值。",
       "[Actuary_Agent] 計算預期損失為 USD 2,500,000，風險發生機率估算為 8.2%。",
       "[Actuary_Agent] 設定保費區間：USD 45,000 ~ 75,000 (Markup 1.8x)",
       "[PM_Agent] 提案已修正，結合大數據參數觸發，填補傳統營業中斷險缺口。",
@@ -113,7 +113,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (terminalContainerRef.current) {
+      terminalContainerRef.current.scrollTop = terminalContainerRef.current.scrollHeight;
+    }
   }, [terminalLogs]);
 
   const scrollToDashboard = () => {
@@ -164,7 +166,7 @@ export default function Home() {
               href="/generator" 
               className="px-8 py-4 bg-transparent border-2 border-slate-700 hover:border-emerald-500 text-white rounded-full font-bold text-lg transition-all hover:bg-emerald-500/10 flex items-center gap-2 group"
             >
-              <span className="group-hover:translate-x-1 transition-transform">🚀</span> 手動觸發 AI
+              <span className="group-hover:translate-x-1 transition-transform">&gt;</span> 手動觸發 AI
             </Link>
           </div>
         </div>
@@ -211,16 +213,15 @@ export default function Home() {
                   </div>
                   <span className="text-xs font-mono text-slate-500">atlas-multi-agent-debate ~ /bin/bash</span>
                 </div>
-                <div className="p-5 font-mono text-[13px] leading-relaxed text-emerald-400 overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div ref={terminalContainerRef} className="p-5 font-mono text-[13px] leading-relaxed text-emerald-400 overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth">
                   {terminalLogs.map((log, i) => (
                     <div key={i} className="mb-2 opacity-90 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
                       <span className="text-slate-600 mr-2">{'>'}</span>
-                      <span className={log.includes('警告') ? 'text-yellow-400 font-bold' : log.includes('Blockchain') ? 'text-indigo-400 font-bold' : ''}>
+                      <span className={log.includes('WARNING') ? 'text-yellow-400 font-bold' : log.includes('Blockchain') ? 'text-indigo-400 font-bold' : ''}>
                         {log}
                       </span>
                     </div>
                   ))}
-                  <div ref={terminalEndRef} />
                 </div>
               </div>
 
@@ -279,13 +280,13 @@ export default function Home() {
                       <div className="space-y-6 mb-8">
                         <div>
                           <h5 className="text-slate-500 text-xs font-bold tracking-wider mb-2 uppercase flex items-center gap-2">
-                            <span className="text-emerald-500">🎯</span> 目標客群
+                            <span className="text-emerald-500">[TARGET]</span> 目標客群
                           </h5>
                           <p className="text-slate-300 text-[15px] leading-relaxed bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">{p.target}</p>
                         </div>
                         <div>
                           <h5 className="text-slate-500 text-xs font-bold tracking-wider mb-2 uppercase flex items-center gap-2">
-                            <span className="text-blue-500">💡</span> 市場缺口
+                            <span className="text-blue-500">[GAP]</span> 市場缺口
                           </h5>
                           <p className="text-slate-300 text-[15px] leading-relaxed bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">{p.gap}</p>
                         </div>

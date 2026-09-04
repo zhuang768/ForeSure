@@ -81,7 +81,7 @@ export default function GeneratorPage() {
             >
               <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 group-hover:opacity-100 opacity-50 transition-opacity"></div>
               <span className="relative text-2xl font-bold text-white flex items-center gap-3">
-                🚀 啟動 AI 代理人
+                [START] 啟動 AI 代理人
               </span>
             </button>
           )}
@@ -99,8 +99,8 @@ export default function GeneratorPage() {
           )}
 
           {error && (
-            <div className="glass-card p-8 border-red-500/50 text-red-400 max-w-2xl text-center w-full">
-              ⚠️ {error}
+            <div className="glass-card p-8 border-red-500/50 text-red-400 max-w-2xl text-center w-full font-mono">
+              [ERROR] {error}
             </div>
           )}
 
