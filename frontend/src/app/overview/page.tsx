@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import AppHeader from "@/components/AppHeader";
 import DecisionDetail from "@/components/DecisionDetail";
 import KpiBar from "@/components/KpiBar";
@@ -19,10 +18,6 @@ type Loaded = {
 };
 
 export default function OverviewPage() {
-  const router = useRouter();
-  useEffect(() => {
-    router.replace("/");
-  }, [router]);
   const t = useT();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [record, setRecord] = useState<RunRecord | null>(null);
