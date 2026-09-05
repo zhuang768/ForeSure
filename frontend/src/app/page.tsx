@@ -250,7 +250,7 @@ export default function IntroPage() {
             <div className="mx-auto mt-16 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2">
               {metrics.map(([label, value, desc], i) => (
                 <Reveal key={label} delay={i * 80}>
-                  <div className="glass h-full p-6 md:p-7">
+                  <div className="glass glass-lift h-full p-6 md:p-7">
                     <div className="font-mono text-xs uppercase leading-5 tracking-wider text-muted">{label}</div>
                     <div className="mt-4 font-mono text-4xl font-semibold leading-9 tabular-nums text-primary">{value}</div>
                     <p className="t-body mt-2 text-muted">{desc}</p>

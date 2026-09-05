@@ -209,6 +209,24 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
+/* hover lift for glass cards: rises 6px, brand-tinted shadow, border warms toward the primary.
+   Pointer-only so touch devices don't get a sticky hover; reduced-motion is handled globally above. */
+.glass-lift {
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+  will-change: transform;
+}
+@media (hover: hover) and (pointer: fine) {
+  .glass-lift:hover {
+    transform: translateY(-6px);
+    border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+    box-shadow:
+      0 22px 44px -20px color-mix(in srgb, var(--primary) 40%, transparent),
+      0 8px 20px -10px rgb(0 0 0 / 0.14);
+  }
+}
 .ghost {
   font-size: clamp(3.5rem, 6.95vw, 6.25rem); /* 100px at 1440 */
   font-weight: 600;
