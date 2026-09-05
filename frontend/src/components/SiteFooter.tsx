@@ -16,15 +16,16 @@ const PAGES: { href: string; k: DictKey }[] = [
   { href: "/overview", k: "nav.overview" },
 ];
 
-function Icon({ d }: { d: string }) {
+/** Thin line icon for a fact row (network, contract, source, event). Shared with the homepage start section. */
+export function FactIcon({ d, className = "h-4 w-4" }: { d: string; className?: string }) {
   return (
-    <svg className="h-4 w-4 shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden>
+    <svg className={`shrink-0 text-primary ${className}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden>
       <path strokeLinecap="round" strokeLinejoin="round" d={d} />
     </svg>
   );
 }
 
-const ICON = {
+export const FACT_ICON = {
   globe: "M12 21a9 9 0 100-18 9 9 0 000 18zm0 0c2.5-2.5 3.75-5.5 3.75-9S14.5 5.5 12 3m0 18c-2.5-2.5-3.75-5.5-3.75-9S9.5 5.5 12 3M3.6 9h16.8M3.6 15h16.8",
   doc: "M9 12h6m-6 4h6M7 3h7l5 5v12a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z",
   code: "M16 18l6-6-6-6M8 6l-6 6 6 6",
@@ -74,12 +75,12 @@ export default function SiteFooter({ chain }: { chain?: ChainStatus | null }) {
           <div className="label">{t("footer.infoTitle")}</div>
           <ul className="t-body mt-4 flex flex-col gap-3">
             <li className="flex items-center gap-2.5">
-              <Icon d={ICON.globe} />
+              <FactIcon d={FACT_ICON.globe} />
               <span className="text-muted">{t("footer.network")}</span>
               <span className="font-medium text-text">Ethereum Sepolia</span>
             </li>
             <li className="flex items-center gap-2.5">
-              <Icon d={ICON.doc} />
+              <FactIcon d={FACT_ICON.doc} />
               <span className="text-muted">{t("footer.contract")}</span>
               {explorer ? (
                 <a href={explorer} target="_blank" rel="noreferrer" className="mono font-medium text-primary-ink underline-offset-4 hover:underline">
@@ -90,14 +91,14 @@ export default function SiteFooter({ chain }: { chain?: ChainStatus | null }) {
               )}
             </li>
             <li className="flex items-center gap-2.5">
-              <Icon d={ICON.code} />
+              <FactIcon d={FACT_ICON.code} />
               <span className="text-muted">{t("footer.source")}</span>
               <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="font-medium text-text underline-offset-4 hover:underline">
                 github.com/zhuang768/ForeSure
               </a>
             </li>
             <li className="flex items-center gap-2.5">
-              <Icon d={ICON.flag} />
+              <FactIcon d={FACT_ICON.flag} />
               <span className="text-text">{t("footer.event")}</span>
             </li>
           </ul>

@@ -7,7 +7,7 @@ import BrandLogo from "@/components/BrandLogo";
 import HomeHero from "@/components/HomeHero";
 import AgentsSection from "@/components/AgentsSection";
 import Reveal from "@/components/Reveal";
-import SiteFooter from "@/components/SiteFooter";
+import SiteFooter, { FACT_ICON, FactIcon } from "@/components/SiteFooter";
 import { chainStatus, listRuns } from "@/lib/api";
 import { fmtStamp, shortHash } from "@/lib/format";
 import { useLang, useT, type DictKey } from "@/lib/i18n";
@@ -340,29 +340,33 @@ export default function IntroPage() {
           </Container>
         </section>
 
-        {/* ---------------- start (contact-style panel) ---------------- */}
+        {/* ---------------- start (contact-style: heading in the left column, steps on the right) ---------------- */}
         <section className="py-20 md:py-28">
           <Container>
-            <SectionHead
-              ghost="START"
-              title={zh ? "準備好體驗未然 ForeSure 了嗎？" : "Ready to experience ForeSure?"}
-              lead={zh ? "立即啟動 85 秒即時時事新聞感測、多代理人對抗辯論與以太坊 Sepolia 存證流程。" : "Launch 85-second live telemetry, multi-agent adversarial debate, and Ethereum Sepolia attestation."}
-            />
-            <div className="mt-14 grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
-              {/* the left column sits a step in from the container edge so the margin reads as breathing room */}
+            <Reveal className="flex justify-center">
+              <div className="ghost" aria-hidden>
+                START
+              </div>
+            </Reveal>
+            <div className="-mt-10 grid items-start gap-12 lg:grid-cols-2 lg:gap-x-24 xl:gap-x-40">
+              {/* left column sits a step in from the container edge so the margin reads as breathing room */}
               <Reveal className="lg:pl-16 xl:pl-24">
-                <BrandLogo decorative className="h-14 w-auto" />
-                <h3 className="t-h3 mt-6 text-text">{zh ? "未然 ForeSure · 多代理人保險決策桌" : "ForeSure · multi-agent insurance decision desk"}</h3>
-                <ul className="t-body mt-6 flex flex-col gap-3">
+                <h2 className="t-h2 text-text">{zh ? "準備好體驗未然了嗎？" : "Ready to try ForeSure?"}</h2>
+                <p className="t-lead mt-5 text-muted">
+                  {zh ? "立即啟動 85 秒即時時事新聞感測、多代理人對抗辯論與以太坊 Sepolia 存證流程。" : "Launch 85-second live telemetry, multi-agent adversarial debate, and Ethereum Sepolia attestation."}
+                </p>
+                <BrandLogo decorative className="mt-15 h-12 w-auto" />
+                <h3 className="t-h3 mt-5 text-text">{zh ? "未然 ForeSure · 多代理人保險決策桌" : "ForeSure · multi-agent insurance decision desk"}</h3>
+                <ul className="t-body mt-5 flex flex-col gap-[13px]">
                   {[
-                    [zh ? "網路" : "Network", "Ethereum Sepolia", null],
-                    [zh ? "合約" : "Contract", contract ? shortHash(contract) : "—", contract ? `https://sepolia.etherscan.io/address/${contract}` : null],
-                    [zh ? "原始碼" : "Source", "github.com/zhuang768/ForeSure", "https://github.com/zhuang768/ForeSure"],
-                    [zh ? "賽事" : "Event", t("footer.event"), null],
-                  ].map(([k, v, href]) => (
-                    <li key={k as string} className="flex items-center gap-3">
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
-                      <span className="w-16 shrink-0 text-muted">{k}</span>
+                    [FACT_ICON.globe, zh ? "網路" : "Network", "Ethereum Sepolia", null],
+                    [FACT_ICON.doc, zh ? "合約" : "Contract", contract ? shortHash(contract) : "—", contract ? `https://sepolia.etherscan.io/address/${contract}` : null],
+                    [FACT_ICON.code, zh ? "原始碼" : "Source", "github.com/zhuang768/ForeSure", "https://github.com/zhuang768/ForeSure"],
+                    [FACT_ICON.flag, zh ? "賽事" : "Event", t("footer.event"), null],
+                  ].map(([icon, k, v, href]) => (
+                    <li key={k as string} className="flex items-start gap-2.5">
+                      <FactIcon d={icon as string} className="mt-1 h-5 w-5" />
+                      <span className="w-14 shrink-0 text-muted">{k}</span>
                       {href ? (
                         <a href={href as string} target="_blank" rel="noreferrer" className="mono font-medium text-primary-ink underline-offset-4 hover:underline">
                           {v}
@@ -374,34 +378,34 @@ export default function IntroPage() {
                   ))}
                 </ul>
               </Reveal>
-              <Reveal delay={120}>
-                <div className="glass p-10">
-                  <div className="label">{zh ? "流程" : "Process"}</div>
-                  <ol className="mt-4 flex flex-col gap-3">
-                    {[
-                      [zh ? "抓取即時新聞並比對既有商品" : "Fetch live news, match existing products", "~10s"],
-                      [zh ? "PM、核保、精算三方辯論並定價" : "PM, Underwriter and Actuary debate & price", "~60s"],
-                      [zh ? "SHA-256 指紋寫入 Sepolia 並可公開查驗" : "Anchor the SHA-256 fingerprint on Sepolia", "~15s"],
-                    ].map(([s, d], i) => (
-                      <li key={s} className="flex items-center gap-4 rounded-2xl border border-border bg-surface/70 px-4 py-3.5">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-soft font-mono text-xs font-bold text-primary-ink">
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        <span className="t-body flex-1 text-text">{s}</span>
-                        <span className="font-mono text-sm text-muted">{d}</span>
-                      </li>
-                    ))}
-                  </ol>
-                  <Link
-                    href="/generator"
-                    className="mt-6 flex w-full items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary-ink py-4 text-lg font-semibold text-white shadow-md transition-transform hover:scale-[1.01]"
-                  >
-                    ▶ {t("intro.ctaLive")}
-                  </Link>
-                  <Link href="/history" className="mt-3 flex w-full items-center justify-center rounded-full border border-border bg-surface py-4 text-base font-medium text-text transition-colors hover:border-primary">
-                    {t("intro.ctaHistory")}
-                  </Link>
-                </div>
+
+              <Reveal delay={120} className="lg:pt-3">
+                <h3 className="t-h3 text-text">{zh ? "流程" : "Process"}</h3>
+                <ol className="mt-5 flex flex-col gap-4">
+                  {[
+                    [zh ? "抓取即時新聞並比對既有商品" : "Fetch live news, match existing products", "~10s"],
+                    [zh ? "PM、核保、精算三方辯論並定價" : "PM, Underwriter and Actuary debate & price", "~60s"],
+                    [zh ? "SHA-256 指紋寫入 Sepolia 並可公開查驗" : "Anchor the SHA-256 fingerprint on Sepolia", "~15s"],
+                  ].map(([step, secs], i) => (
+                    <li key={step} className="flex min-h-12 items-center gap-4 rounded-full border border-border bg-surface/70 px-5 py-2">
+                      <span className="font-mono text-sm font-semibold text-primary-ink">{String(i + 1).padStart(2, "0")}</span>
+                      <span className="t-body flex-1 font-medium text-text">{step}</span>
+                      <span className="font-mono text-sm text-muted">{secs}</span>
+                    </li>
+                  ))}
+                </ol>
+                <Link
+                  href="/generator"
+                  className="mt-7 flex h-12 w-full items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary-ink text-base font-medium text-white shadow-md transition-transform hover:scale-[1.01]"
+                >
+                  ▶ {t("intro.ctaLive")}
+                </Link>
+                <Link
+                  href="/history"
+                  className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-border bg-surface text-base font-medium text-text transition-colors hover:border-primary"
+                >
+                  {t("intro.ctaHistory")}
+                </Link>
               </Reveal>
             </div>
           </Container>
