@@ -2,9 +2,30 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useLang, useT } from "@/lib/i18n";
+import { translate, useLang, useT, type DictKey, type Lang } from "@/lib/i18n";
 import { usePrefs } from "@/lib/prefs";
 import type { ChainStatus } from "@/lib/types";
+
+/**
+ * A label whose box is as wide as the longer of its two translations, so switching language does not
+ * change the button's width and the header controls stay put. The hidden twin is stacked in the same
+ * grid cell and is invisible but still takes up space.
+ */
+function StableLabel({ k, lang, prefix = "" }: { k: DictKey; lang: Lang; prefix?: string }) {
+  const other: Lang = lang === "zh" ? "en" : "zh";
+  return (
+    <span className="grid whitespace-nowrap">
+      <span className="[grid-area:1/1]">
+        {prefix}
+        {translate(lang, k)}
+      </span>
+      <span className="invisible [grid-area:1/1]" aria-hidden>
+        {prefix}
+        {translate(other, k)}
+      </span>
+    </span>
+  );
+}
 
 export default function AppHeader({ chain }: { chain: ChainStatus | null | undefined }) {
   const t = useT();
@@ -15,11 +36,17 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
 
   const chainPill =
     chain === undefined ? null : chain === null ? (
-      <span className="pill bg-danger-soft text-danger">● {t("header.chain.unknown")}</span>
+      <span className="pill bg-danger-soft text-danger">
+        <StableLabel k="header.chain.unknown" lang={lang} prefix="● " />
+      </span>
     ) : chain.mode === "sepolia" ? (
-      <span className="pill bg-primary-soft text-primary-ink">● {t("header.chain.sepolia")}</span>
+      <span className="pill bg-primary-soft text-primary-ink">
+        <StableLabel k="header.chain.sepolia" lang={lang} prefix="● " />
+      </span>
     ) : (
-      <span className="pill border border-border bg-surface-2 text-muted">○ {t("header.chain.mock")}</span>
+      <span className="pill border border-border bg-surface-2 text-muted">
+        <StableLabel k="header.chain.mock" lang={lang} prefix="○ " />
+      </span>
     );
 
   return (
@@ -31,13 +58,16 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
         </Link>
         <div className="flex items-center gap-2">
           {chainPill}
+          {/* The label never changes; the active side is highlighted instead, so the button keeps its width. */}
           <button
             type="button"
             className="btn btn-secondary px-2 py-1 text-xs"
             onClick={() => setLang(lang === "zh" ? "en" : "zh")}
             aria-label="language"
           >
-            {lang === "zh" ? "中 / EN" : "EN / 中"}
+            <span className={lang === "zh" ? "font-bold" : "text-muted"}>中</span>
+            <span className="text-muted">/</span>
+            <span className={lang === "en" ? "font-bold" : "text-muted"}>EN</span>
           </button>
           <button
             type="button"
@@ -45,7 +75,11 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             aria-label="theme"
           >
-            {theme === "dark" ? "☾ " + t("header.theme.dark") : "☀ " + t("header.theme.light")}
+            {theme === "dark" ? (
+              <StableLabel k="header.theme.dark" lang={lang} prefix="☾ " />
+            ) : (
+              <StableLabel k="header.theme.light" lang={lang} prefix="☀ " />
+            )}
           </button>
           <button
             type="button"
@@ -53,15 +87,15 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
             onClick={() => setPresent(!present)}
             aria-pressed={present}
           >
-            {t("header.present")}
+            <StableLabel k="header.present" lang={lang} />
           </button>
           {onGenerator ? (
             <Link href="/" className="btn btn-secondary">
-              {t("header.home")}
+              <StableLabel k="header.home" lang={lang} />
             </Link>
           ) : (
             <Link href="/generator" className="btn btn-primary">
-              ▶ {t("header.run")}
+              <StableLabel k="header.run" lang={lang} prefix="▶ " />
             </Link>
           )}
         </div>
