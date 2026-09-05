@@ -6,6 +6,7 @@ import DecisionDetail from "@/components/DecisionDetail";
 import KpiBar from "@/components/KpiBar";
 import RunQueue from "@/components/RunQueue";
 import StatusBanner from "@/components/StatusBanner";
+import VerifyPanel from "@/components/VerifyPanel";
 import { chainStatus, getRun, listRuns } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import type { ChainStatus, RunRecord, RunSummary } from "@/lib/types";
@@ -72,7 +73,9 @@ export default function HomePage() {
         <div className="grid min-h-[70vh] flex-1 grid-cols-1 gap-[var(--gap)] lg:grid-cols-[minmax(280px,1fr)_2.2fr]">
           <RunQueue runs={runs} selectedId={selectedId} onSelect={select} />
           {current ? (
-            <DecisionDetail record={current} />
+            <DecisionDetail record={current}>
+              <VerifyPanel record={current} />
+            </DecisionDetail>
           ) : (
             <div className="card flex items-center justify-center p-10 text-sm text-muted">
               {loaded === null || (selectedId && !current) ? "…" : t("queue.empty")}
