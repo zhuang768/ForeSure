@@ -106,6 +106,7 @@ export default function HomePage() {
         11800, // pm: Gemini 3.5 Flash drafting full proposal (11.8s)
         13500, // underwriter: Gemini 3.5 Flash underwriting review & critique (13.5s)
         11200, // actuary: Gemini 3.5 Flash mathematical rate-making (11.2s)
+        1500,  // grounding: rule-based check (1.5s)
         5200,  // report: report formatting and markdown assembly (5.2s)
         2200,  // chain_pending: transaction broadcast to Sepolia network (2.2s)
         16500, // chain_done: Ethereum Sepolia block mining & audit verification (16.5s)

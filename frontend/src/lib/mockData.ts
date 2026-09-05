@@ -584,6 +584,7 @@ export const MOCK_RUN_SUMMARIES: RunSummary[] = DATA_20.map((d, i) => {
     news_title: d.newsTitle,
     product_name: d.productName,
     is_mock_proposal: false,
+    grounding_status: i === 0 ? "warn" : "pass",
     chain_is_mock: isMock,
     tx_hash: tx,
     verification_url: tx ? `https://sepolia.etherscan.io/tx/${tx}` : null,
@@ -715,5 +716,33 @@ export const MOCK_RUN_RECORDS: RunRecord[] = DATA_20.map((d, i) => {
       timestamp: summary.timestamp,
     },
     report_path: `reports/${summary.decision_id}.json`,
+    grounding: i === 0
+      ? {
+          status: "warn",
+          checker_version: "grounding-check/v1",
+          checked_claims: 3,
+          grounded_claims: 2,
+          flag_count: 1,
+          evidence_sources: ["actuarial_engine", "news", "matched_products"],
+          flags: [
+            {
+              type: "missing_disclosure",
+              severity: "medium",
+              field: "business_logic",
+              value: null,
+              excerpt: "",
+              message: "精算數字含假設值，但提案未揭露「假設」或「估計」",
+            },
+          ],
+        }
+      : {
+          status: "pass",
+          checker_version: "grounding-check/v1",
+          checked_claims: 3,
+          grounded_claims: 3,
+          flag_count: 0,
+          evidence_sources: ["actuarial_engine", "news", "matched_products"],
+          flags: [],
+        },
   };
 });

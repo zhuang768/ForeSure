@@ -88,6 +88,18 @@ export const MOCK_EVENTS: RunEvent[] = [
     data: "考量發生機率為 12.5%，預期單次損失為 $50,000 USD。根據核保部建議的 100 萬台幣上限，我們可將保費區間精確鎖定在 $2,800 - $3,200 USD，並採用 1.4 倍的風險溢價因子來確保利潤空間，這樣的費率結構在財務上是穩健的。",
   },
   {
+    stage: "grounding",
+    data: {
+      status: "pass",
+      checker_version: "grounding-check/v1",
+      checked_claims: 3,
+      grounded_claims: 3,
+      flag_count: 0,
+      evidence_sources: ["actuarial_engine", "news", "matched_products"],
+      flags: [],
+    },
+  },
+  {
     stage: "report",
     data: {
       product_name: "強降雨農漁業參數型保險",
