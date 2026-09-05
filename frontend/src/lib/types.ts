@@ -42,6 +42,44 @@ export type ActuarialBasis = {
   assumed_loss_note?: string;
   premium_method?: string;
   monte_carlo_gpu?: MonteCarloGpuData | null;
+  vision_underwriting_gpu?: VisionUnderwritingData | null;
+  bge_m3_retrieval_gpu?: BgeM3RetrievalData | null;
+};
+
+export type VisionUnderwritingData = {
+  engine: string;
+  backbone?: string;
+  hardware?: string;
+  device?: string;
+  latency_ms?: number;
+  image_source_reconciled?: string;
+  severity_grade: string;
+  estimated_inundation_depth_cm: number;
+  structural_damage_index: number;
+  fraud_anomaly_score: number;
+  tamper_status: string;
+  trigger_reconciliation: string;
+  loss_adjustment_cost_reduction_pct: number;
+  underwriting_action?: string;
+};
+
+export type BgeM3RetrievalData = {
+  engine: string;
+  acceleration?: string;
+  device?: string;
+  embedding_dimension: number;
+  total_clauses_indexed?: number;
+  retrieval_latency_ms: number;
+  throughput_tokens_per_sec?: number;
+  top_matches?: Array<{
+    id: string;
+    name: string;
+    category: string;
+    clause_snippet: string;
+    dense_similarity: number;
+    sparse_lexical_weight: number;
+    hybrid_score: number;
+  }>;
 };
 
 export type MonteCarloGpuData = {
