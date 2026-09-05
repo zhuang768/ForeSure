@@ -2,51 +2,51 @@
 
 /* ---- design tokens (docs/superpowers/specs/2026-09-05-frontend-redesign-design.md §6) ---- */
 :root {
-  --bg: #f8fafc;
+  --bg: #f3f6f4;
   --surface: #ffffff;
-  --surface-2: #f1f5f9;
-  --border: #e2e8f0;
-  --text: #0f172a;
-  --muted: #64748b;
-  --primary: #0f172a;
-  --primary-soft: #f1f5f9;
-  --primary-ink: #0f172a;
-  --warn: #ea580c;
-  --warn-soft: #ffedd5;
-  --danger: #dc2626;
-  --danger-soft: #fee2e2;
-  --role-pm: #2563eb;
-  --role-pm-soft: #dbeafe;
-  --role-uw: #ea580c;
-  --role-uw-soft: #ffedd5;
-  --role-ac: #16a34a;
-  --role-ac-soft: #dcfce7;
-  --font-base: 15px;
+  --surface-2: #f7faf8;
+  --border: #e1e8e4;
+  --text: #17211c;
+  --muted: #5b6a62;
+  --primary: #26a862;
+  --primary-soft: #edf8f1;
+  --primary-ink: #1b7d48;
+  --warn: #c24d00;
+  --warn-soft: #fff0e3;
+  --danger: #b3261e;
+  --danger-soft: #fdecea;
+  --role-pm: #2b5cc7;
+  --role-pm-soft: #e8f0ff;
+  --role-uw: #c24d00;
+  --role-uw-soft: #fff0e3;
+  --role-ac: #1b7d48;
+  --role-ac-soft: #e3f4ea;
+  --font-base: 16px;
   --gap: 16px;
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --surface-2: #f1f5f9;
-  --border: #e2e8f0;
-  --text: #0f172a;
-  --muted: #64748b;
-  --primary: #0f172a;
-  --primary-soft: #f1f5f9;
-  --primary-ink: #0f172a;
-  --warn: #ea580c;
-  --warn-soft: #ffedd5;
-  --danger: #dc2626;
-  --danger-soft: #fee2e2;
-  --role-pm: #2563eb;
-  --role-pm-soft: #dbeafe;
-  --role-uw: #ea580c;
-  --role-uw-soft: #ffedd5;
-  --role-ac: #16a34a;
-  --role-ac-soft: #dcfce7;
-  color-scheme: light;
+  --bg: #0f1613;
+  --surface: #151f1a;
+  --surface-2: #0f1613;
+  --border: #243129;
+  --text: #e4ede7;
+  --muted: #a9b8af;
+  --primary: #3fc47c;
+  --primary-soft: #16301f;
+  --primary-ink: #6fdc9c;
+  --warn: #ffc99b;
+  --warn-soft: #5a2d0c;
+  --danger: #ff8a80;
+  --danger-soft: #4a1512;
+  --role-pm: #bfdbfe;
+  --role-pm-soft: #1e3a8a;
+  --role-uw: #ffc99b;
+  --role-uw-soft: #5a2d0c;
+  --role-ac: #6fdc9c;
+  --role-ac-soft: #16301f;
+  color-scheme: dark;
 }
 
 :root[data-present="1"] {

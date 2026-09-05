@@ -11,7 +11,9 @@ import type { ChainStatus, RunRecord, RunSummary } from "./types";
 
 function ts(minutesAgo: number): string {
   const d = new Date(Date.now() - minutesAgo * 60 * 1000);
-  return d.toISOString();
+  // Match backend format: "2026-09-05T12:04:00"
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
 function stampId(minutesAgo: number): string {
