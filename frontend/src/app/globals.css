@@ -210,10 +210,10 @@ body {
   -webkit-backdrop-filter: blur(20px);
 }
 .ghost {
-  font-size: clamp(3.25rem, 10vw, 7.5rem);
-  font-weight: 700;
+  font-size: clamp(3.5rem, 6.95vw, 6.25rem); /* 100px at 1440 */
+  font-weight: 600;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: normal;
   text-align: center;
   color: var(--primary);
   opacity: 0.09;
@@ -223,11 +223,48 @@ body {
 :root[data-theme="dark"] .ghost {
   opacity: 0.14;
 }
+/* Type scale measured from the reference site at 1440px: hero 88/88, en 64/64, h2 40/60,
+   h2s 32/48, h3 24/36, lead 18/31.5, body 16/28. Weights 500/600 only, letter-spacing normal. */
 .hero-type {
-  font-size: clamp(3.25rem, 8vw, 7rem);
-  font-weight: 700;
-  line-height: 0.96;
-  letter-spacing: -0.035em;
+  font-size: clamp(3rem, 6.1vw, 5.5rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: normal;
+}
+.t-en {
+  font-size: clamp(2.25rem, 4.45vw, 4rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: normal;
+}
+.t-h2 {
+  font-size: clamp(1.75rem, 2.8vw, 2.5rem);
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+.t-h2s {
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.t-h3 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.t-tag {
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.t-lead {
+  font-size: 1.125rem;
+  line-height: 1.75;
+}
+.t-body {
+  font-size: 1rem;
+  line-height: 1.75;
 }
 .reveal {
   opacity: 0;

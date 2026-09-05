@@ -155,7 +155,7 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
                 key={n.href}
                 href={n.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative py-1 text-sm font-medium transition-colors ${active ? "text-text" : "text-muted hover:text-text"}`}
+                className={`relative py-1 text-base transition-colors ${active ? "font-medium text-text" : "font-normal text-muted hover:text-text"}`}
               >
                 <StableLabel k={n.k} lang={lang} />
                 {active ? <span className="absolute -bottom-1 left-0 h-0.5 w-full rounded bg-primary" aria-hidden /> : null}

@@ -43,7 +43,7 @@ export default function SiteFooter({ chain }: { chain?: ChainStatus | null }) {
   return (
     <footer className="mt-auto border-t border-border bg-surface/70 backdrop-blur">
       <div className="border-b border-border/70">
-        <div className={`mx-auto flex ${width} items-center justify-between px-5 py-3 text-xs text-muted`}>
+        <div className={`mx-auto flex ${width} items-center justify-between px-5 py-3 text-sm text-muted`}>
           <nav aria-label="breadcrumb" className="flex items-center gap-2">
             <Link href="/" className="transition-colors hover:text-text">
               {t("nav.home")}
@@ -68,12 +68,12 @@ export default function SiteFooter({ chain }: { chain?: ChainStatus | null }) {
       <div className={`mx-auto grid ${width} gap-10 px-5 py-12 md:grid-cols-[1.4fr_1fr_0.8fr]`}>
         <div>
           <BrandLogo decorative className="h-12 w-auto" />
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted">{t("footer.tagline")}</p>
+          <p className="t-body mt-4 max-w-md text-muted">{t("footer.tagline")}</p>
         </div>
 
         <div>
           <div className="label">{t("footer.infoTitle")}</div>
-          <ul className="mt-4 flex flex-col gap-3 text-sm">
+          <ul className="t-body mt-4 flex flex-col gap-3">
             <li className="flex items-center gap-2.5">
               <Icon d={ICON.globe} />
               <span className="text-muted">{t("footer.network")}</span>
@@ -106,7 +106,7 @@ export default function SiteFooter({ chain }: { chain?: ChainStatus | null }) {
 
         <div>
           <div className="label">{t("footer.navTitle")}</div>
-          <ul className="mt-4 flex flex-col gap-2.5 text-sm">
+          <ul className="t-body mt-4 flex flex-col gap-2">
             {PAGES.map((p) => (
               <li key={p.href}>
                 <Link
@@ -122,7 +122,7 @@ export default function SiteFooter({ chain }: { chain?: ChainStatus | null }) {
       </div>
 
       <div className="border-t border-border/70">
-        <div className={`mx-auto flex ${width} flex-wrap items-center justify-between gap-2 px-5 py-4 text-xs text-muted`}>
+        <div className={`mx-auto flex ${width} flex-wrap items-center justify-between gap-2 px-5 py-4 text-sm text-muted`}>
           <span>{t("footer.rights")}</span>
           <span className="mono">SHA-256 · Sepolia</span>
         </div>

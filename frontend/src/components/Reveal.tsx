@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
  * Fades its children in (and slides them up) the first time they scroll into view.
  * Pure CSS transition driven by one IntersectionObserver; no animation library.
- * Falls back to "always visible" when the observer API is missing.
+ * Visibility lives in React state so a re-render (language switch, hot reload) cannot
+ * drop the class again. Falls back to "always visible" when the observer API is missing.
  */
 export default function Reveal({
   children,
@@ -18,19 +19,20 @@ export default function Reveal({
   delay?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     if (typeof IntersectionObserver === "undefined") {
-      el.classList.add("is-in");
+      el.classList.add("is-in"); // no observer support: show immediately
       return;
     }
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            el.classList.add("is-in");
+            setShown(true);
             io.disconnect();
           }
         }
@@ -42,7 +44,11 @@ export default function Reveal({
   }, []);
 
   return (
-    <div ref={ref} className={`reveal ${className}`} style={delay ? { transitionDelay: `${delay}ms` } : undefined}>
+    <div
+      ref={ref}
+      className={`reveal ${shown ? "is-in" : ""} ${className}`}
+      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
+    >
       {children}
     </div>
   );

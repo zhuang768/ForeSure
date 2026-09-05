@@ -118,10 +118,10 @@ function SectionHead({ ghost, title, lead }: { ghost: string; title: string; lea
       <div className="ghost" aria-hidden>
         {ghost}
       </div>
-      <h2 className="-mt-9 text-3xl font-semibold tracking-tight text-text sm:-mt-12 sm:text-4xl md:text-[40px] md:leading-tight">
+      <h2 className="t-h2 -mt-8 text-text sm:-mt-10">
         {title}
       </h2>
-      {lead ? <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted md:text-base">{lead}</p> : null}
+      {lead ? <p className="t-lead mt-5 max-w-3xl text-muted">{lead}</p> : null}
     </Reveal>
   );
 }
@@ -150,13 +150,13 @@ function HeroType() {
 function AgentCard({ agent, index, lang, t, delay }: { agent: Agent; index: number; lang: "zh" | "en"; t: (k: DictKey) => string; delay: number }) {
   return (
     <Reveal delay={delay} className="h-full">
-      <article className="glass flex h-full flex-col p-8 md:p-10">
-        <div className={`font-mono text-5xl font-bold tracking-tight md:text-6xl ${ROLE_TEXT[agent.key]}`}>{String(index + 1).padStart(2, "0")}</div>
-        <h3 className="mt-12 text-2xl font-semibold leading-snug text-text md:mt-16">{t(agent.role)}</h3>
-        <p className="mt-3 text-sm leading-relaxed text-muted">{t(agent.desc)}</p>
+      <article className="glass flex h-full flex-col px-10 py-12 md:py-14">
+        <div className={`t-en ${ROLE_TEXT[agent.key]}`}>{String(index + 1).padStart(2, "0")}</div>
+        <h3 className="t-h3 mt-12 text-text md:mt-16">{t(agent.role)}</h3>
+        <p className="t-body mt-3 text-muted">{t(agent.desc)}</p>
         <dl className="mt-10 border-t border-border">
           {agent.params.map(([zl, zv, el, ev]) => (
-            <div key={el} className="flex items-baseline justify-between gap-4 border-b border-border py-3 text-sm">
+            <div key={el} className="t-body flex items-baseline justify-between gap-4 border-b border-border py-3">
               <dt className="shrink-0 text-muted">{lang === "zh" ? zl : el}</dt>
               <dd className="text-right font-medium text-text">{lang === "zh" ? zv : ev}</dd>
             </div>
@@ -183,31 +183,31 @@ function AdvantageSlider({ lang, t }: { lang: "zh" | "en"; t: (k: DictKey) => st
         <div className="relative h-32 w-32 text-primary md:h-44 md:w-44">{adv.icon}</div>
       </div>
       <div key={`t${i}`} className="slide-in">
-        <div className="text-[clamp(2.25rem,5vw,4.5rem)] font-bold uppercase leading-[0.95] tracking-tight text-primary">
+        <div className="t-en uppercase text-primary">
           {adv.code[0]}
           <br />
           {adv.code[1]}
         </div>
-        <h3 className="mt-6 text-2xl font-semibold text-text md:text-3xl">{t(adv.title)}</h3>
-        <p className="mt-5 max-w-lg text-base leading-relaxed text-muted">{t(adv.desc)}</p>
+        <h3 className="t-h2s mt-6 text-text">{t(adv.title)}</h3>
+        <p className="t-lead mt-5 max-w-lg text-muted">{t(adv.desc)}</p>
         <div className="mt-10 flex items-center gap-4">
           <button
             type="button"
             onClick={() => go(-1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-text transition-colors hover:border-primary hover:text-primary"
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-surface text-text transition-colors hover:border-primary hover:text-primary"
             aria-label={lang === "zh" ? "上一項" : "Previous"}
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <span className="font-mono text-sm text-muted">
+          <span className="font-mono text-base text-muted">
             <span className="text-text">{pad(i + 1)}</span> / {pad(n)}
           </span>
           <button
             type="button"
             onClick={() => go(1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-text transition-colors hover:border-primary hover:text-primary"
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-surface text-text transition-colors hover:border-primary hover:text-primary"
             aria-label={lang === "zh" ? "下一項" : "Next"}
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
@@ -232,15 +232,15 @@ function DecisionRow({ run, lang, delay }: { run: RunSummary; lang: "zh" | "en";
           </span>
         </div>
         <div className="min-w-0">
-          <div className="mono text-sm text-primary-ink md:text-right">{fmtStamp(run.timestamp)}</div>
-          <h3 className="mt-2 text-xl font-semibold leading-snug text-text md:text-2xl">{run.product_name}</h3>
+          <div className="t-body text-primary-ink md:text-right">{fmtStamp(run.timestamp)}</div>
+          <h3 className="t-h3 mt-3 text-text">{run.product_name}</h3>
           {run.news_title ? (
-            <p className="mt-3 text-sm leading-relaxed text-muted">
+            <p className="t-body mt-3 text-muted">
               {lang === "zh" ? "觸發新聞：" : "Triggering news: "}
               {run.news_title}
             </p>
           ) : null}
-          <div className="mt-4 flex flex-wrap items-center gap-3 text-xs">
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
             {anchored ? (
               <span className="pill bg-primary-soft text-primary-ink">
                 ✓ Sepolia <span className="mono">{shortHash(run.tx_hash)}</span>
@@ -249,7 +249,7 @@ function DecisionRow({ run, lang, delay }: { run: RunSummary; lang: "zh" | "en";
             {run.grounding_status === "pass" ? (
               <span className="pill bg-surface-2 text-muted">{lang === "zh" ? "幻覺檢測通過" : "Grounding passed"}</span>
             ) : null}
-            <Link href={`/overview?id=${encodeURIComponent(run.decision_id)}`} className="ml-auto font-semibold text-text underline-offset-4 hover:underline">
+            <Link href={`/overview?id=${encodeURIComponent(run.decision_id)}`} className="ml-auto font-medium text-text underline-offset-4 hover:underline">
               {lang === "zh" ? "查看決策 →" : "View decision →"}
             </Link>
           </div>
@@ -319,21 +319,21 @@ export default function IntroPage() {
             <div className="relative z-10 mt-10 flex flex-col gap-10 md:mt-auto md:flex-row md:items-end md:justify-between">
               <div className="flex max-w-xl flex-col gap-5">
                 <div className="flex flex-wrap items-center gap-3">
-                  <Link href="/generator" className="btn btn-primary px-6 py-3 text-sm font-bold shadow-md">
+                  <Link href="/generator" className="btn btn-primary px-7 py-3.5 text-base font-semibold shadow-md">
                     ▶ {t("intro.ctaLive")}
                   </Link>
-                  <Link href="/history" className="btn btn-secondary px-5 py-3 text-sm font-bold">
+                  <Link href="/history" className="btn btn-secondary px-6 py-3.5 text-base font-semibold">
                     {t("intro.ctaHistory")}
                   </Link>
                 </div>
-                <div className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-[11px] text-muted">
+                <div className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs text-muted">
                   <span>Network: Ethereum Sepolia</span>
                   <span>Multi-Agent Consensus (3 Roles)</span>
                   <span>SHA-256 Decision Proof</span>
                   <span>Parametric Oracles (CWA / NOAA)</span>
                 </div>
               </div>
-              <Reveal delay={200} className="flex flex-col gap-1 text-left text-lg font-medium leading-snug text-text md:items-end md:pr-20 md:text-right md:text-2xl">
+              <Reveal delay={200} className="t-tag flex flex-col text-left text-text md:items-end md:pr-20 md:text-right">
                 <span>{zh ? "新興風險參數型定價" : "Parametric pricing for emerging risks"}</span>
                 <span>{zh ? "三方 AI 代理人對抗辯論" : "Tri-agent adversarial debate"}</span>
                 <span>{zh ? "以太坊 Sepolia 鏈上存證" : "Ethereum Sepolia attestation"}</span>
@@ -382,7 +382,7 @@ export default function IntroPage() {
             />
             <div className="mt-14 flex flex-col gap-5">
               <Reveal>
-                <article className="glass relative overflow-hidden p-8 md:p-10">
+                <article className="glass relative overflow-hidden px-10 py-12">
                   <div className="blob right-[-10%] top-[-40%] h-[80%] w-[40%] bg-muted/15" aria-hidden />
                   <div className="relative flex items-center gap-3">
                     <span className="pill bg-surface-2 font-mono text-muted">Legacy Model</span>
@@ -395,15 +395,15 @@ export default function IntroPage() {
                       [zh ? "理賠審查爭議" : "Claim disputes & overhead", zh ? "採損害填補原則，需保戶自行收集單據與繁瑣公證程序，耗時數週且極易產生認定歧見。" : "Indemnity claims demand receipts, adjusters and weeks of delay, leading to friction and distrust."],
                     ].map(([h, p]) => (
                       <div key={h}>
-                        <h3 className="text-lg font-semibold text-text">{h}</h3>
-                        <p className="mt-2 text-sm leading-relaxed text-muted">{p}</p>
+                        <h3 className="t-h3 text-text">{h}</h3>
+                        <p className="t-body mt-3 text-muted">{p}</p>
                       </div>
                     ))}
                   </div>
                 </article>
               </Reveal>
               <Reveal delay={100}>
-                <article className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-primary via-primary to-primary-ink p-8 text-white shadow-lg md:p-10">
+                <article className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-primary via-primary to-primary-ink px-10 py-12 text-white shadow-lg">
                   <div className="blob right-[-10%] top-[-40%] h-[90%] w-[45%] bg-white/25" aria-hidden />
                   <div className="relative flex items-center gap-3">
                     <span className="pill bg-white/20 font-mono text-white">Next-Gen</span>
@@ -416,8 +416,8 @@ export default function IntroPage() {
                       [zh ? "參數型觸發與鏈上存證" : "Parametric trigger & on-chain audit", zh ? "對接公正第三方數據源自動理賠，SHA-256 指紋同步寫入以太坊 Sepolia。" : "Objective oracle data triggers payouts while decision hashes are published to Ethereum Sepolia."],
                     ].map(([h, p]) => (
                       <div key={h}>
-                        <h3 className="text-lg font-semibold">{h}</h3>
-                        <p className="mt-2 text-sm leading-relaxed text-white/85">{p}</p>
+                        <h3 className="t-h3">{h}</h3>
+                        <p className="t-body mt-3 text-white/85">{p}</p>
                       </div>
                     ))}
                   </div>
@@ -427,9 +427,9 @@ export default function IntroPage() {
                 {metrics.map(([label, value, desc], i) => (
                   <Reveal key={label} delay={i * 80}>
                     <div className="glass h-full p-6">
-                      <div className="font-mono text-[10px] uppercase tracking-wider text-muted">{label}</div>
-                      <div className="mt-3 font-mono text-3xl font-bold tabular-nums tracking-tight text-primary md:text-4xl">{value}</div>
-                      <p className="mt-2 text-xs leading-relaxed text-muted">{desc}</p>
+                      <div className="font-mono text-xs uppercase tracking-wider text-muted">{label}</div>
+                      <div className="mt-4 font-mono text-4xl font-semibold tabular-nums text-primary">{value}</div>
+                      <p className="t-body mt-2 text-muted">{desc}</p>
                     </div>
                   </Reveal>
                 ))}
@@ -464,7 +464,7 @@ export default function IntroPage() {
                 showcase.map((r, i) => <DecisionRow key={r.decision_id} run={r} lang={lang} delay={i * 100} />)
               )}
               <div className="flex justify-end py-6">
-                <Link href="/history" className="btn btn-secondary text-sm font-semibold">
+                <Link href="/history" className="btn btn-secondary text-base font-medium">
                   {t("intro.ctaHistory")} →
                 </Link>
               </div>
@@ -483,8 +483,8 @@ export default function IntroPage() {
             <div className="mt-14 grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
               <Reveal>
                 <BrandLogo decorative className="h-14 w-auto" />
-                <h3 className="mt-6 text-xl font-semibold text-text">{zh ? "未然 ForeSure · 多代理人保險決策桌" : "ForeSure · multi-agent insurance decision desk"}</h3>
-                <ul className="mt-6 flex flex-col gap-4 text-sm">
+                <h3 className="t-h3 mt-6 text-text">{zh ? "未然 ForeSure · 多代理人保險決策桌" : "ForeSure · multi-agent insurance decision desk"}</h3>
+                <ul className="t-body mt-6 flex flex-col gap-3">
                   {[
                     [zh ? "網路" : "Network", "Ethereum Sepolia", null],
                     [zh ? "合約" : "Contract", contract ? shortHash(contract) : "—", contract ? `https://sepolia.etherscan.io/address/${contract}` : null],
@@ -506,7 +506,7 @@ export default function IntroPage() {
                 </ul>
               </Reveal>
               <Reveal delay={120}>
-                <div className="glass p-7 md:p-9">
+                <div className="glass p-10">
                   <div className="label">{zh ? "Demo 流程" : "Demo flow"}</div>
                   <ol className="mt-4 flex flex-col gap-3">
                     {[
@@ -518,18 +518,18 @@ export default function IntroPage() {
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-soft font-mono text-xs font-bold text-primary-ink">
                           {String(i + 1).padStart(2, "0")}
                         </span>
-                        <span className="flex-1 text-sm text-text">{s}</span>
-                        <span className="font-mono text-xs text-muted">{d}</span>
+                        <span className="t-body flex-1 text-text">{s}</span>
+                        <span className="font-mono text-sm text-muted">{d}</span>
                       </li>
                     ))}
                   </ol>
                   <Link
                     href="/generator"
-                    className="mt-6 flex w-full items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary-ink py-4 text-base font-bold text-white shadow-md transition-transform hover:scale-[1.01]"
+                    className="mt-6 flex w-full items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary-ink py-4 text-lg font-semibold text-white shadow-md transition-transform hover:scale-[1.01]"
                   >
                     ▶ {t("intro.ctaLive")}
                   </Link>
-                  <Link href="/history" className="mt-3 flex w-full items-center justify-center rounded-full border border-border bg-surface py-3.5 text-sm font-semibold text-text transition-colors hover:border-primary">
+                  <Link href="/history" className="mt-3 flex w-full items-center justify-center rounded-full border border-border bg-surface py-4 text-base font-medium text-text transition-colors hover:border-primary">
                     {t("intro.ctaHistory")}
                   </Link>
                 </div>
