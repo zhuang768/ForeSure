@@ -25,3 +25,6 @@ out/
 
 # brainstorming mockups
 .superpowers/
+
+# git worktrees for isolated plan execution
+.worktrees/
