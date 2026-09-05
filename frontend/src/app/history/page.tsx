@@ -332,6 +332,12 @@ export default function HistoryPage() {
                           ○ {t("history.mockPill")}
                         </span>
                       )}
+                      <Link
+                        href={`/overview?id=${encodeURIComponent(r.decision_id)}`}
+                        className="btn btn-secondary px-2.5 py-1 text-xs"
+                      >
+                        {t("history.verifyInOverview")} →
+                      </Link>
                     </div>
                   </div>
 
