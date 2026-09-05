@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import AppHeader from "@/components/AppHeader";
+import SiteFooter from "@/components/SiteFooter";
 import DecisionDetail from "@/components/DecisionDetail";
 import KpiBar from "@/components/KpiBar";
 import RunQueue from "@/components/RunQueue";
@@ -81,6 +82,7 @@ export default function OverviewPage() {
           )}
         </div>
       </main>
+      <SiteFooter chain={loaded === null ? undefined : loaded.chain} />
     </>
   );
 }

@@ -1,595 +1,634 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
-import { chainStatus } from "@/lib/api";
-import { useLang, useT } from "@/lib/i18n";
-import type { ChainStatus } from "@/lib/types";
+import BrandLogo from "@/components/BrandLogo";
+import Reveal from "@/components/Reveal";
+import SiteFooter from "@/components/SiteFooter";
+import { chainStatus, listRuns } from "@/lib/api";
+import { fmtStamp, shortHash } from "@/lib/format";
+import { useLang, useT, type DictKey } from "@/lib/i18n";
+import { pickShowcaseRuns, wrapIndex } from "@/lib/showcase";
+import type { ChainStatus, RunSummary } from "@/lib/types";
+
+/* ------------------------------------------------------------------ */
+/* static content                                                      */
+/* ------------------------------------------------------------------ */
+
+const HERO_LINES = ["FORESURE", "未然", "AI."];
+
+type RoleKey = "pm" | "uw" | "ac";
+const ROLE: Record<RoleKey, { text: string; soft: string; bar: string; dot: string }> = {
+  pm: { text: "text-role-pm", soft: "bg-role-pm-soft", bar: "bg-role-pm", dot: "bg-role-pm" },
+  uw: { text: "text-role-uw", soft: "bg-role-uw-soft", bar: "bg-role-uw", dot: "bg-role-uw" },
+  ac: { text: "text-role-ac", soft: "bg-role-ac-soft", bar: "bg-role-ac", dot: "bg-role-ac" },
+};
+
+const AGENT_ICON: Record<RoleKey, ReactNode> = {
+  pm: (
+    <svg className="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6} aria-hidden>
+      <circle cx="12" cy="12" r="9" strokeDasharray="3 3" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v3m0 12v3M3 12h3m12 0h3m-4.5-4.5L15 9m-6 6l-1.5 1.5" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" />
+    </svg>
+  ),
+  uw: (
+    <svg className="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>
+  ),
+  ac: (
+    <svg className="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    </svg>
+  ),
+};
+
+type Agent = {
+  key: RoleKey;
+  code: string;
+  tag: string;
+  role: DictKey;
+  desc: DictKey;
+  quote: [string, string];
+  params: [string, string, string, string][]; // zh label, zh value, en label, en value
+};
+
+const AGENTS: Agent[] = [
+  {
+    key: "pm",
+    code: "AGENT_01 // OPPORTUNITY_RADAR",
+    tag: "EXPANSION",
+    role: "intro.pmRole",
+    desc: "intro.pmDesc",
+    quote: [
+      "若不主動捕捉第一線的新興風險，保險業將失去在科技世代的存在價值。",
+      "If we do not capture emerging perils first, insurance loses its relevance in the tech era.",
+    ],
+    params: [
+      ["核心偏向", "商業覆蓋最大化", "Strategic bias", "Max coverage"],
+      ["時事感知", "RAG 向量比對", "Ingestion", "RAG vector match"],
+      ["給付結構", "客觀參數梯級", "Payout model", "Parametric steps"],
+      ["博弈制衡", "抗衡核保過度保守", "Dialectic target", "Challenge over-caution"],
+    ],
+  },
+  {
+    key: "uw",
+    code: "AGENT_02 // RISK_AUDIT_SHIELD",
+    tag: "PRUDENCE",
+    role: "intro.uwRole",
+    desc: "intro.uwDesc",
+    quote: [
+      "凡是可被人為操弄、誘發道德風險或累積巨災的條款，一律建立嚴格除外。",
+      "Any clause vulnerable to moral hazard, manipulation or catastrophe accumulation is strictly excluded.",
+    ],
+    params: [
+      ["核心偏向", "零道德風險防禦", "Strategic bias", "Anti-moral hazard"],
+      ["敞口限額", "單一事件巨災封頂", "Exposure cap", "Per-peril capped"],
+    ],
+  },
+  {
+    key: "ac",
+    code: "AGENT_03 // STATISTICAL_SOLVENCY",
+    tag: "CALIBRATION",
+    role: "intro.actuaryRole",
+    desc: "intro.actuaryDesc",
+    quote: [
+      "缺乏歷史數據不是藉口，以泊松分佈與 1.25x 加成守護資本清償邊界。",
+      "Lack of historical loss data is no excuse; defend solvency margins with Poisson modeling and 1.25x markup.",
+    ],
+    params: [
+      ["損失分佈", "泊松過程與極端值", "Loss model", "Poisson & EVT"],
+      ["定價加成", "1.15x – 1.25x", "Markup", "1.15x – 1.25x"],
+    ],
+  },
+];
+
+type Advantage = { code: [string, string]; title: DictKey; desc: DictKey; icon: ReactNode };
+const ADVANTAGES: Advantage[] = [
+  {
+    code: ["LIVE MARKET", "SENSING"],
+    title: "intro.tech1Title",
+    desc: "intro.tech1Desc",
+    icon: (
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4} aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h4l3-8 4 16 3-8h4" />
+      </svg>
+    ),
+  },
+  {
+    code: ["ANTI-HALLUCINATION", "DEBATE"],
+    title: "intro.tech2Title",
+    desc: "intro.tech2Desc",
+    icon: (
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4} aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h8M8 14h5M21 12a8 8 0 01-11.6 7.1L4 20l1.1-4.2A8 8 0 1121 12z" />
+      </svg>
+    ),
+  },
+  {
+    code: ["PARAMETRIC", "SMART TRIGGER"],
+    title: "intro.tech3Title",
+    desc: "intro.tech3Desc",
+    icon: (
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4} aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" />
+      </svg>
+    ),
+  },
+  {
+    code: ["ETHEREUM", "IMMUTABLE AUDIT"],
+    title: "intro.tech4Title",
+    desc: "intro.tech4Desc",
+    icon: (
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4} aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l7 11-7 4-7-4 7-11zm0 15l7-4-7 9-7-9 7 4z" />
+      </svg>
+    ),
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/* small building blocks                                               */
+/* ------------------------------------------------------------------ */
+
+function Container({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={`mx-auto w-full max-w-[1400px] px-5 ${className}`}>{children}</div>;
+}
+
+/** Ghost English label behind a centered section title, like an editorial magazine spread. */
+function SectionHead({ ghost, title, lead }: { ghost: string; title: string; lead?: string }) {
+  return (
+    <Reveal className="relative flex flex-col items-center text-center">
+      <div className="ghost" aria-hidden>
+        {ghost}
+      </div>
+      <h2 className="-mt-9 text-3xl font-semibold tracking-tight text-text sm:-mt-12 sm:text-4xl md:text-[40px] md:leading-tight">
+        {title}
+      </h2>
+      {lead ? <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted md:text-base">{lead}</p> : null}
+    </Reveal>
+  );
+}
+
+function HeroType() {
+  let offset = 0;
+  return (
+    <h1 className="hero-type relative z-10 text-text" aria-label="ForeSure 未然 AI">
+      {HERO_LINES.map((line, li) => (
+        <span key={li} className={`block ${li === 1 ? "text-primary" : ""}`} aria-hidden>
+          {[...line].map((ch, ci) => {
+            const style = { ["--i" as string]: offset++ } as CSSProperties;
+            return (
+              <span key={ci} className="hero-letter" style={style}>
+                {ch}
+              </span>
+            );
+          })}
+        </span>
+      ))}
+    </h1>
+  );
+}
+
+function AgentCard({ agent, wide, lang, t, delay }: { agent: Agent; wide?: boolean; lang: "zh" | "en"; t: (k: DictKey) => string; delay: number }) {
+  const c = ROLE[agent.key];
+  const iconTile = (
+    <div className={`relative flex shrink-0 items-center justify-center rounded-3xl ${c.soft} ${c.text} ${wide ? "h-40 w-40 md:h-48 md:w-48" : "h-24 w-24"}`}>
+      <div className={wide ? "h-20 w-20 md:h-24 md:w-24" : "h-12 w-12"}>{AGENT_ICON[agent.key]}</div>
+      <span className={`absolute -bottom-2 rounded-full px-2 py-0.5 font-mono text-[10px] font-bold tracking-wider text-white ${c.bar}`}>
+        {agent.tag}
+      </span>
+    </div>
+  );
+  const body = (
+    <div className="min-w-0 flex-1">
+      <div className={`font-mono text-[11px] font-bold uppercase tracking-wider ${c.text}`}>{agent.code}</div>
+      <h3 className="mt-2 text-xl font-semibold text-text md:text-2xl">{t(agent.role)}</h3>
+      <p className={`mt-4 border-l-2 pl-3 text-sm italic leading-relaxed text-text ${c.text.replace("text-", "border-")}`}>
+        「{agent.quote[lang === "zh" ? 0 : 1]}」
+      </p>
+      <p className="mt-4 text-sm leading-relaxed text-muted">{t(agent.desc)}</p>
+      <dl className={`mt-5 grid gap-2 ${wide ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2"}`}>
+        {agent.params.map(([zl, zv, el, ev]) => (
+          <div key={el} className="rounded-xl border border-border/70 bg-surface/60 px-3 py-2">
+            <dt className="font-mono text-[10px] text-muted">{lang === "zh" ? zl : el}</dt>
+            <dd className="mt-0.5 text-xs font-semibold text-text">{lang === "zh" ? zv : ev}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+  return (
+    <Reveal delay={delay} className={wide ? "lg:col-span-2" : ""}>
+      <article className={`glass relative h-full overflow-hidden p-7 md:p-10 ${wide ? "flex flex-col gap-8 md:flex-row md:items-center md:gap-12" : "flex flex-col gap-6"}`}>
+        <div className={`absolute inset-x-0 top-0 h-1 ${c.bar}`} aria-hidden />
+        {iconTile}
+        {body}
+      </article>
+    </Reveal>
+  );
+}
+
+/** 01 / 04 carousel of the four architectural advantages: big English code left-aligned, local title, description. */
+function AdvantageSlider({ lang, t }: { lang: "zh" | "en"; t: (k: DictKey) => string }) {
+  const [i, setI] = useState(0);
+  const n = ADVANTAGES.length;
+  const adv = ADVANTAGES[i];
+  const go = (d: number) => setI((cur) => wrapIndex(cur + d, n));
+  const pad = (v: number) => String(v).padStart(2, "0");
+  return (
+    <div className="mt-14 grid items-center gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
+      <div key={`v${i}`} className="slide-in glass relative flex aspect-[5/4] items-center justify-center overflow-hidden lg:aspect-[4/5]">
+        <div className="blob left-[-20%] top-[-20%] h-[70%] w-[70%] bg-primary/30" aria-hidden />
+        <div className="blob bottom-[-25%] right-[-20%] h-[70%] w-[70%] bg-role-pm/15" aria-hidden />
+        <span className="absolute left-6 top-5 font-mono text-sm text-muted">{pad(i + 1)}</span>
+        <div className="relative h-32 w-32 text-primary md:h-44 md:w-44">{adv.icon}</div>
+      </div>
+      <div key={`t${i}`} className="slide-in">
+        <div className="text-[clamp(2.25rem,5vw,4.5rem)] font-bold uppercase leading-[0.95] tracking-tight text-primary">
+          {adv.code[0]}
+          <br />
+          {adv.code[1]}
+        </div>
+        <h3 className="mt-6 text-2xl font-semibold text-text md:text-3xl">{t(adv.title)}</h3>
+        <p className="mt-5 max-w-lg text-base leading-relaxed text-muted">{t(adv.desc)}</p>
+        <div className="mt-10 flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => go(-1)}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-text transition-colors hover:border-primary hover:text-primary"
+            aria-label={lang === "zh" ? "上一項" : "Previous"}
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <span className="font-mono text-sm text-muted">
+            <span className="text-text">{pad(i + 1)}</span> / {pad(n)}
+          </span>
+          <button
+            type="button"
+            onClick={() => go(1)}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-text transition-colors hover:border-primary hover:text-primary"
+            aria-label={lang === "zh" ? "下一項" : "Next"}
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DecisionRow({ run, lang, delay }: { run: RunSummary; lang: "zh" | "en"; delay: number }) {
+  const anchored = !!run.tx_hash && !run.chain_is_mock;
+  return (
+    <Reveal delay={delay}>
+      <article className="grid gap-5 border-b border-border py-8 md:grid-cols-[minmax(200px,300px)_1fr] md:gap-10">
+        <div className="relative flex aspect-[16/10] items-center justify-center overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary-soft via-surface to-surface-2">
+          <BrandLogo variant="mark" decorative className="h-16 w-auto opacity-80" />
+          <span className={`absolute left-3 top-3 rounded-full px-2 py-0.5 font-mono text-[10px] font-bold ${anchored ? "bg-primary text-white" : "bg-surface-2 text-muted"}`}>
+            {anchored ? "ON-CHAIN" : "PENDING"}
+          </span>
+        </div>
+        <div className="min-w-0">
+          <div className="mono text-sm text-primary-ink md:text-right">{fmtStamp(run.timestamp)}</div>
+          <h3 className="mt-2 text-xl font-semibold leading-snug text-text md:text-2xl">{run.product_name}</h3>
+          {run.news_title ? (
+            <p className="mt-3 text-sm leading-relaxed text-muted">
+              {lang === "zh" ? "觸發新聞：" : "Triggering news: "}
+              {run.news_title}
+            </p>
+          ) : null}
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-xs">
+            {anchored ? (
+              <span className="pill bg-primary-soft text-primary-ink">
+                ✓ Sepolia <span className="mono">{shortHash(run.tx_hash)}</span>
+              </span>
+            ) : null}
+            {run.grounding_status === "pass" ? (
+              <span className="pill bg-surface-2 text-muted">{lang === "zh" ? "幻覺檢測通過" : "Grounding passed"}</span>
+            ) : null}
+            <Link href={`/overview?id=${encodeURIComponent(run.decision_id)}`} className="ml-auto font-semibold text-text underline-offset-4 hover:underline">
+              {lang === "zh" ? "查看決策 →" : "View decision →"}
+            </Link>
+          </div>
+        </div>
+      </article>
+    </Reveal>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* page                                                                */
+/* ------------------------------------------------------------------ */
 
 export default function IntroPage() {
   const t = useT();
   const { lang } = useLang();
   const [chain, setChain] = useState<ChainStatus | null | undefined>(undefined);
+  const [runs, setRuns] = useState<RunSummary[] | undefined>(undefined);
 
   useEffect(() => {
     chainStatus()
       .then(setChain)
       .catch(() => setChain(null));
+    listRuns(20)
+      .then(setRuns)
+      .catch(() => setRuns([]));
   }, []);
+
+  const zh = lang === "zh";
+  const showcase = runs ? pickShowcaseRuns(runs, 3) : undefined;
+  const contract = chain?.contract_address ?? null;
+
+  const metrics: [string, string, string][] = [
+    ["PARAM // LATENCY", "~85s", zh ? "時事爬取、三方辯論與精算定價" : "News, debate & pricing"],
+    ["PARAM // CONSENSUS", "3 Agents", zh ? "PM × 核保 × 精算 跨角色博弈" : "PM, Underwriter & Actuary"],
+    ["PARAM // ATTESTATION", "100%", zh ? "SHA-256 決策指紋寫入 Sepolia" : "SHA-256 proof on Sepolia"],
+    ["PARAM // REPOSITORY", "20+", zh ? "涵蓋氣候、科技、供應鏈新興風險" : "Climate, cyber & supply chains"],
+  ];
 
   return (
     <>
       <AppHeader chain={chain} />
-      <main className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-12 px-5 py-8 md:py-12">
-        {/* Hero Section with Telemetry Calibration & Financial Instrument Aesthetic */}
-        <section className="relative flex flex-col items-center text-center overflow-hidden rounded-2xl border border-border/80 bg-surface/60 p-8 md:p-14 backdrop-blur-xs shadow-xs">
-          {/* Subtle Technical Corner Accents */}
-          <div className="absolute top-3 left-4 text-[10px] font-mono text-muted/50 select-none hidden sm:block">
-            [SYS_ID: 0x73A_SEPOLIA]
-          </div>
-          <div className="absolute top-3 right-4 text-[10px] font-mono text-muted/50 select-none hidden sm:block">
-            [STATUS: OPERATIONAL_200]
-          </div>
+      <main className="relative flex-1 overflow-hidden">
+        {/* soft brand-coloured glows the glass cards can blur */}
+        <div className="blob -left-40 top-[-10rem] h-[36rem] w-[36rem] bg-primary/25" aria-hidden />
+        <div className="blob -right-48 top-[38%] h-[32rem] w-[32rem] bg-role-pm/10" aria-hidden />
+        <div className="blob bottom-[8%] left-[30%] h-[30rem] w-[30rem] bg-primary/15" aria-hidden />
 
-          {/* Precision Telemetry Badge */}
-          <div className="inline-flex items-center gap-2.5 rounded-full border border-primary/50 bg-primary-soft px-4 py-1.5 text-xs font-semibold text-primary-ink shadow-xs transition-all hover:border-primary">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-            </span>
-            <span className="font-mono text-[10px] font-bold tracking-wider uppercase">
-              {lang === "zh" ? "可信 AI 創新專案" : "TRUSTED AI INITIATIVE"}
-            </span>
-            <span className="text-muted/60">·</span>
-            <span>{t("intro.badge")}</span>
-          </div>
-
-          {/* Main Title & Tagline */}
-          <h1 className="mt-7 max-w-full text-4xl font-extrabold tracking-tight text-text sm:text-6xl md:text-7xl">
-            ForeSure未然
-          </h1>
-          <p className="mt-3 text-lg font-medium text-primary-ink sm:text-xl md:text-2xl tracking-tight">
-            {t("intro.heroTagline")}
-          </p>
-
-          <p className="mt-6 max-w-3xl text-sm leading-relaxed text-muted sm:text-base md:text-lg">
-            {t("intro.heroLead")}
-          </p>
-
-          {/* Real-time Technical Telemetry Strip */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs font-mono text-muted">
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              <span>Network: Ethereum Sepolia</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-role-pm" />
-              <span>Multi-Agent Consensus (3 Roles)</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-role-uw" />
-              <span>SHA-256 Decision Proof</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-role-ac" />
-              <span>Parametric Oracles (CWA / NOAA)</span>
-            </span>
-          </div>
-
-          {/* Action CTAs with High-Precision Styling */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <Link
-              href="/generator"
-              className="btn btn-primary px-7 py-3 text-sm font-bold shadow-md hover:shadow-lg transition-all ring-1 ring-primary/40 hover:ring-primary inline-flex items-center gap-2"
-            >
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-              <span>{t("intro.ctaLive")}</span>
-            </Link>
-            <Link
-              href="/history"
-              className="btn px-6 py-3 text-sm font-bold bg-primary-soft text-primary-ink border border-primary/60 hover:bg-primary hover:text-white transition-all shadow-sm inline-flex items-center gap-2"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{t("intro.ctaHistory")}</span>
-              <span className="rounded bg-primary/20 px-1.5 py-0.5 text-[10px] font-mono font-bold">20</span>
-            </Link>
-          </div>
-        </section>
-
-        {/* Real-time System Metrics Strip with Financial Instrument Styling */}
-        <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="card relative flex flex-col justify-between overflow-hidden border-border/80 p-5 transition-all hover:border-primary/50">
-            <div className="flex items-center justify-between border-b border-border/60 pb-2">
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted">PARAM // LATENCY</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+        {/* ---------------- hero ---------------- */}
+        <section className="relative">
+          <Container className="relative flex min-h-[calc(100vh-66px)] flex-col pb-14 pt-10 md:pt-14">
+            <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 md:left-[66%] md:top-[-1rem] lg:left-[64%]" aria-hidden>
+              <div className="relative">
+                <div className="absolute inset-[-20%] rounded-full bg-primary/25 blur-3xl" />
+                <BrandLogo
+                  variant="mark"
+                  decorative
+                  className="float-slow relative h-[24vh] w-auto max-h-[420px] opacity-95 drop-shadow-[0_30px_60px_rgba(38,168,98,0.35)] md:h-[38vh]"
+                />
+              </div>
             </div>
-            <div className="my-3">
-              <div className="font-mono text-3xl font-extrabold tabular-nums tracking-tight text-primary">~85s</div>
-              <div className="mt-1 text-xs font-semibold text-text">{lang === "zh" ? "決策生成週期" : "Cycle Time"}</div>
-            </div>
-            <p className="border-t border-border/40 pt-2 text-[11px] leading-relaxed text-muted">
-              {lang === "zh" ? "時事爬取、三方辯論與精算定價" : "News scraping, debate & pricing"}
-            </p>
-          </div>
 
-          <div className="card relative flex flex-col justify-between overflow-hidden border-border/80 p-5 transition-all hover:border-role-pm/50">
-            <div className="flex items-center justify-between border-b border-border/60 pb-2">
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted">PARAM // CONSENSUS</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-role-pm" />
+            <div className="relative z-10 mt-[22vh] md:mt-0">
+              <HeroType />
             </div>
-            <div className="my-3">
-              <div className="font-mono text-3xl font-extrabold tabular-nums tracking-tight text-primary">3 Agents</div>
-              <div className="mt-1 text-xs font-semibold text-text">{lang === "zh" ? "AI 代理人制衡" : "Agent Triad"}</div>
-            </div>
-            <p className="border-t border-border/40 pt-2 text-[11px] leading-relaxed text-muted">
-              {lang === "zh" ? "PM × 核保 × 精算 跨角色博弈" : "PM, Underwriter & Actuary"}
-            </p>
-          </div>
 
-          <div className="card relative flex flex-col justify-between overflow-hidden border-border/80 p-5 transition-all hover:border-role-uw/50">
-            <div className="flex items-center justify-between border-b border-border/60 pb-2">
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted">PARAM // ATTESTATION</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-role-uw" />
-            </div>
-            <div className="my-3">
-              <div className="font-mono text-3xl font-extrabold tabular-nums tracking-tight text-primary">100% On-chain</div>
-              <div className="mt-1 text-xs font-semibold text-text">{lang === "zh" ? "以太坊鏈上存證" : "Sepolia Proof"}</div>
-            </div>
-            <p className="border-t border-border/40 pt-2 text-[11px] leading-relaxed text-muted">
-              {lang === "zh" ? "SHA-256 智能合約不可篡改存證" : "SHA-256 immutable smart contract"}
-            </p>
-          </div>
-
-          <div className="card relative flex flex-col justify-between overflow-hidden border-border/80 p-5 transition-all hover:border-role-ac/50">
-            <div className="flex items-center justify-between border-b border-border/60 pb-2">
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted">PARAM // REPOSITORY</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-role-ac" />
-            </div>
-            <div className="my-3">
-              <div className="font-mono text-3xl font-extrabold tabular-nums tracking-tight text-primary">20+ Records</div>
-              <div className="mt-1 text-xs font-semibold text-text">{lang === "zh" ? "歷史存證庫儲備" : "Historical Archive"}</div>
-            </div>
-            <p className="border-t border-border/40 pt-2 text-[11px] leading-relaxed text-muted">
-              {lang === "zh" ? "涵蓋氣候、科技、供應鏈新興風險" : "Climate, cyber, tech supply chains"}
-            </p>
-          </div>
-        </section>
-
-        {/* Problem vs Solution: Paradigm Shift */}
-        <section className="flex flex-col gap-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">
-              {lang === "zh" ? "典範轉移：傳統保險瓶頸 vs 未然自主決策" : "Paradigm Shift: Traditional Limits vs ForeSure"}
-            </h2>
-            <p className="mt-2 text-sm text-muted">
-              {lang === "zh"
-                ? "解決缺乏歷史理賠數據時的定價真空，以參數型合約取代冗長人工理賠"
-                : "Solving the pricing vacuum of zero historical loss data with autonomous parametric insurance"}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {/* Traditional Bottleneck */}
-            <div className="card border-border/80 p-6 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between border-b border-border pb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                    {lang === "zh" ? "傳統新商品研發痛點" : "Traditional Product R&D"}
-                  </span>
-                  <span className="pill bg-surface-2 text-muted font-mono text-xs">Legacy Model</span>
+            <div className="relative z-10 mt-10 flex flex-col gap-10 md:mt-auto md:flex-row md:items-end md:justify-between">
+              <div className="flex max-w-xl flex-col gap-5">
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link href="/generator" className="btn btn-primary px-6 py-3 text-sm font-bold shadow-md">
+                    ▶ {t("intro.ctaLive")}
+                  </Link>
+                  <Link href="/history" className="btn btn-secondary px-5 py-3 text-sm font-bold">
+                    {t("intro.ctaHistory")}
+                  </Link>
                 </div>
-                <ul className="mt-4 flex flex-col gap-3 text-xs leading-relaxed text-muted">
-                  <li className="flex items-start gap-2">
-                    <span className="font-bold text-text">·</span>
-                    <span>
-                      <strong className="text-text">{lang === "zh" ? "開發週期冗長：" : "Long R&D cycle: "}</strong>
-                      {lang === "zh"
-                        ? "平均需耗費 6 至 12 個月進行市場調研、精算會議與主管機關送審，無法趕上新興風險爆發速度。"
-                        : "Takes 6 to 12 months for market research, actuarial panels and filing, trailing emerging peril events."}
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="font-bold text-text">·</span>
-                    <span>
-                      <strong className="text-text">{lang === "zh" ? "歷史數據依賴：" : "Historical data dependency: "}</strong>
-                      {lang === "zh"
-                        ? "傳統精算完全依賴 5-10 年之歷史損失率，面對全球暖化劇變或生成式 AI 斷線等新風險產生定價真空。"
-                        : "Strictly requires 5-10 years of loss history, creating a pricing vacuum for unprecedented climate or AI outage risks."}
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="font-bold text-text">·</span>
-                    <span>
-                      <strong className="text-text">{lang === "zh" ? "理賠審查爭議：" : "Claim disputes & overhead: "}</strong>
-                      {lang === "zh"
-                        ? "採損害填補原則，需保戶自行收集單據與繁瑣公證程序，耗時數週且極易產生認定歧見。"
-                        : "Indemnity claims demand endless receipts, adjusters and weeks of delay, leading to friction and distrust."}
-                    </span>
-                  </li>
+                <div className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-[11px] text-muted">
+                  <span>Network: Ethereum Sepolia</span>
+                  <span>Multi-Agent Consensus (3 Roles)</span>
+                  <span>SHA-256 Decision Proof</span>
+                  <span>Parametric Oracles (CWA / NOAA)</span>
+                </div>
+              </div>
+              <Reveal delay={200} className="flex flex-col gap-1 text-left text-lg font-medium leading-snug text-text md:items-end md:pr-20 md:text-right md:text-2xl">
+                <span>{zh ? "新興風險參數型定價" : "Parametric pricing for emerging risks"}</span>
+                <span>{zh ? "三方 AI 代理人對抗辯論" : "Tri-agent adversarial debate"}</span>
+                <span>{zh ? "以太坊 Sepolia 鏈上存證" : "Ethereum Sepolia attestation"}</span>
+              </Reveal>
+            </div>
+
+            <div className="pointer-events-none absolute bottom-3 left-1/2 hidden -translate-x-1/2 animate-bounce font-mono text-[10px] tracking-widest text-muted md:block" aria-hidden>
+              SCROLL ↓
+            </div>
+          </Container>
+        </section>
+
+        {/* ---------------- agents (bento) ---------------- */}
+        <section className="py-20 md:py-28">
+          <Container>
+            <SectionHead ghost="AGENTS" title={t("intro.agentsTitle")} lead={t("intro.agentsSubtitle")} />
+            <div className="mt-14 grid gap-5 lg:grid-cols-2">
+              <AgentCard agent={AGENTS[0]} wide lang={lang} t={t} delay={0} />
+              <AgentCard agent={AGENTS[1]} lang={lang} t={t} delay={100} />
+              <AgentCard agent={AGENTS[2]} lang={lang} t={t} delay={200} />
+            </div>
+          </Container>
+        </section>
+
+        {/* ---------------- advantages (carousel) ---------------- */}
+        <section className="py-20 md:py-28">
+          <Container>
+            <SectionHead
+              ghost="ADVANTAGES"
+              title={t("intro.techTitle")}
+              lead={zh ? "從時事感測到鏈上存證，四個環節各自解決一個傳統流程做不到的事。" : "Four stages, each removing one thing the traditional workflow cannot do."}
+            />
+            <Reveal delay={100}>
+              <AdvantageSlider lang={lang} t={t} />
+            </Reveal>
+          </Container>
+        </section>
+
+        {/* ---------------- paradigm shift (wide image-style cards) ---------------- */}
+        <section className="py-20 md:py-28">
+          <Container>
+            <SectionHead
+              ghost="SHIFT"
+              title={zh ? "典範轉移：傳統保險瓶頸 vs 未然自主決策" : "Paradigm Shift: Traditional Limits vs ForeSure"}
+              lead={zh ? "解決缺乏歷史理賠數據時的定價真空，以參數型合約取代冗長人工理賠" : "Solving the pricing vacuum of zero historical loss data with autonomous parametric insurance"}
+            />
+            <div className="mt-14 flex flex-col gap-5">
+              <Reveal>
+                <article className="glass relative overflow-hidden p-8 md:p-10">
+                  <div className="blob right-[-10%] top-[-40%] h-[80%] w-[40%] bg-muted/15" aria-hidden />
+                  <div className="relative flex items-center gap-3">
+                    <span className="pill bg-surface-2 font-mono text-muted">Legacy Model</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted">{zh ? "傳統新商品研發痛點" : "Traditional product R&D"}</span>
+                  </div>
+                  <div className="relative mt-6 grid gap-6 md:grid-cols-3">
+                    {[
+                      [zh ? "開發週期冗長" : "Long R&D cycle", zh ? "平均需耗費 6 至 12 個月進行市場調研、精算會議與主管機關送審，無法趕上新興風險爆發速度。" : "6 to 12 months of research, actuarial panels and filing, trailing emerging peril events."],
+                      [zh ? "歷史數據依賴" : "Historical data dependency", zh ? "傳統精算完全依賴 5-10 年之歷史損失率，面對全球暖化劇變或生成式 AI 斷線等新風險產生定價真空。" : "Requires 5-10 years of loss history, creating a pricing vacuum for unprecedented climate or AI outage risks."],
+                      [zh ? "理賠審查爭議" : "Claim disputes & overhead", zh ? "採損害填補原則，需保戶自行收集單據與繁瑣公證程序，耗時數週且極易產生認定歧見。" : "Indemnity claims demand receipts, adjusters and weeks of delay, leading to friction and distrust."],
+                    ].map(([h, p]) => (
+                      <div key={h}>
+                        <h3 className="text-lg font-semibold text-text">{h}</h3>
+                        <p className="mt-2 text-sm leading-relaxed text-muted">{p}</p>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              </Reveal>
+              <Reveal delay={100}>
+                <article className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-primary via-primary to-primary-ink p-8 text-white shadow-lg md:p-10">
+                  <div className="blob right-[-10%] top-[-40%] h-[90%] w-[45%] bg-white/25" aria-hidden />
+                  <div className="relative flex items-center gap-3">
+                    <span className="pill bg-white/20 font-mono text-white">Next-Gen</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-white/85">{zh ? "未然 ForeSure 智能方案" : "ForeSure parametric architecture"}</span>
+                  </div>
+                  <div className="relative mt-6 grid gap-6 md:grid-cols-3">
+                    {[
+                      [zh ? "85 秒極速生成" : "85-second synthesis", zh ? "時事新聞感測與既有保險知識庫向量比對，即時捕捉未被滿足之新興保障缺口。" : "Live news telemetry matched against existing product vectors to pinpoint uninsured gaps."],
+                      [zh ? "多代理人對抗博弈" : "Tri-agent adversarial debate", zh ? "PM、核保、精算多輪交鋒，以泊松分佈與極端值理論在缺乏經驗數據下建立審慎定價加成。" : "PM, Underwriter and Actuary stress-test proposals with Poisson and extreme-value modeling."],
+                      [zh ? "參數型觸發與鏈上存證" : "Parametric trigger & on-chain audit", zh ? "對接公正第三方數據源自動理賠，SHA-256 指紋同步寫入以太坊 Sepolia。" : "Objective oracle data triggers payouts while decision hashes are published to Ethereum Sepolia."],
+                    ].map(([h, p]) => (
+                      <div key={h}>
+                        <h3 className="text-lg font-semibold">{h}</h3>
+                        <p className="mt-2 text-sm leading-relaxed text-white/85">{p}</p>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              </Reveal>
+              <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
+                {metrics.map(([label, value, desc], i) => (
+                  <Reveal key={label} delay={i * 80}>
+                    <div className="glass h-full p-6">
+                      <div className="font-mono text-[10px] uppercase tracking-wider text-muted">{label}</div>
+                      <div className="mt-3 font-mono text-3xl font-bold tabular-nums tracking-tight text-primary md:text-4xl">{value}</div>
+                      <p className="mt-2 text-xs leading-relaxed text-muted">{desc}</p>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
+          </Container>
+        </section>
+
+        {/* ---------------- latest decisions (news list) ---------------- */}
+        <section className="py-20 md:py-28">
+          <Container>
+            <SectionHead
+              ghost="DECISIONS"
+              title={zh ? "最新決策與鏈上存證" : "Latest decisions & on-chain audit"}
+              lead={zh ? "每一筆提案都附上觸發新聞、三方辯論紀錄與以太坊 Sepolia 交易雜湊。" : "Every proposal ships with its triggering news, the debate transcript and an Ethereum Sepolia transaction hash."}
+            />
+            <div className="mx-auto mt-10 max-w-5xl border-t border-border">
+              {showcase === undefined ? (
+                [0, 1, 2].map((k) => (
+                  <div key={k} className="grid gap-5 border-b border-border py-8 md:grid-cols-[minmax(200px,300px)_1fr] md:gap-10" aria-hidden>
+                    <div className="aspect-[16/10] rounded-2xl bg-surface-2 pulse" />
+                    <div className="flex flex-col gap-3">
+                      <div className="h-4 w-32 rounded bg-surface-2 pulse" />
+                      <div className="h-7 w-3/4 rounded bg-surface-2 pulse" />
+                      <div className="h-4 w-full rounded bg-surface-2 pulse" />
+                    </div>
+                  </div>
+                ))
+              ) : showcase.length === 0 ? (
+                <p className="py-10 text-center text-sm text-muted">{t("queue.empty")}</p>
+              ) : (
+                showcase.map((r, i) => <DecisionRow key={r.decision_id} run={r} lang={lang} delay={i * 100} />)
+              )}
+              <div className="flex justify-end py-6">
+                <Link href="/history" className="btn btn-secondary text-sm font-semibold">
+                  {t("intro.ctaHistory")} →
+                </Link>
+              </div>
+            </div>
+          </Container>
+        </section>
+
+        {/* ---------------- start (contact-style panel) ---------------- */}
+        <section className="py-20 md:py-28">
+          <Container>
+            <SectionHead
+              ghost="START"
+              title={zh ? "準備好體驗未然 ForeSure 了嗎？" : "Ready to experience ForeSure?"}
+              lead={zh ? "立即啟動 85 秒即時時事新聞感測、多代理人對抗辯論與以太坊 Sepolia 存證流程。" : "Launch 85-second live telemetry, multi-agent adversarial debate, and Ethereum Sepolia attestation."}
+            />
+            <div className="mt-14 grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
+              <Reveal>
+                <BrandLogo decorative className="h-14 w-auto" />
+                <h3 className="mt-6 text-xl font-semibold text-text">{zh ? "未然 ForeSure · 多代理人保險決策桌" : "ForeSure · multi-agent insurance decision desk"}</h3>
+                <ul className="mt-6 flex flex-col gap-4 text-sm">
+                  {[
+                    [zh ? "網路" : "Network", "Ethereum Sepolia", null],
+                    [zh ? "合約" : "Contract", contract ? shortHash(contract) : "—", contract ? `https://sepolia.etherscan.io/address/${contract}` : null],
+                    [zh ? "原始碼" : "Source", "github.com/zhuang768/ForeSure", "https://github.com/zhuang768/ForeSure"],
+                    [zh ? "賽事" : "Event", t("footer.event"), null],
+                  ].map(([k, v, href]) => (
+                    <li key={k as string} className="flex items-center gap-3">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+                      <span className="w-16 shrink-0 text-muted">{k}</span>
+                      {href ? (
+                        <a href={href as string} target="_blank" rel="noreferrer" className="mono font-medium text-primary-ink underline-offset-4 hover:underline">
+                          {v}
+                        </a>
+                      ) : (
+                        <span className="font-medium text-text">{v}</span>
+                      )}
+                    </li>
+                  ))}
                 </ul>
-              </div>
-            </div>
-
-            {/* ForeSure Solution */}
-            <div className="card border-primary/50 bg-primary-soft/10 p-6 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between border-b border-primary/30 pb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-primary-ink">
-                    {lang === "zh" ? "未然 ForeSure 智能方案" : "ForeSure Parametric Architecture"}
-                  </span>
-                  <span className="pill bg-primary-soft text-primary-ink font-mono text-xs">Next-Gen</span>
+              </Reveal>
+              <Reveal delay={120}>
+                <div className="glass p-7 md:p-9">
+                  <div className="label">{zh ? "Demo 流程" : "Demo flow"}</div>
+                  <ol className="mt-4 flex flex-col gap-3">
+                    {[
+                      [zh ? "抓取即時新聞並比對既有商品" : "Fetch live news, match existing products", "~10s"],
+                      [zh ? "PM、核保、精算三方辯論並定價" : "PM, Underwriter and Actuary debate & price", "~60s"],
+                      [zh ? "SHA-256 指紋寫入 Sepolia 並可公開查驗" : "Anchor the SHA-256 fingerprint on Sepolia", "~15s"],
+                    ].map(([s, d], i) => (
+                      <li key={s} className="flex items-center gap-4 rounded-2xl border border-border bg-surface/70 px-4 py-3.5">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-soft font-mono text-xs font-bold text-primary-ink">
+                          {String(i + 1).padStart(2, "0")}
+                        </span>
+                        <span className="flex-1 text-sm text-text">{s}</span>
+                        <span className="font-mono text-xs text-muted">{d}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  <Link
+                    href="/generator"
+                    className="mt-6 flex w-full items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary-ink py-4 text-base font-bold text-white shadow-md transition-transform hover:scale-[1.01]"
+                  >
+                    ▶ {t("intro.ctaLive")}
+                  </Link>
+                  <Link href="/history" className="mt-3 flex w-full items-center justify-center rounded-full border border-border bg-surface py-3.5 text-sm font-semibold text-text transition-colors hover:border-primary">
+                    {t("intro.ctaHistory")}
+                  </Link>
                 </div>
-                <ul className="mt-4 flex flex-col gap-3 text-xs leading-relaxed text-text">
-                  <li className="flex items-start gap-2">
-                    <span className="font-bold text-primary">·</span>
-                    <span>
-                      <strong className="text-primary-ink">{lang === "zh" ? "85 秒極速生成：" : "85-Second Autonomous Synthesis: "}</strong>
-                      {lang === "zh"
-                        ? "時事新聞感測與既有保險知識庫向量比對，即時捕捉未被滿足之新興保障缺口。"
-                        : "Real-time news telemetry matched against existing product vectors to pinpoint uninsured market gaps."}
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="font-bold text-primary">·</span>
-                    <span>
-                      <strong className="text-primary-ink">{lang === "zh" ? "多代理人對抗博弈：" : "Tri-Agent Adversarial Debate: "}</strong>
-                      {lang === "zh"
-                        ? "PM、核保、精算多輪交鋒，以泊松分佈與極端值理論在缺乏經驗數據下建立審慎定價加成 (Markup)。"
-                        : "PM, Underwriter, and Actuary stress-test proposals using Poisson & extreme-value modeling without legacy data."}
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="font-bold text-primary">·</span>
-                    <span>
-                      <strong className="text-primary-ink">{lang === "zh" ? "參數型客觀觸發與鏈上存證：" : "Parametric Trigger & Ethereum Audit: "}</strong>
-                      {lang === "zh"
-                        ? "對接公正第三方數據源（氣象局、地震監測、雲端健康度 API）自動理賠，SHA-256 指紋同步寫入以太坊 Sepolia。"
-                        : "Objective oracle data automatically triggers payouts, while decision hashes are permanently published to Ethereum Sepolia."}
-                    </span>
-                  </li>
-                </ul>
-              </div>
+              </Reveal>
             </div>
-          </div>
-        </section>
-
-        {/* Three AI Agents Architecture with Dialectic Pipeline Ribbon & Instrument Cards */}
-        <section className="flex flex-col gap-8">
-          <div className="flex flex-col items-center text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-1 font-mono text-[11px] text-muted">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              <span>TRI-AGENT ADVERSARIAL CONSENSUS ENGINE</span>
-            </div>
-            <h2 className="mt-3 text-2xl font-bold tracking-tight text-text sm:text-3xl">
-              {t("intro.agentsTitle")}
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
-              {t("intro.agentsSubtitle")}
-            </p>
-
-            {/* Adversarial Consensus Pipeline Ribbon */}
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-xs font-mono shadow-xs backdrop-blur-xs">
-              <div className="flex items-center gap-1.5 font-semibold text-role-pm">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-role-pm-soft text-[10px] font-bold text-role-pm">
-                  01
-                </span>
-                <span>PM: {lang === "zh" ? "時事感知與保障缺口" : "Peril Discovery"}</span>
-              </div>
-              <span className="text-muted/40 font-mono">──►</span>
-              <div className="flex items-center gap-1.5 font-semibold text-role-uw">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-role-uw-soft text-[10px] font-bold text-role-uw">
-                  02
-                </span>
-                <span>{lang === "zh" ? "核保: 嚴防逆選擇與除外" : "UW: Moral Hazard Defense"}</span>
-              </div>
-              <span className="text-muted/40 font-mono">──►</span>
-              <div className="flex items-center gap-1.5 font-semibold text-role-ac">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-role-ac-soft text-[10px] font-bold text-role-ac">
-                  03
-                </span>
-                <span>{lang === "zh" ? "精算: 數學校準與加成" : "Actuary: Math Calibration"}</span>
-              </div>
-              <span className="hidden text-muted/30 lg:inline">|</span>
-              <span className="hidden font-mono text-[11px] text-muted lg:inline">
-                {lang === "zh" ? "三輪辯論反覆博弈收斂" : "3-Round Dialectic Convergence"}
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {/* PM Agent Card */}
-            <div className="card group relative flex flex-col justify-between overflow-hidden border-border/90 bg-gradient-to-b from-role-pm-soft/20 via-surface to-surface p-6 transition-all duration-200 hover:border-role-pm/60 hover:shadow-md">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-role-pm" />
-              <div>
-                {/* Header & Status */}
-                <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-role-pm-soft text-role-pm">
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <circle cx="12" cy="12" r="9" strokeDasharray="3 3" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v3m0 12v3M3 12h3m12 0h3m-4.5-4.5L15 9m-6 6l-1.5 1.5" />
-                        <circle cx="12" cy="12" r="2" fill="currentColor" />
-                      </svg>
-                    </span>
-                    <div>
-                      <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-role-pm">
-                        AGENT_01 // OPPORTUNITY_RADAR
-                      </div>
-                      <h3 className="text-base font-bold text-text">
-                        {t("intro.pmRole")}
-                      </h3>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center gap-1 rounded bg-role-pm-soft px-2 py-0.5 font-mono text-[10px] font-bold text-role-pm">
-                    <span className="h-1.5 w-1.5 rounded-full bg-role-pm animate-pulse" />
-                    EXPANSION
-                  </span>
-                </div>
-
-                {/* Adversarial Philosophy Quote */}
-                <div className="mt-4 rounded-r-md border-l-2 border-role-pm bg-role-pm-soft/30 px-3 py-2 text-xs italic text-text">
-                  {lang === "zh"
-                    ? "“若不主動捕捉第一線的新興風險，保險業將失去在科技世代的存在價值。”"
-                    : '"If we do not capture emerging perils first, insurance loses its relevance in the tech era."'}
-                </div>
-
-                <p className="mt-3 text-xs leading-relaxed text-muted">
-                  {t("intro.pmDesc")}
-                </p>
-
-                {/* Quantitative Metric Matrix */}
-                <div className="mt-4 rounded-lg border border-border/80 bg-surface-2/70 p-3 text-xs">
-                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-muted">
-                    {lang === "zh" ? "決策參數矩陣 (PARAMETERS)" : "DECISION MATRIX"}
-                  </div>
-                  <div className="mt-2.5 grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="rounded border border-border/50 bg-surface p-2">
-                      <div className="font-mono text-[10px] text-muted">{lang === "zh" ? "核心偏向" : "Strategic Bias"}</div>
-                      <div className="mt-0.5 font-semibold text-text">{lang === "zh" ? "商業覆蓋最大化" : "Max Coverage"}</div>
-                    </div>
-                    <div className="rounded border border-border/50 bg-surface p-2">
-                      <div className="font-mono text-[10px] text-muted">{lang === "zh" ? "時事感知" : "Telemetry Ingestion"}</div>
-                      <div className="mt-0.5 font-semibold text-text">{lang === "zh" ? "RAG 向量比對" : "RAG Vector Match"}</div>
-                    </div>
-                    <div className="rounded border border-border/50 bg-surface p-2">
-                      <div className="font-mono text-[10px] text-muted">{lang === "zh" ? "給付結構" : "Payout Model"}</div>
-                      <div className="mt-0.5 font-semibold text-text">{lang === "zh" ? "客觀參數梯級" : "Parametric Steps"}</div>
-                    </div>
-                    <div className="rounded border border-border/50 bg-surface p-2">
-                      <div className="font-mono text-[10px] text-muted">{lang === "zh" ? "博弈制衡" : "Dialectic Target"}</div>
-                      <div className="mt-0.5 font-semibold text-text">{lang === "zh" ? "抗衡核保過度保守" : "Challenge Over-caution"}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Cryptographic Consensus Audit Footer */}
-              <div className="mt-5 flex items-center justify-between border-t border-border/60 pt-3 font-mono text-[10px] text-muted">
-                <span>WEIGHT: 33.3%</span>
-                <span className="text-role-pm font-bold">RAG_CONFIDENCE: 94.2%</span>
-              </div>
-            </div>
-
-            {/* Underwriter Agent Card */}
-            <div className="card group relative flex flex-col justify-between overflow-hidden border-border/90 bg-gradient-to-b from-role-uw-soft/20 via-surface to-surface p-6 transition-all duration-200 hover:border-role-uw/60 hover:shadow-md">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-role-uw" />
-              <div>
-                {/* Header & Status */}
-                <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-role-uw-soft text-role-uw">
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                      </svg>
-                    </span>
-                    <div>
-                      <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-role-uw">
-                        AGENT_02 // RISK_AUDIT_SHIELD
-                      </div>
-                      <h3 className="text-base font-bold text-text">
-                        {t("intro.uwRole")}
-                      </h3>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center gap-1 rounded bg-role-uw-soft px-2 py-0.5 font-mono text-[10px] font-bold text-role-uw">
-                    <span className="h-1.5 w-1.5 rounded-full bg-role-uw animate-pulse" />
-                    PRUDENCE
-                  </span>
-                </div>
-
-                {/* Adversarial Philosophy Quote */}
-                <div className="mt-4 rounded-r-md border-l-2 border-role-uw bg-role-uw-soft/30 px-3 py-2 text-xs italic text-text">
-                  {lang === "zh"
-                    ? "“凡是可被人為操弄、誘發道德風險或累積巨災的條款，一律建立嚴格除外。”"
-                    : '"Any clause vulnerable to moral hazard, manipulation or catastrophe accumulation is strictly excluded."'}
-                </div>
-
-                <p className="mt-3 text-xs leading-relaxed text-muted">
-                  {t("intro.uwDesc")}
-                </p>
-
-                {/* Quantitative Metric Matrix */}
-                <div className="mt-4 rounded-lg border border-border/80 bg-surface-2/70 p-3 text-xs">
-                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-muted">
-                    {lang === "zh" ? "風控參數矩陣 (PARAMETERS)" : "RISK MATRIX"}
-                  </div>
-                  <div className="mt-2.5 grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="rounded border border-border/50 bg-surface p-2">
-                      <div className="font-mono text-[10px] text-muted">{lang === "zh" ? "核心偏向" : "Strategic Bias"}</div>
-                      <div className="mt-0.5 font-semibold text-text">{lang === "zh" ? "零道德風險防禦" : "Anti-Moral Hazard"}</div>
-                    </div>
-                    <div className="rounded border border-border/50 bg-surface p-2">
-                      <div className="font-mono text-[10px] text-muted">{lang === "zh" ? "除外規範" : "Exclusion Policy"}</div>
-                      <div className="mt-0.5 font-semibold text-text">{lang === "zh" ? "人為故意嚴格剔除" : "Exclude Human Acts"}</div>
-                    </div>
-                    <div className="rounded border border-border/50 bg-surface p-2">
-                      <div className="font-mono text-[10px] text-muted">{lang === "zh" ? "敞口限額" : "Exposure Cap"}</div>
-                      <div className="mt-0.5 font-semibold text-text">{lang === "zh" ? "單一事件巨災封頂" : "Per-Peril Capped"}</div>
-                    </div>
-                    <div className="rounded border border-border/50 bg-surface p-2">
-                      <div className="font-mono text-[10px] text-muted">{lang === "zh" ? "博弈制衡" : "Dialectic Target"}</div>
-                      <div className="mt-0.5 font-semibold text-text">{lang === "zh" ? "壓縮 PM 寬鬆漏洞" : "Tighten Loose Clauses"}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Cryptographic Consensus Audit Footer */}
-              <div className="mt-5 flex items-center justify-between border-t border-border/60 pt-3 font-mono text-[10px] text-muted">
-                <span>WEIGHT: 33.3%</span>
-                <span className="text-role-uw font-bold">MORAL_HAZARD: MITIGATED</span>
-              </div>
-            </div>
-
-            {/* Actuary Agent Card */}
-            <div className="card group relative flex flex-col justify-between overflow-hidden border-border/90 bg-gradient-to-b from-role-ac-soft/20 via-surface to-surface p-6 transition-all duration-200 hover:border-role-ac/60 hover:shadow-md">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-role-ac" />
-              <div>
-                {/* Header & Status */}
-                <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-role-ac-soft text-role-ac">
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                    </span>
-                    <div>
-                      <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-role-ac">
-                        AGENT_03 // STATISTICAL_SOLVENCY
-                      </div>
-                      <h3 className="text-base font-bold text-text">
-                        {t("intro.actuaryRole")}
-                      </h3>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center gap-1 rounded bg-role-ac-soft px-2 py-0.5 font-mono text-[10px] font-bold text-role-ac">
-                    <span className="h-1.5 w-1.5 rounded-full bg-role-ac animate-pulse" />
-                    CALIBRATION
-                  </span>
-                </div>
-
-                {/* Adversarial Philosophy Quote */}
-                <div className="mt-4 rounded-r-md border-l-2 border-role-ac bg-role-ac-soft/30 px-3 py-2 text-xs italic text-text">
-                  {lang === "zh"
-                    ? "“缺乏歷史數據不是藉口，以泊松分佈與 1.25x 加成守護資本清償邊界。”"
-                    : '"Lack of historical loss data is no excuse; defend solvency margins with Poisson modeling and 1.25x markup."'}
-                </div>
-
-                <p className="mt-3 text-xs leading-relaxed text-muted">
-                  {t("intro.actuaryDesc")}
-                </p>
-
-                {/* Quantitative Metric Matrix */}
-                <div className="mt-4 rounded-lg border border-border/80 bg-surface-2/70 p-3 text-xs">
-                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-muted">
-                    {lang === "zh" ? "精算參數矩陣 (PARAMETERS)" : "ACTUARIAL MATRIX"}
-                  </div>
-                  <div className="mt-2.5 grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="rounded border border-border/50 bg-surface p-2">
-                      <div className="font-mono text-[10px] text-muted">{lang === "zh" ? "核心偏向" : "Strategic Bias"}</div>
-                      <div className="mt-0.5 font-semibold text-text">{lang === "zh" ? "清償能力與數學校準" : "Solvency & Math"}</div>
-                    </div>
-                    <div className="rounded border border-border/50 bg-surface p-2">
-                      <div className="font-mono text-[10px] text-muted">{lang === "zh" ? "損失分佈" : "Loss Model"}</div>
-                      <div className="mt-0.5 font-semibold text-text">{lang === "zh" ? "泊松過程與極端值" : "Poisson & EVT"}</div>
-                    </div>
-                    <div className="rounded border border-border/50 bg-surface p-2">
-                      <div className="font-mono text-[10px] text-muted">{lang === "zh" ? "定價加成" : "Markup Multiplier"}</div>
-                      <div className="mt-0.5 font-semibold text-role-ac font-mono">1.15x – 1.25x</div>
-                    </div>
-                    <div className="rounded border border-border/50 bg-surface p-2">
-                      <div className="font-mono text-[10px] text-muted">{lang === "zh" ? "博弈制衡" : "Dialectic Target"}</div>
-                      <div className="mt-0.5 font-semibold text-text">{lang === "zh" ? "拒絕憑空主觀保費" : "Audit Subjectivity"}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Cryptographic Consensus Audit Footer */}
-              <div className="mt-5 flex items-center justify-between border-t border-border/60 pt-3 font-mono text-[10px] text-muted">
-                <span>WEIGHT: 33.4%</span>
-                <span className="text-role-ac font-bold">SOLVENCY_MARGIN: 99.5%</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Four Architectural Advantages */}
-        <section className="flex flex-col gap-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">
-              {t("intro.techTitle")}
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="card p-5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-soft text-primary font-bold text-xs">
-                01
-              </div>
-              <h3 className="mt-3 text-sm font-bold text-text">{t("intro.tech1Title")}</h3>
-              <p className="mt-1 text-xs leading-relaxed text-muted">{t("intro.tech1Desc")}</p>
-            </div>
-
-            <div className="card p-5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-soft text-primary font-bold text-xs">
-                02
-              </div>
-              <h3 className="mt-3 text-sm font-bold text-text">{t("intro.tech2Title")}</h3>
-              <p className="mt-1 text-xs leading-relaxed text-muted">{t("intro.tech2Desc")}</p>
-            </div>
-
-            <div className="card p-5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-soft text-primary font-bold text-xs">
-                03
-              </div>
-              <h3 className="mt-3 text-sm font-bold text-text">{t("intro.tech3Title")}</h3>
-              <p className="mt-1 text-xs leading-relaxed text-muted">{t("intro.tech3Desc")}</p>
-            </div>
-
-            <div className="card p-5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-soft text-primary font-bold text-xs">
-                04
-              </div>
-              <h3 className="mt-3 text-sm font-bold text-text">{t("intro.tech4Title")}</h3>
-              <p className="mt-1 text-xs leading-relaxed text-muted">{t("intro.tech4Desc")}</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Bottom CTA Banner */}
-        <section className="card flex flex-col items-center justify-between gap-6 border-primary/40 bg-primary-soft/20 p-8 text-center sm:flex-row sm:text-left">
-          <div>
-            <h3 className="text-xl font-bold tracking-tight text-text">
-              {lang === "zh" ? "準備好體驗未然 ForeSure 了嗎？" : "Ready to Experience ForeSure?"}
-            </h3>
-            <p className="mt-1 text-xs text-muted">
-              {lang === "zh"
-                ? "立即啟動 85 秒即時時事新聞感測、多代理人對抗辯論與以太坊 Sepolia 存證流程。"
-                : "Launch 85-second live telemetry, multi-agent adversarial debate, and Ethereum Sepolia attestation."}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Link
-              href="/generator"
-              className="btn btn-primary px-6 py-2.5 text-xs font-bold shadow-sm"
-            >
-              ▶ {t("intro.ctaLive")}
-            </Link>
-            <Link
-              href="/history"
-              className="btn px-6 py-2.5 text-xs font-bold bg-primary-soft text-primary-ink border border-primary/60 hover:bg-primary hover:text-white transition-all shadow-xs"
-            >
-              {t("intro.ctaHistory")}
-            </Link>
-          </div>
+          </Container>
         </section>
       </main>
+
+      {/* floating actions, like the reference's LINE / phone buttons */}
+      <div className="fixed bottom-6 right-5 z-30 flex flex-col gap-3">
+        <Link
+          href="/generator"
+          className="flex h-13 w-13 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-105"
+          aria-label={t("intro.ctaLive")}
+          title={t("intro.ctaLive")}
+        >
+          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </Link>
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="glass flex h-13 w-13 items-center justify-center text-text shadow-md transition-transform hover:scale-105"
+          aria-label={t("footer.top")}
+          title={t("footer.top")}
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+          </svg>
+        </button>
+      </div>
+
+      <SiteFooter chain={chain} />
     </>
   );
 }

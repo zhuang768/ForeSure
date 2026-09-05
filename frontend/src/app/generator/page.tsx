@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
+import SiteFooter from "@/components/SiteFooter";
 import ChainBadge from "@/components/ChainBadge";
 import DebateFeed from "@/components/DebateFeed";
 import GroundingBadge from "@/components/GroundingBadge";
@@ -246,6 +247,7 @@ export default function GeneratorPage() {
           </section>
         </div>
       </main>
+      <SiteFooter chain={chain} />
     </>
   );
 }

@@ -200,3 +200,79 @@ body {
 :root[data-present="1"] main {
   max-width: 1600px;
 }
+
+/* ---- editorial homepage layout: large type, ghost section labels, glass cards, scroll reveal ---- */
+.glass {
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.ghost {
+  font-size: clamp(3.25rem, 10vw, 7.5rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-align: center;
+  color: var(--primary);
+  opacity: 0.09;
+  user-select: none;
+  pointer-events: none;
+}
+:root[data-theme="dark"] .ghost {
+  opacity: 0.14;
+}
+.hero-type {
+  font-size: clamp(3.25rem, 8vw, 7rem);
+  font-weight: 700;
+  line-height: 0.96;
+  letter-spacing: -0.035em;
+}
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+@keyframes letter-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.35em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.hero-letter {
+  display: inline-block;
+  opacity: 0;
+  animation: letter-in 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation-delay: calc(var(--i) * 40ms);
+}
+@keyframes float-slow {
+  from {
+    transform: translateY(-8px);
+  }
+  to {
+    transform: translateY(8px);
+  }
+}
+.float-slow {
+  animation: float-slow 4.5s ease-in-out infinite alternate;
+}
+.blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  pointer-events: none;
+}
+.slide-in {
+  animation: letter-in 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}

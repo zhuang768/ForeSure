@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
+import SiteFooter from "@/components/SiteFooter";
 import DebateFeed from "@/components/DebateFeed";
 import GroundingBadge from "@/components/GroundingBadge";
 import { chainStatus, getLocalStoredRuns, getRun, listRuns } from "@/lib/api";
@@ -477,6 +478,7 @@ export default function HistoryPage() {
           )}
         </div>
       </main>
+      <SiteFooter chain={chain} />
     </>
   );
 }
