@@ -1,6 +1,20 @@
 import { STAGES } from "@/lib/stages";
-import type { ActiveRun, ChainStatus, Health, RunEvent, RunRecord, RunSummary, Stage, VerifyResult } from "@/lib/types";
+import type {
+  ActiveRun,
+  ChainStatus,
+  Health,
+  RedTeamReport,
+  RunEvent,
+  RunRecord,
+  RunSummary,
+  Stage,
+  VerifyResult,
+} from "@/lib/types";
 import { MOCK_RUN_RECORDS, MOCK_RUN_SUMMARIES } from "@/lib/mockData";
+// Offline demo falls back to the committed snapshot; tests/test_redteam.py keeps it identical to a live run.
+import redteamSnapshot from "@/lib/redteamReport.json";
+
+const MOCK_REDTEAM_REPORT = redteamSnapshot as RedTeamReport;
 
 export const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8080").replace(/\/$/, "");
 // Demo token; intentionally public and accepted by the backend for the hackathon only.
@@ -81,6 +95,17 @@ export async function chainStatus(): Promise<ChainStatus | null> {
   } catch {
     _offlineMode = true;
     return null;
+  }
+}
+
+export async function redTeamReport(): Promise<RedTeamReport> {
+  try {
+    const online = await checkOnline();
+    if (!online) return MOCK_REDTEAM_REPORT;
+    return await request<RedTeamReport>("/api/v1/redteam");
+  } catch {
+    _offlineMode = true;
+    return MOCK_REDTEAM_REPORT;
   }
 }
 

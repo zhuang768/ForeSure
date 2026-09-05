@@ -19,6 +19,7 @@ import product_analyzer
 import run_store
 from chain_writer import chain_status, verify_decision_on_chain
 from main import run_pipeline
+from redteam import run_redteam
 
 KB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "insurance_kb.json")
 
@@ -214,6 +215,19 @@ async def verify_run(decision_id: str, body: VerifyRequest | None = None):
 @app.get("/api/v1/chain/status")
 async def get_chain_status():
     return chain_status()
+
+
+@app.get("/api/v1/redteam")
+async def get_redteam_report():
+    """
+    紅隊測試報告：用固定的對抗語料衡量幻覺檢測的檢出率與誤報率。
+    純規則、不呼叫 LLM、不連外，同樣語料必得同樣結果與同一個 report_hash。
+    """
+    try:
+        return run_redteam()
+    except Exception:
+        logger.exception("紅隊測試執行失敗")
+        return {"error": "紅隊測試執行失敗，請查看伺服器日誌"}
 
 
 # --- 4. 知識庫 ---

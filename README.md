@@ -16,6 +16,7 @@
 - **統計驅動精算**：颱風、水災、地震的發生機率取自內政部消防署 1958–2025 逐事件統計，保費 = 年頻率 × 單次損失 × 加成；每個數字附 `basis` 欄位，區分真實統計與假設值。
 - **三代理人辯論**：產品經理提案、核保人員挑毛病、精算師整合，以 function calling 產出六個欄位的中英雙語提案。
 - **幻覺檢測**：純規則、不呼叫 LLM 的 `grounding_check.py`，檢查無來源的數字、捏造的引用與未揭露的假設值，結論與標記數一起上鏈。
+- **紅隊測試台**：`redteam.py` 用 `data/redteam_cases.json` 的固定對抗語料反覆攻擊幻覺檢測，公開檢出率、誤報率與已知漏洞；報告附 `report_hash`，評審可當場重跑核對，`/overview` 底部有同一份報告的面板。
 - **區塊鏈存證與驗證**：提案內容雜湊寫入 Sepolia 測試網的 `AuditRegistry` 合約；前端可即時驗證，並提供竄改測試示範不一致時的結果。
 - **中英雙語 Word 報告**：每輪自動產出 docx，新聞標題可連回原始報導，數據依據段落附統計來源。
 - **前端決策桌**：首頁、決策總覽、啟動分析（SSE 即時串流 12 個階段）、歷史紀錄庫四頁；淺／深色、中／英切換；離線時顯示標記為模擬的示範資料。
@@ -42,7 +43,7 @@ graph TD
 ```
 
 - **前端**：Next.js 16 靜態匯出，部署在 Cloudflare Pages。透過 REST 讀歷史與詳情，透過 SSE 看一次執行的 12 個階段；驗證時用 ethers 直接讀 Sepolia 公開節點，不經過後端。
-- **後端**：FastAPI 的 `apigee_target.py` 負責 JWT、限流、CORS 與端點，`main.py` 串起 pipeline 七個模組；`run_store.py` 把每輪結果寫進 `reports/audit_log.json`，這份帳本就是歷史紀錄與驗證的依據。端點契約見 `docs/API.md`。
+- **後端**：FastAPI 的 `apigee_target.py` 負責 JWT、限流、CORS 與端點，`main.py` 串起 pipeline 七個模組；`run_store.py` 把每輪結果寫進 `reports/audit_log.json`，這份帳本就是歷史紀錄與驗證的依據。`GET /api/v1/redteam` 現算紅隊報告。端點契約見 `docs/API.md`。
 - **模型**：LLM 走 Gemini 的 OpenAI 相容端點，主模型被限流時自動切備援；語意比對用 fastembed 多語言模型，ChromaDB 以記憶體模式在啟動時建索引。
 - **資料**：`data/nfa_disaster_events.csv` 由 `scripts/convert_nfa_stats.py` 從消防署原始 xls 轉出；AMD 模組的結果快照在 `data/*_benchmark.json`。
 - **外部服務**：Google News RSS、Gemini API、Ethereum Sepolia 測試網（PublicNode 公開 RPC）。
@@ -85,6 +86,8 @@ npm run dev                       # http://localhost:3000
 
 # 3. 測試與建置
 python -m pytest -q               # 後端（專案根目錄）
+python redteam.py                 # 紅隊測試台：印出檢出率、誤報率與 report_hash，有漏抓或誤報回傳碼 1
+python scripts/export_redteam_report.py   # 改過語料或檢查器後，重新產生前端離線快照
 cd frontend && npm test           # 前端 Vitest
 npm run build                     # 靜態匯出到 frontend/out/
 
@@ -111,7 +114,7 @@ docker compose up --build         # 同時起排程與 API 兩個容器
 **已知限制**
 
 - 消防署資料沒有金額，單次損失 = 歷史平均受災戶數 × 假設的每戶損失（住宅地震基本保險全損給付 NT$150 萬）；水災嚴重事件只有 3 筆，`basis.low_sample` 會標記；資安、健康等類別沒有官方統計，全部標為假設值。
-- 幻覺檢測是純規則：只看數字與引用句型，抓不到沒有數字的誇大宣稱，也無法判斷商業邏輯是否合理。
+- 幻覺檢測是純規則：只看數字與引用句型，抓不到沒有數字的誇大宣稱，也無法判斷商業邏輯是否合理。這些已知漏洞在紅隊測試台裡照實列為 `known_gap`，不計入檢出率。
 - LLM 走 Gemini 免費層，有每日請求上限；限流時自動切備援模型，第三次失敗才退回模擬提案。
 - 上鏈只寫入提案雜湊，不含內容；使用單一測試錢包與 Sepolia 測試網，尚未設計多簽或正式鏈。
 - Cloudflare Pages 上的前端需要連到後端才有真資料，連不到時顯示的是標記為模擬的示範資料。
@@ -120,7 +123,6 @@ docker compose up --build         # 同時起排程與 API 兩個容器
 
 **未來工作**
 
-- 紅隊測試台：用固定的對抗語料反覆攻擊幻覺檢測，公開檢出率、誤報率與已知漏洞。
 - 新聞提示注入防護：RSS 標題與摘要進入提示前先過規則掃描，結論一併上鏈。
 - 人審佇列與簽核：需人審的提案進入待辦，核准者的簽章與時間一起存證。
 - 雙模型「AI 裁判」交叉檢核提案，補純規則檢查的盲點。

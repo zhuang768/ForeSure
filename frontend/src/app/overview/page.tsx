@@ -5,6 +5,7 @@ import AppHeader from "@/components/AppHeader";
 import SiteFooter from "@/components/SiteFooter";
 import DecisionDetail from "@/components/DecisionDetail";
 import KpiBar from "@/components/KpiBar";
+import RedTeamPanel from "@/components/RedTeamPanel";
 import RunQueue from "@/components/RunQueue";
 import VerifyPanel from "@/components/VerifyPanel";
 import { chainStatus, getRun, listRuns } from "@/lib/api";
@@ -81,6 +82,7 @@ export default function OverviewPage() {
             </div>
           )}
         </div>
+        <RedTeamPanel />
       </main>
       <SiteFooter chain={loaded === null ? undefined : loaded.chain} />
     </>

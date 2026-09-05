@@ -151,6 +151,39 @@ export type Grounding = {
   flags: GroundingFlag[];
 };
 
+/** One red-team case: an adversarial proposal (or a clean control) replayed through the grounding check. */
+export type RedTeamCase = {
+  id: string;
+  title: string;
+  attack: string;
+  known_gap: boolean;
+  description: string;
+  expected_status: GroundingStatus | null;
+  actual_status: GroundingStatus;
+  expected_flag_types: string[];
+  actual_flag_types: GroundingFlag["type"][];
+  outcome: "detected" | "missed" | "clean" | "false_positive" | "known_gap";
+  flags: GroundingFlag[];
+};
+
+/** Red-team bench report (docs/API.md "紅隊測試"); deterministic, so report_hash is stable across machines. */
+export type RedTeamReport = {
+  suite_version: string;
+  checker_version: string;
+  total_cases: number;
+  attack_cases: number;
+  control_cases: number;
+  known_gap_cases: number;
+  known_gaps_open: number;
+  detected: number;
+  missed: number;
+  false_positives: number;
+  detection_rate: number | null;
+  false_positive_rate: number | null;
+  report_hash: string;
+  cases: RedTeamCase[];
+};
+
 export type Debate = { pm: string; underwriter: string };
 
 export type ProposalData = {
