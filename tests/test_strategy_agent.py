@@ -134,3 +134,44 @@ def test_news_translation_is_split_out_of_the_proposal():
     assert args == {"product_name": "X"}                     # proposal keeps only its own sections
     assert translation == {"source_news_zh": "標題", "source_news_en": "Title",
                            "news_summary_zh": "摘要", "news_summary_en": ""}
+
+
+class _Reply:
+    """Minimal chat completion: choices[0].message.content, no tool calls."""
+
+    def __init__(self, content):
+        message = type("Message", (), {"content": content, "tool_calls": None})()
+        self.choices = [type("Choice", (), {"message": message, "finish_reason": "stop"})()]
+        self.model = "fake"
+
+
+def test_fallback_keeps_the_debate_when_the_final_call_fails(monkeypatch):
+    """PM and underwriter answered and were streamed to the UI; a timeout on the actuary call must not
+    wipe them from the persisted record."""
+    import httpx
+    import openai
+
+    monkeypatch.setenv("OPENAI_API_KEY", "dummy-key")
+    monkeypatch.setattr(strategy_agent, "_make_client", lambda timeout=90.0: object())
+    calls = []
+
+    def fake_chat(client, **kwargs):
+        calls.append(kwargs)
+        if len(calls) == 1:
+            return _Reply("PM 提案全文")
+        if len(calls) == 2:
+            return _Reply("核保批評全文")
+        raise openai.APITimeoutError(request=httpx.Request("POST", "http://x"))
+
+    monkeypatch.setattr(strategy_agent, "_chat", fake_chat)
+    stages = []
+
+    out = strategy_agent.generate_product_proposal(
+        {"title": "t", "summary": "s", "link": ""}, {"gap_analysis_prompt": "p"},
+        {"probability_pct": 1.0, "expected_loss_usd": 10.0, "premium_range_usd": [1, 2]},
+        on_stage=lambda stage, text: stages.append(stage),
+    )
+
+    assert stages == ["pm", "underwriter"]
+    assert out["is_mock"] is True
+    assert out["debate"] == {"pm": "PM 提案全文", "underwriter": "核保批評全文"}

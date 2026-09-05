@@ -251,6 +251,10 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
         f"請初步草擬一份具市場破壞力、但仍可商業化的保險商品點子。"
     )
 
+    # Kept outside the try so a failure on a later call does not discard the debate text that the earlier
+    # calls already produced and streamed to the UI.
+    pm_idea = ""
+    uw_critique = ""
     try:
         if not os.getenv("OPENAI_API_KEY"):
             raise ValueError("No API Key")
@@ -335,7 +339,7 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
             "news_summary": news_item.get("summary", ""),
             "news_link": news_item.get("link", ""),
             "actuarial_data": actuarial_data,
-            "debate": {"pm": "", "underwriter": ""},
+            "debate": {"pm": pm_idea, "underwriter": uw_critique},
             "proposal": _mock_proposal(news_item),
             "is_mock": True,
             "model": None,
