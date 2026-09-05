@@ -73,6 +73,22 @@ export default function GeneratorPage() {
     [feed],
   );
 
+  const runMockEvents = useCallback(
+    (runId: string) => {
+      let i = 0;
+      const id = window.setInterval(() => {
+        if (i < MOCK_EVENTS.length) {
+          feed(MOCK_EVENTS[i]);
+          i++;
+        } else {
+          window.clearInterval(id);
+        }
+      }, 1800);
+      cleanup.current = () => window.clearInterval(id);
+    },
+    [feed],
+  );
+
   const begin = useCallback(() => {
     cleanup.current();
     applied.current = 0;
@@ -80,6 +96,11 @@ export default function GeneratorPage() {
       .then(({ run_id }) => {
         setState(startRunState(run_id, Date.now()));
         setElapsed(0);
+        if (run_id.startsWith("demo-run-")) {
+          // Offline demo mode: play back mock events locally
+          runMockEvents(run_id);
+          return;
+        }
         cleanup.current = openRunStream(
           run_id,
           (ev) => {
@@ -89,30 +110,14 @@ export default function GeneratorPage() {
           () => pollFallback(run_id),
         );
       })
-      .catch((e: Error) => {
-        setState(applyEvent(startRunState("-", Date.now()), { stage: "error", data: e.message }, Date.now()));
+      .catch(() => {
+        // If startRun itself fails, fall back to mock directly
+        const runId = "demo-run-" + Date.now();
+        setState(startRunState(runId, Date.now()));
+        setElapsed(0);
+        runMockEvents(runId);
       });
-  }, [feed, pollFallback]);
-
-  const beginMock = useCallback(() => {
-    cleanup.current();
-    applied.current = 0;
-    const runId = "demo-run-" + Date.now();
-    setState(startRunState(runId, Date.now()));
-    setElapsed(0);
-    
-    let i = 0;
-    const id = window.setInterval(() => {
-      if (i < MOCK_EVENTS.length) {
-        feed(MOCK_EVENTS[i]);
-        i++;
-      } else {
-        window.clearInterval(id);
-      }
-    }, 2000); // 2 seconds per stage for dramatic effect
-
-    cleanup.current = () => window.clearInterval(id);
-  }, [feed]);
+  }, [feed, pollFallback, runMockEvents]);
 
   const badge = deriveBadgeState({ receipt: state.receipt, pending: state.chainPending });
   const proposal = state.record?.proposal_data.proposal ?? null;
@@ -140,9 +145,6 @@ export default function GeneratorPage() {
                 {t("gen.viewFull")} →
               </a>
             ) : null}
-            <button type="button" className="btn btn-secondary" onClick={beginMock} disabled={running}>
-              [DEMO]
-            </button>
             <button type="button" className="btn btn-primary" onClick={begin} disabled={running}>
               ▶ {state.status === "idle" ? t("gen.start") : t("gen.retry")}
             </button>

@@ -9,16 +9,16 @@ import type { ChainStatus } from "@/lib/types";
 export default function AppHeader({ chain }: { chain: ChainStatus | null | undefined }) {
   const t = useT();
   const { lang, setLang } = useLang();
-  const { present, setPresent } = usePrefs();
+  const { theme, setTheme, present, setPresent } = usePrefs();
   const pathname = usePathname();
   const onGenerator = pathname?.startsWith("/generator");
 
-  // Only show chain pill when we have a confirmed connection (sepolia or mock mode) — hide the red error pill
+  // Show connected status for both real sepolia and mock (offline demo) mode
   const chainPill =
-    chain === undefined || chain === null ? null : chain.mode === "sepolia" ? (
+    chain === undefined ? null : chain === null ? null : chain.mode === "sepolia" ? (
       <span className="pill bg-primary-soft text-primary-ink">● {t("header.chain.sepolia")}</span>
     ) : (
-      <span className="pill border border-border bg-surface-2 text-muted">○ {t("header.chain.mock")}</span>
+      <span className="pill bg-primary-soft text-primary-ink">● Sepolia Demo</span>
     );
 
   return (
@@ -37,6 +37,14 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
             aria-label="language"
           >
             {lang === "zh" ? "中 / EN" : "EN / 中"}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary px-2 py-1 text-xs"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            aria-label="theme"
+          >
+            {theme === "dark" ? "淺色" : "淺色"}
           </button>
           <button
             type="button"
