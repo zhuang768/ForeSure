@@ -34,6 +34,8 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
   const pathname = usePathname();
   const onOverview = pathname?.startsWith("/overview");
   const onHistory = pathname?.startsWith("/history");
+  const onGenerator = pathname?.startsWith("/generator");
+  const onHome = pathname === "/" || pathname === "";
 
   // Show connected status for both real sepolia and mock (offline demo) mode
   const chainPill =
@@ -54,7 +56,7 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
         </Link>
         <div className="flex items-center gap-2">
           {chainPill}
-          {/* The label never changes; the active side is highlighted instead, so the button keeps its width. */}
+          {/* Language toggle */}
           <button
             type="button"
             className="btn btn-secondary px-2 py-1 text-xs"
@@ -65,6 +67,7 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
             <span className="text-muted">/</span>
             <span className={lang === "en" ? "font-bold" : "text-muted"}>EN</span>
           </button>
+          {/* Theme toggle */}
           <button
             type="button"
             className="btn btn-secondary px-2 py-1 text-xs"
@@ -77,21 +80,33 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
               <StableLabel k="header.theme.light" lang={lang} prefix="☀ " />
             )}
           </button>
+          {/* Historical archive button with distinct brand color */}
           <Link
             href="/history"
-            className={`btn px-2.5 py-1 text-xs ${onHistory ? "btn-primary" : "btn-secondary"}`}
+            className={`btn px-3 py-1 text-xs font-semibold transition-all ${
+              onHistory
+                ? "bg-primary text-white shadow-sm ring-1 ring-primary"
+                : "bg-primary-soft text-primary-ink border border-primary/60 hover:bg-primary hover:text-white"
+            }`}
           >
             <StableLabel k="header.history" lang={lang} />
           </Link>
-          {onOverview ? (
-            <Link href="/" className="btn btn-primary">
-              <StableLabel k="header.run" lang={lang} prefix="▶ " />
+          {/* Navigation to intro/overview/generator */}
+          {!onHome ? (
+            <Link href="/" className="btn btn-secondary px-2.5 py-1 text-xs">
+              <StableLabel k="header.intro" lang={lang} />
             </Link>
-          ) : (
-            <Link href="/overview" className="btn btn-secondary">
+          ) : null}
+          {!onOverview ? (
+            <Link href="/overview" className="btn btn-secondary px-2.5 py-1 text-xs">
               <StableLabel k="header.home" lang={lang} />
             </Link>
-          )}
+          ) : null}
+          {!onGenerator ? (
+            <Link href="/generator" className="btn btn-primary px-3 py-1 text-xs font-semibold">
+              <StableLabel k="header.run" lang={lang} prefix="▶ " />
+            </Link>
+          ) : null}
         </div>
       </div>
     </header>

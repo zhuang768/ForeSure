@@ -4,23 +4,50 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
 import DebateFeed from "@/components/DebateFeed";
-import { chainStatus, getRun, listRuns } from "@/lib/api";
+import { chainStatus, getLocalStoredRuns, getRun, listRuns } from "@/lib/api";
 import { fmtPct, fmtStamp, fmtUsdCompact, fmtUsdRangeCompact, shortHash } from "@/lib/format";
 import { useLang, useT } from "@/lib/i18n";
 import { localizedField } from "@/lib/localize";
+import { MOCK_RUN_RECORDS, MOCK_RUN_SUMMARIES } from "@/lib/mockData";
 import type { ChainStatus, RunRecord, RunSummary } from "@/lib/types";
 
 export default function HistoryPage() {
   const t = useT();
   const { lang } = useLang();
   const [chain, setChain] = useState<ChainStatus | null | undefined>(undefined);
-  const [runs, setRuns] = useState<RunSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [runs, setRuns] = useState<RunSummary[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const { summaries } = getLocalStoredRuns();
+        if (summaries && summaries.length > 0) {
+          return [...summaries, ...MOCK_RUN_SUMMARIES].slice(0, 100);
+        }
+      } catch {}
+    }
+    return MOCK_RUN_SUMMARIES;
+  });
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "onchain" | "mock">("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "loss">("newest");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [recordCache, setRecordCache] = useState<Record<string, RunRecord>>({});
+  const [recordCache, setRecordCache] = useState<Record<string, RunRecord>>(() => {
+    const map: Record<string, RunRecord> = {};
+    MOCK_RUN_RECORDS.forEach((r) => {
+      map[r.decision_id] = r;
+    });
+    if (typeof window !== "undefined") {
+      try {
+        const { records } = getLocalStoredRuns();
+        if (records) {
+          records.forEach((r) => {
+            map[r.decision_id] = r;
+          });
+        }
+      } catch {}
+    }
+    return map;
+  });
   const [loadingRecords, setLoadingRecords] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -30,12 +57,12 @@ export default function HistoryPage() {
 
     listRuns(100)
       .then((data) => {
-        setRuns(data);
-        setLoading(false);
+        if (data && data.length > 0) {
+          setRuns(data);
+        }
       })
       .catch(() => {
-        setRuns([]);
-        setLoading(false);
+        /* keep instant mock fallback */
       });
   }, []);
 
