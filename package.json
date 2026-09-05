@@ -1,0 +1,7 @@
+{
+  "name": "foresure-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build && cp -r out ../out"
+  }
+}
