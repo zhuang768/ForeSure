@@ -8,7 +8,7 @@ import MatchedProducts from "@/components/MatchedProducts";
 import NewsList from "@/components/NewsList";
 import ProposalCard from "@/components/ProposalCard";
 import StageProgress from "@/components/StageProgress";
-import { chainStatus, getActiveRun, openRunStream, startRun } from "@/lib/api";
+import { chainStatus, getActiveRun, openRunStream, saveLocalRun, startRun } from "@/lib/api";
 import { deriveBadgeState } from "@/lib/badge";
 import { useT } from "@/lib/i18n";
 import { applyEvent, initialRunState, startRunState, type RunState } from "@/lib/runReducer";
@@ -26,7 +26,7 @@ export default function GeneratorPage() {
 
   const refreshChain = useCallback(() => {
     chainStatus()
-      .then((c) => setChain(c))
+      .then(setChain)
       .catch(() => setChain(null));
   }, []);
 
@@ -48,7 +48,13 @@ export default function GeneratorPage() {
   }, []);
 
   const feed = useCallback((ev: RunEvent) => {
-    setState((s) => applyEvent(s, ev, Date.now()));
+    setState((s) => {
+      const next = applyEvent(s, ev, Date.now());
+      if (ev.stage === "done" && next.record) {
+        saveLocalRun(next.record);
+      }
+      return next;
+    });
   }, []);
 
   // If the SSE connection drops before done/error, poll the active run and replay unseen events.
@@ -75,16 +81,38 @@ export default function GeneratorPage() {
 
   const runMockEvents = useCallback(
     (runId: string) => {
-      let i = 0;
-      const id = window.setInterval(() => {
-        if (i < MOCK_EVENTS.length) {
-          feed(MOCK_EVENTS[i]);
-          i++;
-        } else {
-          window.clearInterval(id);
-        }
-      }, 1800);
-      cleanup.current = () => window.clearInterval(id);
+      // Realistic multi-stage execution delays (ms) matching real LLM reasoning + Ethereum Sepolia block confirmation
+      const STAGE_DELAYS = [
+        5800,  // news_fetched: crawling & news parsing (5.8s)
+        4200,  // news_selected: LLM selecting highest risk topic (4.2s)
+        5500,  // kb_matched: vector embedding similarity search (5.5s)
+        7500,  // actuarial: baseline loss & frequency calculation (7.5s)
+        11800, // pm: Gemini 3.5 Flash drafting full proposal (11.8s)
+        13500, // underwriter: Gemini 3.5 Flash underwriting review & critique (13.5s)
+        11200, // actuary: Gemini 3.5 Flash mathematical rate-making (11.2s)
+        5200,  // report: report formatting and markdown assembly (5.2s)
+        2200,  // chain_pending: transaction broadcast to Sepolia network (2.2s)
+        16500, // chain_done: Ethereum Sepolia block mining & audit verification (16.5s)
+        2000,  // done: record persistence and state finalize (2.0s)
+      ];
+
+      let step = 0;
+      let activeTimer: number | undefined;
+
+      const scheduleNext = () => {
+        if (step >= MOCK_EVENTS.length) return;
+        const delay = STAGE_DELAYS[step] ?? 4000;
+        activeTimer = window.setTimeout(() => {
+          feed(MOCK_EVENTS[step]);
+          step++;
+          scheduleNext();
+        }, delay);
+      };
+
+      scheduleNext();
+      cleanup.current = () => {
+        if (activeTimer !== undefined) window.clearTimeout(activeTimer);
+      };
     },
     [feed],
   );

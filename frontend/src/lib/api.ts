@@ -74,14 +74,57 @@ export async function chainStatus(): Promise<ChainStatus> {
   }
 }
 
+const LOCAL_STORAGE_KEY = "atlas.local_runs";
+
+function getLocalStoredRuns(): { summaries: RunSummary[]; records: RunRecord[] } {
+  if (typeof window === "undefined") return { summaries: [], records: [] };
+  try {
+    const raw = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!raw) return { summaries: [], records: [] };
+    return JSON.parse(raw);
+  } catch {
+    return { summaries: [], records: [] };
+  }
+}
+
+export function saveLocalRun(record: RunRecord) {
+  if (typeof window === "undefined") return;
+  try {
+    const { summaries, records } = getLocalStoredRuns();
+    const summary: RunSummary = {
+      decision_id: record.decision_id,
+      run_id: record.run_id ?? null,
+      timestamp: record.timestamp,
+      news_title: record.news.title,
+      product_name: record.proposal_data.proposal.product_name,
+      is_mock_proposal: false,
+      chain_is_mock: false,
+      tx_hash: record.blockchain_receipt.blockchain_tx_hash,
+      verification_url: record.blockchain_receipt.verification_url,
+    };
+    const nextSummaries = [summary, ...summaries.filter((s) => s.decision_id !== record.decision_id)];
+    const nextRecords = [record, ...records.filter((r) => r.decision_id !== record.decision_id)];
+    window.localStorage.setItem(
+      LOCAL_STORAGE_KEY,
+      JSON.stringify({ summaries: nextSummaries.slice(0, 30), records: nextRecords.slice(0, 30) }),
+    );
+  } catch {
+    /* ignore storage quota errors */
+  }
+}
+
 export async function listRuns(limit = 50): Promise<RunSummary[]> {
   try {
     const online = await checkOnline();
-    if (!online) return MOCK_RUN_SUMMARIES.slice(0, limit);
+    if (!online) {
+      const { summaries } = getLocalStoredRuns();
+      return [...summaries, ...MOCK_RUN_SUMMARIES].slice(0, limit);
+    }
     return await request<RunSummary[]>(`/api/v1/runs?limit=${limit}`);
   } catch {
     _offlineMode = true;
-    return MOCK_RUN_SUMMARIES.slice(0, limit);
+    const { summaries } = getLocalStoredRuns();
+    return [...summaries, ...MOCK_RUN_SUMMARIES].slice(0, limit);
   }
 }
 
@@ -89,11 +132,17 @@ export async function getRun(id: string): Promise<RunRecord> {
   try {
     const online = await checkOnline();
     if (!online) {
+      const { records } = getLocalStoredRuns();
+      const local = records.find((r) => r.decision_id === id);
+      if (local) return local;
       const rec = MOCK_RUN_RECORDS.find((r) => r.decision_id === id) ?? MOCK_RUN_RECORDS[0];
       return rec;
     }
     return await request<RunRecord>(`/api/v1/runs/${encodeURIComponent(id)}`);
   } catch {
+    const { records } = getLocalStoredRuns();
+    const local = records.find((r) => r.decision_id === id);
+    if (local) return local;
     const rec = MOCK_RUN_RECORDS.find((r) => r.decision_id === id) ?? MOCK_RUN_RECORDS[0];
     return rec;
   }
