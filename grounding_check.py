@@ -6,7 +6,8 @@
 1. unsupported_number（high）：market_gap 與 business_logic 裡的數字，必須對得回精算引擎輸出
    （含 basis 說明文字裡的數字，例如嚴重事件門檻）、新聞原文或既有商品資料。
    coverage_details 與 exclusions 是商品設計參數，不受檢。
-2. unverified_citation（high）：「根據 X 統計」的 X 必須出現在本次證據文字裡。
+2. unverified_citation（high）：「根據 X 統計」的 X 必須出現在本次證據文字裡（比對時不算數字，
+   年份與統計年段幾乎每個來源名都有，不能當成對上的依據）。
 3. missing_disclosure（medium）：精算數字含假設值時，敘述必須揭露「假設」或「估計」。
 
 結論 status：有 high 為 fail、只有 medium 為 warn、無標記為 pass。
@@ -15,7 +16,7 @@ from __future__ import annotations
 
 import re
 
-CHECKER_VERSION = "grounding-check/v1.1"  # v1.1: numbers quoted in the basis strings count as evidence
+CHECKER_VERSION = "grounding-check/v1.2"  # v1.2: digits never satisfy a citation; only % claims convert to fractions
 NUMBER_TOLERANCE = 0.02  # 讓 LLM 四捨五入（0.6129 → 0.61、14,447,368 → 1,444 萬）仍算接地
 
 CLAIM_FIELDS = ("market_gap", "business_logic")
@@ -28,6 +29,7 @@ _SCALE = {"萬": 1e4, "億": 1e8, "千": 1e3, "k": 1e3, "K": 1e3, "M": 1e6, "B":
 _CURRENCY_PREFIXES = ("USD", "NT$", "NTD", "TWD", "新台幣")  # 前置幣別＝保額／自負額等商品設計參數
 _PAIR_SEPARATORS = "/-–"
 _CITATION_WINDOW = 4  # 引用實體與證據文字的最小共同片段長度
+_CITATION_NOISE_RE = re.compile(r"[\s\d,.\-–/]+")  # 比對來源名時剔除的空白、數字與年段分隔符
 
 # 行首清單編號。(?!\d) 讓「3.5%」開頭的行不被當成編號「3.」而吃掉整數位。
 _LIST_MARKER_RE = re.compile(r"(?m)^\s*\d+[.、)．](?!\d)\s*")
@@ -145,9 +147,12 @@ def _corpus_text(actuarial: dict, news: dict | None, products: list[dict] | None
     return re.sub(r"\s+", "", " ".join(parts))
 
 
-def _is_grounded(value: float, corpus: list[float]) -> bool:
+def _is_grounded(value: float, corpus: list[float], *, percent: bool = False) -> bool:
+    """只有寫成百分比的宣稱才試百分比與小數互換（61% 對 0.6129）；一般金額不做，
+    否則「27 億」÷100 剛好落進保費區間就會被當成有依據。"""
+    candidates = (value, value / 100, value * 100) if percent else (value,)
     for c in corpus:
-        for candidate in (value, value / 100, value * 100):
+        for candidate in candidates:
             if abs(candidate - c) <= NUMBER_TOLERANCE * max(abs(c), 1e-9):
                 return True
     return False
@@ -169,9 +174,13 @@ def _citation_is_supported(entity: str, corpus_text: str) -> bool:
     stripped = re.sub(r"\s+", "", entity)
     if stripped in corpus_text:
         return True
+    # 數字不算證據：「世界銀行 2025 年報告」不能因為 2025 對到消防署表名裡的 1958-2025 就算有來源。
+    letters = _CITATION_NOISE_RE.sub("", entity)
+    if len(letters) < _CITATION_WINDOW:
+        return bool(letters) and letters in corpus_text  # 「消防署 1958-2025」剩下的短名要整串出現
     return any(
-        stripped[i: i + _CITATION_WINDOW] in corpus_text
-        for i in range(len(stripped) - _CITATION_WINDOW + 1)
+        letters[i: i + _CITATION_WINDOW] in corpus_text
+        for i in range(len(letters) - _CITATION_WINDOW + 1)
     )
 
 
@@ -194,7 +203,7 @@ def check_grounding(proposal_data: dict, news: dict | None, matched_products: li
         text = proposal.get(field) or ""
         for value, raw in extract_numbers(text):
             checked += 1
-            if _is_grounded(value, corpus_numbers):
+            if _is_grounded(value, corpus_numbers, percent=raw.endswith(("%", "％"))):
                 grounded += 1
                 continue
             flags.append({

@@ -204,5 +204,26 @@ def test_the_engines_own_severe_threshold_counts_as_evidence():
     assert result["status"] == "pass"
 
 
+def test_fabricated_citation_with_a_year_is_still_rejected():
+    """v1.1 let this through: the 4-char window "2025" matched the "1958-2025" span in the NFA table name."""
+    result = _check(market_gap="根據世界銀行 2025 年氣候風險報告，農損逐年上升。")
+    assert result["status"] == "fail"
+    assert [(f["type"], f["value"]) for f in result["flags"]] == [("unverified_citation", "世界銀行 2025 年氣候風險")]
+
+
+def test_a_real_source_cited_with_its_year_span_still_passes():
+    """Guard for the fix above: once digits stop counting, a short real name must still be found verbatim."""
+    result = _check(market_gap="根據消防署 1958-2025 統計，嚴重颱風每年約 0.61 次。")
+    assert result["status"] == "pass"
+    assert result["flags"] == []
+
+
+def test_a_large_amount_is_not_grounded_by_dividing_it_by_100():
+    """v1.1 accepted "27 億美元" because 2.7e9 / 100 lands within 2% of the premium ceiling (26.56M)."""
+    result = _check(market_gap="潛在市場規模達 27 億美元。")
+    assert result["status"] == "fail"
+    assert [(f["type"], f["value"]) for f in result["flags"]] == [("unsupported_number", "27 億")]
+
+
 def test_rule_change_is_visible_in_the_checker_version():
-    assert gc.CHECKER_VERSION == "grounding-check/v1.1"
+    assert gc.CHECKER_VERSION == "grounding-check/v1.2"
