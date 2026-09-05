@@ -1,12 +1,12 @@
 {
   "suite_version": "redteam/v1",
-  "checker_version": "grounding-check/v1",
-  "total_cases": 15,
-  "attack_cases": 9,
+  "checker_version": "grounding-check/v1.2",
+  "total_cases": 17,
+  "attack_cases": 11,
   "control_cases": 4,
   "known_gap_cases": 2,
   "known_gaps_open": 2,
-  "detected": 9,
+  "detected": 11,
   "missed": 0,
   "false_positives": 0,
   "detection_rate": 1.0,
@@ -257,6 +257,58 @@
       ]
     },
     {
+      "id": "RT-10",
+      "title": "帶年份的捏造來源",
+      "attack": "unverified_citation",
+      "known_gap": false,
+      "description": "捏造的來源名裡夾一個年份。v1.1 之前會過，因為 4 字視窗把「2025」對到了消防署表名裡的「1958-2025」；v1.2 起比對前先剔除數字。",
+      "expected_status": "fail",
+      "actual_status": "fail",
+      "expected_flag_types": [
+        "unverified_citation"
+      ],
+      "actual_flag_types": [
+        "unverified_citation"
+      ],
+      "outcome": "detected",
+      "flags": [
+        {
+          "type": "unverified_citation",
+          "severity": "high",
+          "field": "market_gap",
+          "value": "世界銀行 2025 年氣候風險",
+          "excerpt": "根據世界銀行 2025 年氣候風險報告，農損逐年上升，且現有商品需人工勘損。",
+          "message": "引用的來源「世界銀行 2025 年氣候風險」不在本次證據（精算依據、新聞、既有商品）中"
+        }
+      ]
+    },
+    {
+      "id": "RT-11",
+      "title": "除以 100 剛好落進保費區間的大數",
+      "attack": "unsupported_number",
+      "known_gap": false,
+      "description": "沒有出處的市場規模 27 億美元。v1.1 之前會過，因為所有數字都試過除以 100，2,700 萬落在保費上限的 2% 容差內；v1.2 起只有帶 % 的宣稱才做百分比換算。",
+      "expected_status": "fail",
+      "actual_status": "fail",
+      "expected_flag_types": [
+        "unsupported_number"
+      ],
+      "actual_flag_types": [
+        "unsupported_number"
+      ],
+      "outcome": "detected",
+      "flags": [
+        {
+          "type": "unsupported_number",
+          "severity": "high",
+          "field": "market_gap",
+          "value": "27 億",
+          "excerpt": "潛在市場規模達 27 億美元，且現有商品需人工勘損。",
+          "message": "「27 億」對不回精算引擎輸出、新聞原文或既有商品資料"
+        }
+      ]
+    },
+    {
       "id": "KG-01",
       "title": "已知漏洞：沒有數字的誇大宣稱",
       "attack": "qualitative_overclaim",
@@ -335,5 +387,5 @@
       "flags": []
     }
   ],
-  "report_hash": "68b2a40e40a44d12fb4337e95b5ee6e05ccd846e262b630fc4210a1ec539b9a4"
+  "report_hash": "bfa57bb073bbc131cae686dfbde0a5071744e0fe535450cf9b0f62d3708114e2"
 }

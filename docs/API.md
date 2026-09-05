@@ -186,12 +186,12 @@ Word 報告會中英並列。2026-09-05 13:00 之前產生的舊紀錄沒有 `_e
 ```json
 {
   "suite_version": "redteam/v1",
-  "checker_version": "grounding-check/v1",
-  "total_cases": 15,
-  "attack_cases": 9, "control_cases": 4, "known_gap_cases": 2, "known_gaps_open": 2,
-  "detected": 9, "missed": 0, "false_positives": 0,
+  "checker_version": "grounding-check/v1.2",
+  "total_cases": 17,
+  "attack_cases": 11, "control_cases": 4, "known_gap_cases": 2, "known_gaps_open": 2,
+  "detected": 11, "missed": 0, "false_positives": 0,
   "detection_rate": 1.0, "false_positive_rate": 0.0,
-  "report_hash": "68b2a40e…",
+  "report_hash": "bfa57bb0…",
   "cases": [
     {
       "id": "RT-09", "title": "新聞夾帶提示詞注入", "attack": "unsupported_number", "known_gap": false,
