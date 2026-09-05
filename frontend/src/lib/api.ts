@@ -16,11 +16,24 @@ let _offlineMode: boolean | null = null;
 
 async function checkOnline(): Promise<boolean> {
   if (_offlineMode !== null) return !_offlineMode;
+  // In browser, if current page is HTTPS and API_BASE is HTTP (like default localhost),
+  // Mixed Content is blocked immediately by browsers. Avoid blocking or hanging fetch.
+  if (
+    typeof window !== "undefined" &&
+    window.location.protocol === "https:" &&
+    API_BASE.startsWith("http://")
+  ) {
+    _offlineMode = true;
+    return false;
+  }
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1200);
     const res = await fetch(`${API_BASE}/api/v1/health`, {
       method: "GET",
-      signal: AbortSignal.timeout(3000),
+      signal: controller.signal,
     });
+    clearTimeout(timer);
     _offlineMode = !res.ok;
     return res.ok;
   } catch {
@@ -76,7 +89,7 @@ export async function chainStatus(): Promise<ChainStatus> {
 
 const LOCAL_STORAGE_KEY = "atlas.local_runs";
 
-function getLocalStoredRuns(): { summaries: RunSummary[]; records: RunRecord[] } {
+export function getLocalStoredRuns(): { summaries: RunSummary[]; records: RunRecord[] } {
   if (typeof window === "undefined") return { summaries: [], records: [] };
   try {
     const raw = window.localStorage.getItem(LOCAL_STORAGE_KEY);

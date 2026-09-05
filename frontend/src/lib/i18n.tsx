@@ -16,6 +16,7 @@ export const DICT = {
     "header.theme.dark": "深色",
     "header.present": "簡報模式",
     "header.home": "回到總覽",
+    "header.intro": "系統介紹",
     "banner.offline": "無法連線後端，請確認已啟動於",
     "banner.retry": "重試",
     "kpi.total": "累計提案",
@@ -130,6 +131,62 @@ export const DICT = {
     "history.onchainPill": "已上鏈 Sepolia",
     "history.mockPill": "模擬存證",
     "history.empty": "目前尚無歷史紀錄",
+    "header.history": "歷史分析與存證紀錄庫",
+    "history.pageTitle": "歷史分析與存證紀錄庫",
+    "history.pageSubtitle": "所有歷史生成之保險提案、AI 多代理人辯論歷程與以太坊 Sepolia 存證",
+    "history.totalCount": "歷史提案總數",
+    "history.onchainCount": "Sepolia 鏈上已存證",
+    "history.totalExposure": "累積覆蓋風險估計",
+    "history.avgMarkup": "平均定價加成倍數",
+    "history.searchPlaceholder": "搜尋商品名稱、時事新聞或決策 ID...",
+    "history.filterAll": "全部提案",
+    "history.filterOnchain": "僅顯示已上鏈",
+    "history.filterMock": "僅顯示模擬存證",
+    "history.sortNewest": "時間：最新優先",
+    "history.sortOldest": "時間：最早優先",
+    "history.sortLoss": "損失：金額最高",
+    "history.expand": "展開辯論與精算",
+    "history.collapse": "收合資訊",
+    "history.actuarialBasis": "精算與損失依據",
+    "history.debateTranscript": "代理人辯論歷程",
+    "history.coverageTitle": "承保範圍",
+    "history.exclusionsTitle": "除外責任",
+    "history.targetAudience": "目標客群",
+    "history.noMatches": "無符合條件的歷史提案",
+    "history.verifyInOverview": "前往驗證總覽",
+    "intro.badge": "可信 AI 創新專案 · 新興風險定價與鏈上存證",
+    "intro.heroTitle": "未然 ForeSure",
+    "intro.heroTagline": "多代理人新興風險定價與以太坊鏈上存證決策桌",
+    "intro.heroLead": "針對氣候異常、AI 基礎建設中斷與高科技供應鏈等缺乏歷史數據的新興風險，「未然 ForeSure」結合即時市場時事感知、多 AI 代理人（PM、核保、精算）跨角色博弈辯論，於 90 秒內自動生成具風控標準的參數型保險提案，並透過以太坊 Sepolia 智能合約進行 SHA-256 決策指紋存證，實現金融監理級不可篡改性。",
+    "intro.ctaLive": "啟動實機分析 Demo",
+    "intro.ctaHistory": "歷史分析與存證紀錄庫",
+    "intro.ctaOverview": "進入決策總覽",
+    "intro.agentsTitle": "三方 AI 代理人博弈與精算架構",
+    "intro.agentsSubtitle": "拒絕黑箱單一 Prompt，透過跨角色相互制衡與精算模型校準，兼顧商業可行性與數學風控",
+    "intro.pmRole": "產品經理 (PM Agent)",
+    "intro.pmDesc": "時事痛點敏銳洞察、市場保障空白挖掘、目標客群定位與參數型給付結構規劃。",
+    "intro.uwRole": "核保專家 (Underwriter Agent)",
+    "intro.uwDesc": "嚴格防範逆選擇與道德風險，排查巨災敞口，精確訂定承保範圍與除外責任。",
+    "intro.actuaryRole": "總精算師 (Actuary Agent)",
+    "intro.actuaryDesc": "損失頻率與嚴重度統計模型分析、定價加成精算、確保商業與數學可持續性。",
+    "intro.techTitle": "四大關鍵核心優勢",
+    "intro.tech1Title": "即時市場時事感測",
+    "intro.tech1Desc": "自動追蹤全球天候與經貿新聞，比對現有商品庫發現市場未滿足的保障缺口。",
+    "intro.tech2Title": "多代理人防幻覺辯論",
+    "intro.tech2Desc": "拒絕單一黑箱 Prompt，透過 PM、核保、精算跨領域多輪檢驗，確保提案嚴謹度。",
+    "intro.tech3Title": "參數型智能給付",
+    "intro.tech3Desc": "以第三方客觀數據（氣象局、地震監測、API 狀態）為理賠依據，免除繁瑣人工作業。",
+    "intro.tech4Title": "以太坊不可篡改存證",
+    "intro.tech4Desc": "每筆決策 SHA-256 指紋同步廣播至 Sepolia 區塊鏈，提供金融監理級稽核軌跡。",
+    "intro.flowTitle": "現場評審展示四步驟流程",
+    "intro.flowStep1Title": "1. 系統介紹與定位",
+    "intro.flowStep1Desc": "了解未然系統如何解決新興巨災與 AI 科技風險定價難題。",
+    "intro.flowStep2Title": "2. 啟動實機分析",
+    "intro.flowStep2Desc": "即時爬取新聞，三代理人 85 秒動態辯論並定案保費與責任限制。",
+    "intro.flowStep3Title": "3. 鏈上存證與查驗",
+    "intro.flowStep3Desc": "檢視以太坊 Sepolia 智能合約交易雜湊，前往 Etherscan 公開驗證。",
+    "intro.flowStep4Title": "4. 存證紀錄庫與總覽",
+    "intro.flowStep4Desc": "進入歷史庫查驗過去 20 筆提案，或於總覽進行 SHA-256 指紋抗篡改校驗。",
   },
   en: {
     "app.title": "ForeSure",
@@ -142,6 +199,7 @@ export const DICT = {
     "header.theme.dark": "Dark",
     "header.present": "Presentation",
     "header.home": "Back to overview",
+    "header.intro": "Introduction",
     "banner.offline": "Cannot reach the backend. Make sure it is running at",
     "banner.retry": "Retry",
     "kpi.total": "Proposals",
@@ -256,6 +314,62 @@ export const DICT = {
     "history.onchainPill": "Sepolia Anchored",
     "history.mockPill": "Mock Record",
     "history.empty": "No historical records available",
+    "header.history": "Historical Archive",
+    "history.pageTitle": "Historical Decisions & Audit Archive",
+    "history.pageSubtitle": "Complete repository of generated insurance proposals, multi-agent debate transcripts, and Ethereum Sepolia audit trails",
+    "history.totalCount": "Total Proposals",
+    "history.onchainCount": "Sepolia Anchored",
+    "history.totalExposure": "Cumulative Exposure",
+    "history.avgMarkup": "Average Markup Multiplier",
+    "history.searchPlaceholder": "Search by product name, news trigger, or decision ID...",
+    "history.filterAll": "All Proposals",
+    "history.filterOnchain": "Sepolia Anchored Only",
+    "history.filterMock": "Mock Anchored Only",
+    "history.sortNewest": "Time: Newest First",
+    "history.sortOldest": "Time: Oldest First",
+    "history.sortLoss": "Loss: High to Low",
+    "history.expand": "Expand Debate & Actuarial",
+    "history.collapse": "Collapse",
+    "history.actuarialBasis": "Actuarial & Loss Basis",
+    "history.debateTranscript": "Agent Debate Transcript",
+    "history.coverageTitle": "Coverage Details",
+    "history.exclusionsTitle": "Exclusions",
+    "history.targetAudience": "Target Audience",
+    "history.noMatches": "No matching historical proposals found",
+    "history.verifyInOverview": "Verify in Overview",
+    "intro.badge": "Trustworthy AI · Emerging Risk Pricing & On-Chain Audit",
+    "intro.heroTitle": "ForeSure",
+    "intro.heroTagline": "Multi-Agent Parametric Risk Pricing & Ethereum Attestation Workbench",
+    "intro.heroLead": "Tackling emerging risks like climate volatility, AI infrastructure outages, and semiconductor supply disruptions with zero historical data. ForeSure combines live market sensing with a tri-agent adversarial debate (PM, Underwriter, Actuary) to synthesize parametric coverage within 90 seconds, permanently anchoring SHA-256 decision fingerprints on Ethereum Sepolia for regulatory-grade immutability.",
+    "intro.ctaLive": "Launch Live Analysis Demo",
+    "intro.ctaHistory": "Historical Archive",
+    "intro.ctaOverview": "Open Decision Overview",
+    "intro.agentsTitle": "Tri-Agent Adversarial & Actuarial Architecture",
+    "intro.agentsSubtitle": "Rejecting single-prompt hallucinations through multi-agent checks and balances, combining product agility with actuarial solvency.",
+    "intro.pmRole": "Product Manager (PM Agent)",
+    "intro.pmDesc": "Identifies emerging risk triggers from news feeds, discovers coverage gaps, and structures parametric terms.",
+    "intro.uwRole": "Underwriting Specialist (UW Agent)",
+    "intro.uwDesc": "Guards against adverse selection and moral hazard, defines strict exclusions, and caps aggregate loss exposure.",
+    "intro.actuaryRole": "Chief Actuary (Actuary Agent)",
+    "intro.actuaryDesc": "Models frequency and severity distributions, calculates actuarial markup, and ensures capital solvency.",
+    "intro.techTitle": "Four Architectural Advantages",
+    "intro.tech1Title": "Live Market Sensing",
+    "intro.tech1Desc": "Monitors global telemetry, weather, and industry news feeds to detect emergent uninsured exposures.",
+    "intro.tech2Title": "Anti-Hallucination Debate",
+    "intro.tech2Desc": "Adversarial dialectic across PM, Underwriter, and Actuary agents to rigorously stress-test assumptions.",
+    "intro.tech3Title": "Parametric Smart Trigger",
+    "intro.tech3Desc": "Objective third-party oracles (NOAA, USGS, Cloud health APIs) trigger automated frictionless payouts.",
+    "intro.tech4Title": "Ethereum Immutable Audit",
+    "intro.tech4Desc": "Every decision fingerprint is published to Ethereum Sepolia smart contracts, ensuring auditability.",
+    "intro.flowTitle": "Interactive Demo Walkthrough",
+    "intro.flowStep1Title": "1. System Introduction",
+    "intro.flowStep1Desc": "Explore ForeSure's multi-agent architecture and parametric risk framework.",
+    "intro.flowStep2Title": "2. Live Analysis Demo",
+    "intro.flowStep2Desc": "Watch live news scraping, three-agent adversarial debates, and real-time pricing.",
+    "intro.flowStep3Title": "3. On-Chain Verification",
+    "intro.flowStep3Desc": "Verify Sepolia transaction hashes and contract state on Etherscan.",
+    "intro.flowStep4Title": "4. Historical Archive",
+    "intro.flowStep4Desc": "Explore 20 historical proposals with full debate transcripts and loss models.",
   },
 } as const;
 
@@ -268,30 +382,39 @@ export function translate(lang: Lang, key: DictKey): string {
 
 const STORAGE_KEY = "atlas.lang";
 
-// External store over localStorage so components never call setState inside an effect and
-// server/client snapshots stay consistent during hydration (server always renders zh).
+let activeLang: Lang = "zh";
+if (typeof window !== "undefined") {
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved === "en" || saved === "zh") {
+      activeLang = saved;
+    }
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 const listeners = new Set<() => void>();
 function subscribe(listener: () => void) {
   listeners.add(listener);
   return () => listeners.delete(listener);
 }
 function readLang(): Lang {
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) === "en" ? "en" : "zh";
-  } catch {
-    return "zh";
-  }
+  return activeLang;
 }
 
 export function useLang() {
   const lang = useSyncExternalStore(subscribe, readLang, () => "zh" as Lang);
   const setLang = useCallback((l: Lang) => {
+    activeLang = l;
     try {
       window.localStorage.setItem(STORAGE_KEY, l);
     } catch {
       /* storage unavailable */
     }
-    document.documentElement.lang = l === "zh" ? "zh-Hant" : "en";
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = l === "zh" ? "zh-Hant" : "en";
+    }
     listeners.forEach((fn) => fn());
   }, []);
   return { lang, setLang };

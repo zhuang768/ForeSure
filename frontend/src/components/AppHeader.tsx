@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { translate, useLang, useT, type DictKey, type Lang } from "@/lib/i18n";
 import { usePrefs } from "@/lib/prefs";
 import type { ChainStatus } from "@/lib/types";
+import BrandLogo from "@/components/BrandLogo";
 
 /**
  * A label whose box is as wide as the longer of its two translations, so switching language does not
@@ -32,7 +33,9 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
   const { lang, setLang } = useLang();
   const { theme, setTheme, present, setPresent } = usePrefs();
   const pathname = usePathname();
-  const onOverview = pathname?.startsWith("/overview");
+  const onHistory = pathname?.startsWith("/history");
+  const onGenerator = pathname?.startsWith("/generator");
+  const onHome = pathname === "/" || pathname === "";
 
   // Show connected status for both real sepolia and mock (offline demo) mode
   const chainPill =
@@ -46,53 +49,101 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-[1800px] items-center justify-between gap-4 px-5">
-        <Link href="/" className="flex items-baseline gap-3">
-          <span className="text-base font-bold tracking-tight">{t("app.title")}</span>
-          <span className="hidden text-xs text-muted md:inline">{t("app.subtitle")}</span>
+      <div className="mx-auto flex min-h-18 max-w-[1800px] flex-wrap items-center justify-between gap-x-5 gap-y-3 px-5 py-3">
+        <Link href="/" aria-label={t("app.title")} className="flex shrink-0 items-center gap-4 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
+          <BrandLogo decorative className="h-12 w-auto" />
+          <span className="hidden border-l border-border pl-4 text-xs text-muted xl:inline">{t("app.subtitle")}</span>
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex max-w-full flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
           {chainPill}
-          {/* The label never changes; the active side is highlighted instead, so the button keeps its width. */}
-          <button
-            type="button"
-            className="btn btn-secondary px-2 py-1 text-xs"
-            onClick={() => setLang(lang === "zh" ? "en" : "zh")}
-            aria-label="language"
+          {/* Language segmented toggle: explicit selection */}
+          <div className="inline-flex items-center rounded-md border border-border bg-surface-2 p-0.5 text-xs">
+            <button
+              type="button"
+              onClick={() => setLang("zh")}
+              className={`rounded px-2 py-0.5 text-xs font-semibold transition-all ${
+                lang === "zh"
+                  ? "bg-primary text-white shadow-xs"
+                  : "text-muted hover:text-text"
+              }`}
+              aria-label="繁體中文"
+              title="繁體中文"
+            >
+              中
+            </button>
+            <button
+              type="button"
+              onClick={() => setLang("en")}
+              className={`rounded px-2 py-0.5 text-xs font-semibold transition-all ${
+                lang === "en"
+                  ? "bg-primary text-white shadow-xs"
+                  : "text-muted hover:text-text"
+              }`}
+              aria-label="English"
+              title="English"
+            >
+              EN
+            </button>
+          </div>
+
+          {/* Theme segmented toggle: explicit selection (Zero Emojis, pure SVG) */}
+          <div className="inline-flex items-center rounded-md border border-border bg-surface-2 p-0.5 text-xs">
+            <button
+              type="button"
+              onClick={() => setTheme("light")}
+              className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium transition-all ${
+                theme === "light"
+                  ? "bg-surface text-text shadow-xs font-semibold"
+                  : "text-muted hover:text-text"
+              }`}
+              aria-label={lang === "zh" ? "淺色模式" : "Light mode"}
+              title={lang === "zh" ? "淺色模式" : "Light mode"}
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <circle cx="12" cy="12" r="5" />
+                <path strokeLinecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+              </svg>
+              <span>{lang === "zh" ? "淺色" : "Light"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTheme("dark")}
+              className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium transition-all ${
+                theme === "dark"
+                  ? "bg-surface text-text shadow-xs font-semibold"
+                  : "text-muted hover:text-text"
+              }`}
+              aria-label={lang === "zh" ? "深色模式" : "Dark mode"}
+              title={lang === "zh" ? "深色模式" : "Dark mode"}
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+              <span>{lang === "zh" ? "深色" : "Dark"}</span>
+            </button>
+          </div>
+          {/* Historical archive button with distinct brand color */}
+          <Link
+            href="/history"
+            className={`btn px-3 py-1 text-xs font-semibold transition-all ${
+              onHistory
+                ? "bg-primary text-white shadow-sm ring-1 ring-primary"
+                : "bg-primary-soft text-primary-ink border border-primary/60 hover:bg-primary hover:text-white"
+            }`}
           >
-            <span className={lang === "zh" ? "font-bold" : "text-muted"}>中</span>
-            <span className="text-muted">/</span>
-            <span className={lang === "en" ? "font-bold" : "text-muted"}>EN</span>
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary px-2 py-1 text-xs"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label="theme"
-          >
-            {theme === "dark" ? (
-              <StableLabel k="header.theme.dark" lang={lang} prefix="☾ " />
-            ) : (
-              <StableLabel k="header.theme.light" lang={lang} prefix="☀ " />
-            )}
-          </button>
-          <button
-            type="button"
-            className={`btn px-2 py-1 text-xs ${present ? "btn-primary" : "btn-secondary"}`}
-            onClick={() => setPresent(!present)}
-            aria-pressed={present}
-          >
-            <StableLabel k="header.present" lang={lang} />
-          </button>
-          {onOverview ? (
-            <Link href="/" className="btn btn-primary">
+            <StableLabel k="header.history" lang={lang} />
+          </Link>
+          {/* Navigation to intro or generator */}
+          {!onHome ? (
+            <Link href="/" className="btn btn-secondary px-2.5 py-1 text-xs">
+              <StableLabel k="header.intro" lang={lang} />
+            </Link>
+          ) : null}
+          {!onGenerator ? (
+            <Link href="/generator" className="btn btn-primary px-3 py-1 text-xs font-semibold">
               <StableLabel k="header.run" lang={lang} prefix="▶ " />
             </Link>
-          ) : (
-            <Link href="/overview" className="btn btn-secondary">
-              <StableLabel k="header.home" lang={lang} />
-            </Link>
-          )}
+          ) : null}
         </div>
       </div>
     </header>
