@@ -29,10 +29,11 @@ POST 端點每個 IP 每分鐘限 30 次。
 | 5 | `pm` | 字串，PM 提案全文 | 中欄第一段 |
 | 6 | `underwriter` | 字串，核保批評全文 | 中欄第二段 |
 | 7 | `actuary` | 字串，精算師的 business_logic | 中欄第三段 |
-| 8 | `report` | `{report_path}` | 顯示已產出 docx |
-| 9 | `chain_pending` | `{network}` | 徽章轉成「上鏈中…」 |
-| 10 | `chain_done` | 鏈上收據，見下 | 徽章轉成「已上鏈」或「模擬」 |
-| 11 | `done` | 完整紀錄（與 `GET /api/v1/runs/{decision_id}` 相同） | 收尾、加入歷史列表 |
+| 8 | `grounding` | 幻覺檢測結果，格式見下方「幻覺檢測」 | 右欄徽章（通過／警示／未通過） |
+| 9 | `report` | `{report_path}` | 顯示已產出 docx |
+| 10 | `chain_pending` | `{network}` | 徽章轉成「上鏈中…」 |
+| 11 | `chain_done` | 鏈上收據，見下 | 徽章轉成「已上鏈」或「模擬」 |
+| 12 | `done` | 完整紀錄（與 `GET /api/v1/runs/{decision_id}` 相同） | 收尾、加入歷史列表 |
 | 例外 | `error` | 字串 | 顯示錯誤 |
 
 `chain_done` 的收據：
@@ -56,9 +57,9 @@ POST 端點每個 IP 每分鐘限 30 次。
 ## 歷史紀錄
 
 - `GET /api/v1/runs?limit=50` → 摘要陣列，最新在前：
-  `{decision_id, run_id, timestamp, news_title, product_name, is_mock_proposal, chain_is_mock, tx_hash, verification_url}`
+  `{decision_id, run_id, timestamp, news_title, product_name, is_mock_proposal, grounding_status, chain_is_mock, tx_hash, verification_url}`
 - `GET /api/v1/runs/{decision_id}` → 完整紀錄：
-  `{decision_id, timestamp, news, matched_products, actuarial_data, proposal_data:{proposal, debate:{pm, underwriter}, is_mock, model}, blockchain_receipt, report_path}`
+  `{decision_id, timestamp, news, matched_products, actuarial_data, proposal_data:{proposal, debate:{pm, underwriter}, is_mock, model}, grounding, blockchain_receipt, report_path}`
 
 重播：用完整紀錄的欄位，依上表順序自己排時間差播放即可，不需要後端。
 
@@ -97,7 +98,7 @@ Word 報告會中英並列。2026-09-05 13:00 之前產生的舊紀錄沒有 `_e
 ## 攤平格式端點（首頁與 /generator 頁目前在用）
 
 資料來源與上面相同，只是把 `proposal`、`actuarial_data`、`blockchain_tx_hash`、`source_news` 攤到頂層，
-且 `actuarial_data.probability` 是 0 到 1 的小數（`probability_pct` 也保留）。
+且 `actuarial_data.probability` 是 0 到 1 的小數（`probability_pct` 也保留）。攤平格式也有頂層 grounding。
 
 - `GET /api/v1/all_reports` → 全部報告，**舊到新**（前端自行 reverse）
 - `GET /api/v1/latest_report` → 最新一份，沒有時回 `{"error": "..."}`
@@ -141,3 +142,32 @@ Word 報告會中英並列。2026-09-05 13:00 之前產生的舊紀錄沒有 `_e
 - `low_sample` 為 `true` 時（嚴重事件少於 5 筆，目前水災如此）請顯示「樣本少」警示；沒有統計的類別此欄為 `null`。
 - 建議畫面：機率旁標「依據：消防署 1995–2025」並可點開 `probability_method`；損失旁標「假設值」並可點開 `assumed_loss_note`。
 - 舊紀錄（2026-09-05 之前產生）沒有 `basis` 欄位，前端要能容忍缺欄。
+
+## 幻覺檢測（`grounding`）
+
+每次執行在辯論結束後、產出報告與上鏈之前，由 `grounding_check.py` 對最終提案做一次純規則檢查
+（不呼叫 LLM，離線可重跑，同樣輸入必得同樣輸出）。結果出現在四個地方：SSE 的 `grounding` 事件、
+完整紀錄與攤平格式的頂層 `grounding`、摘要的 `grounding_status`，以及上鏈 payload 的
+`grounding_status`、`grounding_flag_count`、`grounding_checker_version`（所以結論被雜湊封存，事後改不了）。
+
+```json
+{
+  "status": "fail",
+  "checker_version": "grounding-check/v1",
+  "checked_claims": 3,
+  "grounded_claims": 2,
+  "flag_count": 1,
+  "evidence_sources": ["actuarial_engine", "news", "matched_products"],
+  "flags": [
+    {"type": "unsupported_number", "severity": "high", "field": "business_logic", "value": "35%",
+     "excerpt": "透過再保險分散風險，保費利潤率預期可達 35%。",
+     "message": "「35%」對不回精算引擎輸出、新聞原文或既有商品資料"}
+  ]
+}
+```
+
+- `status`：`pass`（沒有標記）、`warn`（只有 medium）、`fail`（有 high）。
+- `flags[].type`：`unsupported_number`（`market_gap`／`business_logic` 裡對不回精算引擎、新聞或既有商品的數字，容許 2% 誤差；`coverage_details`／`exclusions` 是商品設計參數不受檢）、`unverified_citation`（「根據 X 統計」的 X 不在本次證據裡）、`missing_disclosure`（數字含假設值但敘述沒寫「假設」或「估計」）。
+- `flags[].severity`：`high` 或 `medium`；`field` 是提案欄位名；`value` 是被標記的數字或來源名（`missing_disclosure` 為 `null`）；`excerpt` 是原文片段。
+- 建議畫面：右欄徽章「✓ 幻覺檢測通過」綠、「! 幻覺檢測警示 (n)」琥珀、「✕ 幻覺檢測未通過 (n)」紅；證據與稽核分頁列出每一項標記（類型、欄位、值、原文片段）；佇列與歷史列表在 warn／fail 時顯示徽章。
+- 舊紀錄（2026-09-05 15:00 之前產生）沒有 `grounding`，`grounding_status` 為 `null`，前端要能容忍缺欄。
