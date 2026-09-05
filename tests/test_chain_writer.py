@@ -37,3 +37,36 @@ def test_audit_wrapper_uses_foresure_decision_id_prefix(monkeypatch):
 
     assert receipt["decision_id"].startswith("foresure-")
     assert receipt["payload"]["decision_id"] == receipt["decision_id"]
+
+
+GROUNDING = {"status": "fail", "flag_count": 2, "checker_version": "grounding-check/v1", "flags": []}
+
+
+def test_payload_seals_the_grounding_verdict(monkeypatch):
+    _force_mock(monkeypatch)
+
+    receipt = chain_writer.audit_proposal_on_chain(
+        {"proposal": {"product_name": "X"}, "actuarial_data": {}, "grounding": GROUNDING}
+    )
+
+    payload = receipt["payload"]
+    assert payload["grounding_status"] == "fail"
+    assert payload["grounding_flag_count"] == 2
+    assert payload["grounding_checker_version"] == "grounding-check/v1"
+    assert payload["agent_pipeline_version"] == "v1.5.0"
+
+
+def test_payload_without_grounding_keeps_null_fields(monkeypatch):
+    _force_mock(monkeypatch)
+
+    payload = chain_writer.audit_proposal_on_chain({"proposal": {"product_name": "X"}, "actuarial_data": {}})["payload"]
+
+    assert payload["grounding_status"] is None
+    assert payload["grounding_flag_count"] is None
+
+
+def test_changing_the_grounding_verdict_changes_the_hash():
+    sealed = chain_writer.build_decision_payload("d1", {"proposal": {}, "actuarial_data": {}, "grounding": GROUNDING})
+    laundered = dict(sealed, grounding_status="pass", grounding_flag_count=0)
+
+    assert chain_writer.compute_hash(sealed) != chain_writer.compute_hash(laundered)

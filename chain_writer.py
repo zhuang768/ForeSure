@@ -133,9 +133,11 @@ def build_decision_payload(decision_id: str, proposal_data: dict) -> dict:
     """要被雜湊上鏈的結構化決策內容。驗證時必須用完全相同的 payload 重算。"""
     proposal = proposal_data.get("proposal", {})
     actuarial = proposal_data.get("actuarial_data", {})
+    # 幻覺檢測的結論一起被雜湊：事後不能宣稱「當時檢查是過的」。舊紀錄沒有檢查，三個欄位為 None。
+    grounding = proposal_data.get("grounding") or {}
     return {
         "decision_id": decision_id,
-        "agent_pipeline_version": "v1.4.0",
+        "agent_pipeline_version": "v1.5.0",
         "trigger_news_source": proposal_data.get("source_news", "unknown_source"),
         "product_name": proposal.get("product_name", "未知險種"),
         "market_gap": proposal.get("market_gap", ""),
@@ -144,6 +146,9 @@ def build_decision_payload(decision_id: str, proposal_data: dict) -> dict:
         "probability_pct": actuarial.get("probability_pct"),
         "expected_loss_usd": actuarial.get("expected_loss_usd"),
         "premium_range_usd": actuarial.get("premium_range_usd"),
+        "grounding_status": grounding.get("status"),
+        "grounding_flag_count": grounding.get("flag_count"),
+        "grounding_checker_version": grounding.get("checker_version"),
     }
 
 
