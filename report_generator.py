@@ -114,6 +114,41 @@ def _add_actuarial_basis(doc, basis: dict) -> None:
     doc.add_paragraph(_label("保費計算", "Premium method", basis.get("premium_method", "")))
 
 
+_GROUNDING_LABEL = {
+    "pass": ("通過：風險與定價數字皆可追溯到來源", "Pass: every risk and pricing figure traces back to a source"),
+    "warn": ("警示：需補充揭露，建議人工確認", "Warning: a disclosure is missing; human confirmation advised"),
+    "fail": ("未通過：發現無來源的數字或無法驗證的引用，須人工審核後才可送審",
+             "Fail: ungrounded figures or unverifiable citations found; human review required before filing"),
+}
+_FLAG_LABEL = {
+    "unsupported_number": ("無來源的數字", "Ungrounded number"),
+    "unverified_citation": ("無法驗證的引用", "Unverifiable citation"),
+    "missing_disclosure": ("假設值未揭露", "Assumption not disclosed"),
+}
+
+
+def _add_grounding_section(doc, grounding: dict) -> None:
+    """Rule-based hallucination check: the verdict, the counts and every flag, written for the human reviewer."""
+    _heading(doc, "4. 幻覺檢測", "Grounding Check", level=1)
+    zh, en = _GROUNDING_LABEL.get(grounding.get("status"), ("未知", "Unknown"))
+    doc.add_paragraph(_label("結果", "Verdict", zh))
+    _english(doc.add_paragraph(), en)
+    checked, grounded = grounding.get("checked_claims", 0), grounding.get("grounded_claims", 0)
+    doc.add_paragraph(_label("檢查的數字", "Figures checked",
+                             f"{checked} 項，其中 {grounded} 項有來源 / {grounded} of {checked} grounded"))
+    for flag in grounding.get("flags") or []:
+        fz, fe = _FLAG_LABEL.get(flag.get("type"), (str(flag.get("type", "")), str(flag.get("type", ""))))
+        line = f"[{flag.get('severity', '')}] {fz} / {fe}：{flag.get('field', '')}"
+        if flag.get("value"):
+            line += f" → {flag['value']}"
+        doc.add_paragraph(line)
+        if flag.get("excerpt"):
+            doc.add_paragraph(f"「{flag['excerpt']}」")
+        if flag.get("message"):
+            doc.add_paragraph(flag["message"])
+    doc.add_paragraph(_label("檢查器版本", "Checker version", grounding.get("checker_version", "")))
+
+
 def _safe_name(name: str) -> str:
     return "".join(c for c in (name or "") if c.isalnum() or c == " ").strip().replace(" ", "_")
 
@@ -199,6 +234,11 @@ def generate_report(proposal_data: dict, output_dir: str = "reports") -> str:
 
     _heading(doc, '商業邏輯與獲利模式', 'Business Logic & Profit Model', level=2)
     _bilingual_section(doc, proposal.get('business_logic'), proposal.get('business_logic_en'))
+
+    # 4. 幻覺檢測 / Grounding check（舊紀錄沒有，略過）
+    grounding = proposal_data.get("grounding")
+    if grounding:
+        _add_grounding_section(doc, grounding)
 
     # 儲存檔案 / Save
     filepath = os.path.join(output_dir, _report_filename(proposal))

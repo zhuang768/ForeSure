@@ -151,3 +151,38 @@ def test_one_sided_translation_uses_the_original_for_the_other_language(tmp_path
     text = _text_of(generate_report(data, output_dir=str(tmp_path)))
 
     assert "風暴襲擊南部" in text and "Storm hits the south" in text
+
+
+GROUNDING_FAIL = {
+    "status": "fail", "checker_version": "grounding-check/v1",
+    "checked_claims": 3, "grounded_claims": 2, "flag_count": 1,
+    "evidence_sources": ["actuarial_engine", "news", "matched_products"],
+    "flags": [{"type": "unsupported_number", "severity": "high", "field": "business_logic", "value": "35%",
+               "excerpt": "透過再保險分散風險，保費利潤率預期可達 35%。",
+               "message": "「35%」對不回精算引擎輸出、新聞原文或既有商品資料"}],
+}
+
+
+def test_report_spells_out_the_grounding_verdict_and_every_flag(tmp_path):
+    data = {"proposal": PROPOSAL, "source_news": "n", "news_summary": "s",
+            "actuarial_data": {"probability_pct": 51.61, "expected_loss_usd": 14447368.42,
+                               "premium_range_usd": [15938709.68, 26564516.13]},
+            "grounding": GROUNDING_FAIL}
+
+    text = _text_of(generate_report(data, output_dir=str(tmp_path)))
+
+    assert "幻覺檢測" in text and "Grounding Check" in text
+    assert "未通過" in text
+    assert "無來源的數字" in text and "business_logic" in text and "35%" in text
+    assert "保費利潤率預期可達 35%" in text
+    assert "grounding-check/v1" in text
+
+
+def test_report_without_grounding_has_no_grounding_section(tmp_path):
+    data = {"proposal": PROPOSAL, "source_news": "n", "news_summary": "s",
+            "actuarial_data": {"probability_pct": 4.57, "expected_loss_usd": 41839.45,
+                               "premium_range_usd": [3495.69, 5825.49]}}
+
+    text = _text_of(generate_report(data, output_dir=str(tmp_path)))
+
+    assert "幻覺檢測" not in text
