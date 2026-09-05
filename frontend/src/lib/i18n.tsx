@@ -354,30 +354,39 @@ export function translate(lang: Lang, key: DictKey): string {
 
 const STORAGE_KEY = "atlas.lang";
 
-// External store over localStorage so components never call setState inside an effect and
-// server/client snapshots stay consistent during hydration (server always renders zh).
+let activeLang: Lang = "zh";
+if (typeof window !== "undefined") {
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved === "en" || saved === "zh") {
+      activeLang = saved;
+    }
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 const listeners = new Set<() => void>();
 function subscribe(listener: () => void) {
   listeners.add(listener);
   return () => listeners.delete(listener);
 }
 function readLang(): Lang {
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) === "en" ? "en" : "zh";
-  } catch {
-    return "zh";
-  }
+  return activeLang;
 }
 
 export function useLang() {
   const lang = useSyncExternalStore(subscribe, readLang, () => "zh" as Lang);
   const setLang = useCallback((l: Lang) => {
+    activeLang = l;
     try {
       window.localStorage.setItem(STORAGE_KEY, l);
     } catch {
       /* storage unavailable */
     }
-    document.documentElement.lang = l === "zh" ? "zh-Hant" : "en";
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = l === "zh" ? "zh-Hant" : "en";
+    }
     listeners.forEach((fn) => fn());
   }, []);
   return { lang, setLang };

@@ -10,9 +10,28 @@ const PRESENT_KEY = "atlas.present";
 /** Inline script run before first paint — reads localStorage theme, defaults to light if not set (ignores OS dark mode). */
 export const NO_FLASH_SCRIPT = `(function(){try{var t=localStorage.getItem("${THEME_KEY}");if(t!=="dark"){t="light"}document.documentElement.setAttribute("data-theme",t);if(localStorage.getItem("${PRESENT_KEY}")==="1"){document.documentElement.setAttribute("data-present","1")}}catch(e){}})();`;
 
-// Tiny external store: the source of truth is the <html> attribute (set by the inline script
-// before hydration), mirrored to localStorage. useSyncExternalStore keeps server and client in sync
-// without setState-in-effect.
+let activeTheme: Theme = "light";
+let activePresent: boolean = false;
+
+if (typeof window !== "undefined") {
+  try {
+    const attr = document.documentElement.getAttribute("data-theme");
+    if (attr === "dark" || attr === "light") {
+      activeTheme = attr as Theme;
+    } else {
+      const stored = window.localStorage.getItem(THEME_KEY);
+      if (stored === "dark" || stored === "light") {
+        activeTheme = stored as Theme;
+      }
+    }
+    activePresent =
+      document.documentElement.getAttribute("data-present") === "1" ||
+      window.localStorage.getItem(PRESENT_KEY) === "1";
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 const listeners = new Set<() => void>();
 function emit() {
   listeners.forEach((l) => l());
@@ -23,11 +42,10 @@ function subscribe(listener: () => void) {
 }
 
 function readTheme(): Theme {
-  const attr = document.documentElement.getAttribute("data-theme");
-  return attr === "dark" ? "dark" : "light";
+  return activeTheme;
 }
 function readPresent(): boolean {
-  return document.documentElement.getAttribute("data-present") === "1";
+  return activePresent;
 }
 
 function save(key: string, value: string) {
@@ -43,14 +61,21 @@ export function usePrefs() {
   const present = useSyncExternalStore(subscribe, readPresent, () => false);
 
   const setTheme = useCallback((t: Theme) => {
-    document.documentElement.setAttribute("data-theme", t);
+    activeTheme = t;
+    if (typeof document !== "undefined") {
+      document.documentElement.setAttribute("data-theme", t);
+      document.documentElement.style.colorScheme = t;
+    }
     save(THEME_KEY, t);
     emit();
   }, []);
 
   const setPresent = useCallback((p: boolean) => {
-    if (p) document.documentElement.setAttribute("data-present", "1");
-    else document.documentElement.removeAttribute("data-present");
+    activePresent = p;
+    if (typeof document !== "undefined") {
+      if (p) document.documentElement.setAttribute("data-present", "1");
+      else document.documentElement.removeAttribute("data-present");
+    }
     save(PRESENT_KEY, p ? "1" : "0");
     emit();
   }, []);
