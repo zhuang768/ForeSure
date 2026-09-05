@@ -156,7 +156,7 @@ Word 報告會中英並列。2026-09-05 13:00 之前產生的舊紀錄沒有 `_e
 ```json
 {
   "status": "fail",
-  "checker_version": "grounding-check/v1.1",
+  "checker_version": "grounding-check/v1.2",
   "checked_claims": 3,
   "grounded_claims": 2,
   "flag_count": 1,
