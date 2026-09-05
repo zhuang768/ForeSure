@@ -199,21 +199,6 @@ export default function IntroPage() {
   const zh = lang === "zh";
   const showcase = runs ? pickShowcaseRuns(runs, 3) : undefined;
 
-  // What the traditional workflow needs versus what ForeSure does: [aspect, traditional, ForeSure].
-  const shiftRows: [string, string, string][] = zh
-    ? [
-        ["開發週期", "6 到 12 個月：市調、精算會議、送審", "約 85 秒"],
-        ["定價依據", "5 到 10 年歷史損失率", "即時新聞 + 三方辯論"],
-        ["理賠", "收單據、公證、等數週", "客觀參數自動觸發"],
-        ["稽核", "內部文件", "Sepolia 鏈上 SHA-256 指紋"],
-      ]
-    : [
-        ["Development cycle", "6 to 12 months of research, actuarial panels and filing", "About 85 seconds"],
-        ["Pricing basis", "5 to 10 years of loss history", "Live news + three-agent debate"],
-        ["Claims", "Receipts, adjusters, weeks of waiting", "Triggered by objective parameters"],
-        ["Audit", "Internal documents", "SHA-256 fingerprint on Sepolia"],
-      ];
-
   const metrics: [string, string, string][] = [
     ["PARAM // LATENCY", "~85s", zh ? "時事爬取、三方辯論與精算定價" : "News, debate & pricing"],
     ["PARAM // CONSENSUS", "3 Agents", zh ? "PM × 核保 × 精算 跨角色博弈" : "PM, Underwriter & Actuary"],
@@ -250,7 +235,7 @@ export default function IntroPage() {
           </Container>
         </section>
 
-        {/* ---------------- paradigm shift (comparison table) ---------------- */}
+        {/* ---------------- paradigm shift (2x2 metrics) ---------------- */}
         <section className="py-20 md:py-28">
           <Container>
             <SectionHead
@@ -262,36 +247,7 @@ export default function IntroPage() {
                   : "Four things the traditional workflow cannot do, covered by live news, a three-agent debate and on-chain proof."
               }
             />
-            <Reveal>
-              <div className="glass mt-20 px-6 pb-3 pt-8 md:px-10 md:pt-10">
-                {/* header row: hidden on small screens where each cell carries its own label */}
-                <div className="hidden border-b border-border pb-5 md:grid md:grid-cols-[200px_1fr_1fr] md:gap-x-10">
-                  <div />
-                  <div className="t-h3 text-text">{zh ? "傳統流程" : "Traditional workflow"}</div>
-                  <div className="t-h3 flex items-center gap-3 text-primary-ink">
-                    <span className="h-2.5 w-2.5 rounded-full bg-primary" aria-hidden />
-                    {zh ? "未然 ForeSure" : "ForeSure"}
-                  </div>
-                </div>
-                {shiftRows.map(([k, old, us], i) => (
-                  <div
-                    key={k}
-                    className={`grid gap-y-2 py-7 md:grid-cols-[200px_1fr_1fr] md:items-baseline md:gap-x-10 ${i < shiftRows.length - 1 ? "border-b border-border" : ""}`}
-                  >
-                    <h3 className="t-h3 text-text">{k}</h3>
-                    <p className="text-[20px] font-medium leading-8 text-muted">
-                      <span className="mr-2 text-sm font-normal md:hidden">{zh ? "傳統流程" : "Traditional"}</span>
-                      {old}
-                    </p>
-                    <p className="t-h3 text-primary-ink">
-                      <span className="mr-2 text-sm font-normal md:hidden">{zh ? "未然" : "ForeSure"}</span>
-                      {us}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
-            <div className="mt-5 grid grid-cols-2 gap-5 lg:grid-cols-4">
+            <div className="mt-20 grid grid-cols-1 gap-5 sm:grid-cols-2">
               {metrics.map(([label, value, desc], i) => (
                 <Reveal key={label} delay={i * 80}>
                   <div className="glass h-full p-6 md:p-10">
@@ -349,10 +305,10 @@ export default function IntroPage() {
             </Reveal>
             <div className="-mt-10 grid items-start gap-12 lg:grid-cols-2 lg:gap-x-24 xl:gap-x-40">
               {/* left column sits a step in from the container edge so the margin reads as breathing room */}
-              {/* reads as the left-hand subheading of the split, so it sits a step lower and at the 24px title size */}
-              <Reveal className="lg:mt-10 lg:pl-16 xl:pl-24">
-                <h2 className="t-h3 text-text">{zh ? "準備好體驗未然了嗎？" : "Ready to try ForeSure?"}</h2>
-                <p className="t-lead mt-4 text-muted">
+              {/* the section title, vertically centred against the steps on the right */}
+              <Reveal className="lg:self-center lg:pl-16 xl:pl-24">
+                <h2 className="t-h2 text-text">{zh ? "準備好體驗未然了嗎？" : "Ready to try ForeSure?"}</h2>
+                <p className="t-lead mt-5 text-muted">
                   {zh ? "立即啟動 85 秒即時時事新聞感測、多代理人對抗辯論與以太坊 Sepolia 存證流程。" : "Launch 85-second live telemetry, multi-agent adversarial debate, and Ethereum Sepolia attestation."}
                 </p>
               </Reveal>
