@@ -32,7 +32,7 @@ export const FACT_ICON = {
   flag: "M4 21V4m0 0h12l-2 4 2 4H4",
 };
 
-/** Shared site footer: breadcrumb bar, brand column, attestation facts and page links. */
+/** Shared site footer: brand column, attestation facts and page links. */
 export default function SiteFooter({ chain }: { chain?: ChainStatus | null }) {
   const t = useT();
   const pathname = usePathname() ?? "/";
@@ -42,29 +42,6 @@ export default function SiteFooter({ chain }: { chain?: ChainStatus | null }) {
 
   return (
     <footer className="mt-auto border-t border-border bg-surface/70 backdrop-blur">
-      <div className="border-b border-border/70">
-        <div className="mx-auto flex max-w-[1800px] items-center justify-between px-5 py-3 text-sm text-muted">
-          <nav aria-label="breadcrumb" className="flex items-center gap-2">
-            <Link href="/" className="transition-colors hover:text-text">
-              {t("nav.home")}
-            </Link>
-            {current.href !== "/" ? (
-              <>
-                <span aria-hidden>/</span>
-                <span className="text-text">{t(current.k)}</span>
-              </>
-            ) : null}
-          </nav>
-          <button
-            type="button"
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="rounded-sm transition-colors hover:text-text"
-          >
-            {t("footer.top")} ↑
-          </button>
-        </div>
-      </div>
-
       <div className="mx-auto grid max-w-[1800px] gap-10 px-5 py-12 md:grid-cols-[1.4fr_1fr_0.8fr]">
         <div>
           <BrandLogo decorative className="h-12 w-auto" />
