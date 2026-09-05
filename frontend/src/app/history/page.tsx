@@ -28,7 +28,7 @@ export default function HistoryPage() {
     }
     return MOCK_RUN_SUMMARIES;
   });
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "onchain" | "mock">("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "loss">("newest");

@@ -1,8 +1,10 @@
 # Environments
 venv/
+.venv/
 .env
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # IDEs and OS files
 .vscode/

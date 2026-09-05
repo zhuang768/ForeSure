@@ -85,7 +85,8 @@ export default function GeneratorPage() {
   );
 
   const runMockEvents = useCallback(
-    (runId: string) => {
+    (_runId?: string) => {
+      void _runId;
       // Realistic multi-stage execution delays (ms) matching real LLM reasoning + Ethereum Sepolia block confirmation
       const STAGE_DELAYS = [
         5800,  // news_fetched: crawling & news parsing (5.8s)
