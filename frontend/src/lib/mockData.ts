@@ -1,11 +1,10 @@
 /**
- * Comprehensive offline/demo mock data.
- * When the backend is unreachable, the API layer falls back to this data.
- * This makes the Cloudflare Pages deployment look identical to a local run
- * with a live backend.
+ * Offline demo data, shown when no backend is reachable.
+ * Every record here is labelled as a mock: no chain receipt, no tx hash, no explorer link.
+ * The badges and counters must never present demo content as anchored on Sepolia.
  */
 
-import type { ChainStatus, RunRecord, RunSummary } from "./types";
+import type { RunRecord, RunSummary } from "./types";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -22,22 +21,6 @@ function stampId(minutesAgo: number): string {
     Math.random().toString(36).slice(2, 10)
   }`;
 }
-
-function mockTx(): string {
-  return (
-    "0x" +
-    Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")
-  );
-}
-
-// ── chain status ──────────────────────────────────────────────────────────────
-
-export const MOCK_CHAIN_STATUS: ChainStatus = {
-  mode: "sepolia",
-  rpc_url: "https://sepolia.infura.io/v3/demo",
-  contract_address: "0xAuditRegistryDemoContract00000000000000",
-  submitter: "0xDemoSubmitter0000000000000000000000000000",
-};
 
 // ── run records ──────────────────────────────────────────────────────────────
 
@@ -575,8 +558,6 @@ const DATA_20 = RUN_DATA.slice(0, 20);
 
 export const MOCK_RUN_SUMMARIES: RunSummary[] = DATA_20.map((d, i) => {
   const id = i === 0 ? "foresure-20260905-2e27fc30" : stampId(d.minutesAgo);
-  const isMock = i === 19;
-  const tx = isMock ? null : i === 0 ? "0x9b76b1e582e27fc304859231892018401829140a" : mockTx();
   return {
     decision_id: id,
     run_id: `run-${id}`,
@@ -585,15 +566,14 @@ export const MOCK_RUN_SUMMARIES: RunSummary[] = DATA_20.map((d, i) => {
     product_name: d.productName,
     is_mock_proposal: false,
     grounding_status: i === 0 ? "warn" : "pass",
-    chain_is_mock: isMock,
-    tx_hash: tx,
-    verification_url: tx ? `https://sepolia.etherscan.io/tx/${tx}` : null,
+    chain_is_mock: true,
+    tx_hash: null,
+    verification_url: null,
   };
 });
 
 export const MOCK_RUN_RECORDS: RunRecord[] = DATA_20.map((d, i) => {
   const summary = MOCK_RUN_SUMMARIES[i];
-  const tx = summary.tx_hash ?? mockTx();
   return {
     decision_id: summary.decision_id,
     run_id: summary.run_id ?? undefined,
@@ -707,12 +687,12 @@ export const MOCK_RUN_RECORDS: RunRecord[] = DATA_20.map((d, i) => {
     blockchain_receipt: {
       decision_id: summary.decision_id,
       payload: {},
-      data_hash: tx ? tx.slice(0, 66) : "0x0000000000000000000000000000000000000000000000000000000000000000",
-      blockchain_tx_hash: tx,
-      block_number: 7800000 + i * 137,
-      verification_url: summary.verification_url,
-      network: summary.chain_is_mock ? "mock" : "sepolia",
-      is_mock: Boolean(summary.chain_is_mock),
+      data_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+      blockchain_tx_hash: null,
+      block_number: null,
+      verification_url: null,
+      network: "mock",
+      is_mock: true,
       timestamp: summary.timestamp,
     },
     report_path: `reports/${summary.decision_id}.json`,

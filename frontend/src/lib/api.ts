@@ -1,10 +1,6 @@
 import { STAGES } from "@/lib/stages";
 import type { ActiveRun, ChainStatus, Health, RunEvent, RunRecord, RunSummary, Stage, VerifyResult } from "@/lib/types";
-import {
-  MOCK_CHAIN_STATUS,
-  MOCK_RUN_RECORDS,
-  MOCK_RUN_SUMMARIES,
-} from "@/lib/mockData";
+import { MOCK_RUN_RECORDS, MOCK_RUN_SUMMARIES } from "@/lib/mockData";
 
 export const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8080").replace(/\/$/, "");
 // Demo token; intentionally public and accepted by the backend for the hackathon only.
@@ -76,14 +72,15 @@ export async function health(): Promise<Health> {
   }
 }
 
-export async function chainStatus(): Promise<ChainStatus> {
+/** null means no backend answered; the header then says "offline" instead of pretending a chain mode. */
+export async function chainStatus(): Promise<ChainStatus | null> {
   try {
     const online = await checkOnline();
-    if (!online) return MOCK_CHAIN_STATUS;
+    if (!online) return null;
     return await request<ChainStatus>("/api/v1/chain/status");
   } catch {
     _offlineMode = true;
-    return MOCK_CHAIN_STATUS;
+    return null;
   }
 }
 
@@ -110,8 +107,8 @@ export function saveLocalRun(record: RunRecord) {
       timestamp: record.timestamp,
       news_title: record.news.title,
       product_name: record.proposal_data.proposal.product_name,
-      is_mock_proposal: false,
-      chain_is_mock: false,
+      is_mock_proposal: record.proposal_data.is_mock ?? false,
+      chain_is_mock: record.blockchain_receipt.is_mock || !record.blockchain_receipt.blockchain_tx_hash,
       tx_hash: record.blockchain_receipt.blockchain_tx_hash,
       verification_url: record.blockchain_receipt.verification_url,
       grounding_status: record.grounding?.status ?? null,

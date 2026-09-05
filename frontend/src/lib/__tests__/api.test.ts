@@ -67,3 +67,57 @@ describe("verifyRun", () => {
     expect(result.reason).toBeTruthy();
   });
 });
+
+describe("chainStatus", () => {
+  it("offline: resolves to null instead of a status that claims a Sepolia connection", async () => {
+    const api = await loadApi(async () => {
+      throw new TypeError("connection refused");
+    });
+
+    await expect(api.chainStatus()).resolves.toBeNull();
+  });
+});
+
+describe("saveLocalRun", () => {
+  it("keeps the receipt's mock flag on the stored summary instead of hard-coding it as on-chain", async () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal("window", {
+      localStorage: {
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => void store.set(k, v),
+      },
+    });
+    const api = await loadApi(async () => {
+      throw new TypeError("connection refused");
+    });
+    const record = {
+      ...api_record(),
+      blockchain_receipt: { ...api_record().blockchain_receipt, is_mock: true, blockchain_tx_hash: null, verification_url: null },
+    };
+
+    api.saveLocalRun(record);
+
+    const { summaries } = api.getLocalStoredRuns();
+    expect(summaries[0].chain_is_mock).toBe(true);
+    expect(summaries[0].tx_hash).toBeNull();
+  });
+});
+
+function api_record() {
+  return {
+    decision_id: "foresure-test",
+    timestamp: "20260906_050000",
+    news: { title: "t", link: "l", published: "p", summary: "s", is_mock: false },
+    matched_products: [],
+    actuarial_data: { probability_pct: 1, expected_loss_usd: 1, premium_range_usd: [1, 2] as [number, number], markup_multiplier: [1, 2] as [number, number] },
+    proposal_data: {
+      proposal: { product_name: "P", target_audience: "", market_gap: "", coverage_details: "", exclusions: "", business_logic: "" },
+      is_mock: false,
+    },
+    blockchain_receipt: {
+      decision_id: "foresure-test", payload: {}, data_hash: "0x00", blockchain_tx_hash: "0xdead", block_number: 1,
+      verification_url: "https://sepolia.etherscan.io/tx/0xdead", network: "sepolia", is_mock: false, timestamp: "20260906_050000",
+    },
+    report_path: "reports/x.docx",
+  } as unknown as import("@/lib/types").RunRecord;
+}

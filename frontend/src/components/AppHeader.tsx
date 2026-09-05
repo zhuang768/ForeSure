@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { describeChain, type ChainTone } from "@/lib/chainPill";
 import { translate, useLang, useT, type DictKey, type Lang } from "@/lib/i18n";
 import { usePrefs } from "@/lib/prefs";
 import type { ChainStatus } from "@/lib/types";
@@ -39,6 +40,11 @@ const NAV: { href: string; k: DictKey }[] = [
 const SEG = "inline-flex items-center rounded-md border border-border bg-surface-2 p-0.5 text-xs";
 const SEG_ON = "bg-primary text-white shadow-xs";
 const SEG_OFF = "text-muted hover:text-text";
+const CHAIN_PILL: Record<ChainTone, string> = {
+  onchain: "pill bg-primary-soft text-primary-ink",
+  mock: "pill bg-warn-soft text-warn",
+  offline: "pill border border-border bg-surface-2 text-muted",
+};
 
 /** Shared top bar: logo, page links, chain status, language / theme toggles, primary CTA. */
 export default function AppHeader({ chain }: { chain: ChainStatus | null | undefined }) {
@@ -51,13 +57,13 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
   const onGenerator = isActive("/generator");
 
-  // Show connected status for both real sepolia and mock (offline demo) mode
-  const chainPill =
-    chain === undefined || chain === null ? null : (
-      <span className="pill bg-primary-soft text-primary-ink">
-        <StableLabel k="header.chain.sepolia" lang={lang} prefix="● " />
-      </span>
-    );
+  // Green only when the backend reports a real Sepolia connection; mock mode and "no backend" say so.
+  const chainState = describeChain(chain);
+  const chainPill = chainState ? (
+    <span className={CHAIN_PILL[chainState.tone]}>
+      <StableLabel k={chainState.key} lang={lang} prefix="● " />
+    </span>
+  ) : null;
 
   const langToggle = (
     <div className={SEG} role="group" aria-label="Language">

@@ -113,17 +113,18 @@ export const MOCK_EVENTS: RunEvent[] = [
   {
     stage: "chain_pending",
     data: {
-      network: "Ethereum Sepolia Testnet",
+      network: "mock",
     },
   },
   {
     stage: "chain_done",
+    // Offline playback never touches the chain, so the receipt says so: no tx, no explorer link.
     data: {
-      blockchain_tx_hash: "0x3e8a51b984d7204fca17013859207e92318491829140a3875189201948572019",
-      block_number: 7834291,
-      verification_url: "https://sepolia.etherscan.io/tx/0x3e8a51b984d7204fca17013859207e92318491829140a3875189201948572019",
-      network: "sepolia",
-      is_mock: false,
+      blockchain_tx_hash: null,
+      block_number: null,
+      verification_url: null,
+      network: "mock",
+      is_mock: true,
     },
   },
   {
