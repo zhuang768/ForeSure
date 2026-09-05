@@ -160,3 +160,14 @@ body {
 .pulse {
   animation: pulse-soft 0.9s ease-in-out infinite alternate;
 }
+
+/* presentation mode: bigger, calmer, for the projector */
+:root[data-present="1"] .card {
+  border-radius: 1rem;
+}
+:root[data-present="1"] .label {
+  font-size: 0.8rem;
+}
+:root[data-present="1"] main {
+  max-width: 1600px;
+}

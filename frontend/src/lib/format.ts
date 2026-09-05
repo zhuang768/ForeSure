@@ -22,6 +22,16 @@ export function fmtStamp(s: string | null | undefined): string {
   return `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}`;
 }
 
+/** LLM replies arrive as light markdown; show them as plain prose (keep list numbers and line breaks). */
+export function stripMarkdown(text: string | null | undefined): string {
+  if (!text) return "";
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/__(.+?)__/g, "$1")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/^\s*[*-]\s+/gm, "• ");
+}
+
 export function fmtSeconds(sec: number): string {
   return `${sec.toFixed(1)}s`;
 }

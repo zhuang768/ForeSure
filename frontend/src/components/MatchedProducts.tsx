@@ -9,9 +9,7 @@ export default function MatchedProducts({ items }: { items: MatchedProduct[] }) 
       {items.map((m) => (
         <span key={m.id} className="pill border border-border bg-surface-2 text-text" title={m.description}>
           {m.name}
-          <span className="mono text-[0.65rem] text-muted">
-            {m.category} · {m.distance.toFixed(2)}
-          </span>
+          <span className="mono text-[0.65rem] text-muted">{m.category}</span>
         </span>
       ))}
     </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fmtPct, fmtSeconds, fmtStamp, fmtUsd, shortHash } from "@/lib/format";
+import { fmtPct, fmtSeconds, fmtStamp, fmtUsd, shortHash, stripMarkdown } from "@/lib/format";
 
 describe("format helpers", () => {
   it("formats USD without decimals and with separators", () => {
@@ -20,5 +20,10 @@ describe("format helpers", () => {
   });
   it("renders seconds with one decimal", () => {
     expect(fmtSeconds(12.34)).toBe("12.3s");
+  });
+  it("strips markdown emphasis and heading markers from LLM text", () => {
+    expect(stripMarkdown("**【風險缺口】** 現有資安險只保 __大廠__")).toBe("【風險缺口】 現有資安險只保 大廠");
+    expect(stripMarkdown("### 三大漏洞\n1. **道德風險**")).toBe("三大漏洞\n1. 道德風險");
+    expect(stripMarkdown(undefined)).toBe("");
   });
 });

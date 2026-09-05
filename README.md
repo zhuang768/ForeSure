@@ -28,8 +28,8 @@ Atlas 是一個專為大型金融控股公司（如國泰金控）設計的 **�
 - **JWT 企業級身分認證 (HTTPBearer)**
 - **基於 IP 的頻率限制 (Rate Limiting)**，防止惡意 DDoS 攻擊。
 
-### 5. 💻 投資型高質感前端戰情室 (Next.js Glassmorphism UI)
-採用 Next.js + TailwindCSS 打造。以白底/淺灰底為基調，搭配深色玻璃透視卡片 (Glass-card)，展現極致的視覺對比與專業金融科技質感。
+### 5. 💻 前端決策桌 (Next.js + React + TypeScript)
+兩頁：`/` 提案佇列與四分頁詳情（決策摘要、Agent 辯論重播、定價依據、證據與稽核含鏈上驗證與竄改測試），`/generator` 以 SSE 即時串流一次完整執行的 11 個階段。淺色／深色、中／EN、簡報模式三個切換。所有資料皆來自後端 API，沒有寫死內容；存證徽章只在鏈上真的有紀錄時才顯示綠色。
 
 ---
 
@@ -77,14 +77,17 @@ OPENAI_MODEL=gpt-4o-mini
 uvicorn apigee_target:app --reload --port 8080
 ```
 
-### 4. 啟動前端 AI 戰情室 (Next.js)
-開啟另一個終端機，進入 `frontend` 資料夾並啟動網頁：
+### 4. 啟動前端決策桌 (Next.js)
+開啟另一個終端機，進入 `frontend` 資料夾：
 ```bash
 cd frontend
+cp .env.local.example .env.local   # API 位址、Demo token、公開 RPC、合約地址
 npm install
-npm run dev
+npm run dev        # http://localhost:3000
+npm test           # Vitest 單元測試（事件 reducer、徽章狀態、i18n、格式化）
+npm run build      # 靜態匯出到 out/，Cloudflare Pages 用
 ```
-打開瀏覽器進入 `http://localhost:3000` 即可觀賞高質感 UI。
+後端 `.env` 的 `ATLAS_ALLOWED_ORIGINS` 要包含前端的來源（本機預設已允許 `localhost:3000`）。
 
 ### 5. (可選) 執行歷史巨災回測腳本
 若要向評審展示 AI 對過去真實災難的精算反應，請執行：

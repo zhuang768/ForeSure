@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { fmtSeconds } from "@/lib/format";
+import { fmtSeconds, stripMarkdown } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import type { Stage } from "@/lib/types";
 
@@ -32,7 +32,11 @@ export default function DebateFeed({
   replayable?: boolean;
 }) {
   const t = useT();
-  const texts: Record<Role, string | undefined> = { pm, underwriter, actuary };
+  const texts: Record<Role, string | undefined> = {
+    pm: pm ? stripMarkdown(pm) : undefined,
+    underwriter: underwriter ? stripMarkdown(underwriter) : undefined,
+    actuary: actuary ? stripMarkdown(actuary) : undefined,
+  };
   // chars revealed per role while replaying; null = not replaying (show everything)
   const [shown, setShown] = useState<Record<Role, number> | null>(null);
   const timer = useRef<number | null>(null);
@@ -46,7 +50,11 @@ export default function DebateFeed({
   const startReplay = () => {
     if (timer.current) window.clearInterval(timer.current);
     // Snapshot the texts at replay start (event handler, not render); replay only runs on finished records.
-    const snapshot: Record<Role, string> = { pm: pm ?? "", underwriter: underwriter ?? "", actuary: actuary ?? "" };
+    const snapshot: Record<Role, string> = {
+      pm: texts.pm ?? "",
+      underwriter: texts.underwriter ?? "",
+      actuary: texts.actuary ?? "",
+    };
     const progress: Record<Role, number> = { pm: 0, underwriter: 0, actuary: 0 };
     setShown({ ...progress });
     timer.current = window.setInterval(() => {
