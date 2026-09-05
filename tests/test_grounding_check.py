@@ -132,3 +132,58 @@ def test_unit_skip_survives_trailing_punctuation_and_no_space():
     assert gc.extract_numbers("本商品最多理賠12次。") == []
     assert gc.extract_numbers("保單有效期間內申請理賠 10次以內免審核。") == []
     assert gc.extract_numbers("需 24 小時內出險") == []
+
+
+def test_line_leading_decimal_keeps_its_integer_part():
+    assert gc.extract_numbers("3.5% 的預期損失率屬假設值") == [(3.5, "3.5%")]
+
+
+def test_list_markers_are_still_stripped_after_the_decimal_guard():
+    values = [v for v, _ in gc.extract_numbers("1. 降雨量連續 3 日超過 500mm 自動理賠 100萬。")]
+    assert 1.0 not in values  # the "1." list marker is not a claim
+    assert 1_000_000.0 in values  # the real figure survives
+
+
+def test_citation_matching_tolerates_a_paraphrased_source_name():
+    result = _check(market_gap="依據內政部消防署歷史淹水統計，嚴重颱風每年約 0.61 次。")
+    assert result["status"] == "pass"
+    assert [f["type"] for f in result["flags"]] == []
+
+
+def test_citation_window_match_still_rejects_a_fabricated_source():
+    result = _check(market_gap="根據世界銀行統計，農損逐年上升。")
+    assert result["status"] == "fail"
+    assert [(f["type"], f["value"]) for f in result["flags"]] == [("unverified_citation", "世界銀行")]
+
+
+def test_the_same_citation_is_flagged_once():
+    result = _check(market_gap="根據世界銀行統計顯示風險上升；根據世界銀行資料亦然。")
+    assert [f["type"] for f in result["flags"]] == ["unverified_citation"]
+    assert result["flag_count"] == 1
+
+
+def test_ascii_labelled_codes_are_not_claims():
+    assert gc.extract_numbers("符合 ISO 27001 標準") == []
+    assert gc.extract_numbers("Tier 2 供應商") == []
+
+
+def test_only_the_first_number_of_a_ratio_pair_is_extracted():
+    values = [v for v, _ in gc.extract_numbers("Coinsurance 80/20 分攤")]
+    assert values == [80.0]
+
+
+def test_only_the_first_number_of_a_percent_range_is_extracted():
+    assert gc.extract_numbers("Base Rate 3%-8% 之間") == [(3.0, "3%")]
+
+
+def test_currency_prefixed_design_parameters_are_skipped():
+    assert gc.extract_numbers("自負額 USD 5,000，年保費 NT$ 3,500，理賠上限 TWD 45,000") == []
+    assert gc.extract_numbers("新台幣 12,000 元之自負額") == []
+
+
+def test_measurement_units_are_skipped():
+    assert gc.extract_numbers("雨量達 100 毫米或水位 30 公分即啟動") == []
+
+
+def test_amounts_followed_by_currency_words_are_still_extracted():
+    assert [v for v, _ in gc.extract_numbers("總保費收入 1.8 億元")] == [1.8e8]
