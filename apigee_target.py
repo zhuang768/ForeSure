@@ -125,8 +125,11 @@ def _execute_run(run_id: str):
 
 @app.post("/api/v1/runs", dependencies=[Depends(verify_jwt)])
 async def start_run(background_tasks: BackgroundTasks):
-    """啟動一次完整 pipeline（需 Bearer token），回傳 run_id；用 GET /api/v1/runs/{run_id}/events 追進度。"""
-    run_id = run_store.create_run()
+    """啟動一次完整 pipeline（需 Bearer token），回傳 run_id；用 GET /api/v1/runs/{run_id}/events 追進度。
+    同一時間只允許一個執行：兩條 pipeline 並行會搶同一個 Sepolia nonce，也會同時改寫 audit_log.json。"""
+    run_id = run_store.create_run_if_idle()
+    if run_id is None:
+        raise HTTPException(status_code=409, detail="a run is already in progress; wait for it to finish")
     background_tasks.add_task(_execute_run, run_id)
     return {"run_id": run_id, "status": "running"}
 

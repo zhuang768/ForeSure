@@ -123,11 +123,29 @@ def reset_active_runs() -> None:
         _active_runs.clear()
 
 
+# A run that is still "running" after this long is assumed to have died without mark_finished
+# (worker crash, server killed mid-run) and no longer blocks a new one. A real run takes 60 to 100 s.
+STALE_RUN_SECONDS = 15 * 60
+
+
 def create_run() -> str:
     run_id = uuid.uuid4().hex[:12]
     with _active_lock:
         _active_runs[run_id] = {"run_id": run_id, "status": "running", "events": [], "created_at": time.time()}
     return run_id
+
+
+def create_run_if_idle() -> str | None:
+    """Register a run only when no other run is in flight; the check and the insert share one lock so two
+    simultaneous requests cannot both pass. Returns None when a run is already running."""
+    now = time.time()
+    with _active_lock:
+        for run in _active_runs.values():
+            if run["status"] == "running" and now - run["created_at"] < STALE_RUN_SECONDS:
+                return None
+        run_id = uuid.uuid4().hex[:12]
+        _active_runs[run_id] = {"run_id": run_id, "status": "running", "events": [], "created_at": now}
+        return run_id
 
 
 def get_active(run_id: str):

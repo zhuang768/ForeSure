@@ -15,6 +15,8 @@ POST 端點每個 IP 每分鐘限 30 次。
 
 `POST /api/v1/runs`（需 token）→ `{"run_id": "9a123da108b4", "status": "running"}`
 
+同一時間只允許一個執行；已有執行進行中時回 `409`（`detail` 說明原因），等它結束再送。
+
 ## 即時進度（Server-Sent Events）
 
 `GET /api/v1/runs/{run_id}/events`，`Content-Type: text/event-stream`。

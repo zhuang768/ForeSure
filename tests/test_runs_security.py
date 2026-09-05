@@ -49,3 +49,21 @@ def test_sse_error_event_does_not_leak_exception_details(client, monkeypatch):
 
     assert "event: error" in body
     assert "secret internal path" not in body
+
+
+def test_a_second_run_is_refused_while_one_is_still_running(client):
+    """Two pipelines in flight would take the same Sepolia nonce and both write audit_log.json."""
+    in_flight = run_store.create_run()
+
+    assert client.post("/api/v1/runs", headers=AUTH).status_code == 409
+
+    run_store.mark_finished(in_flight, "finished")
+    assert client.post("/api/v1/runs", headers=AUTH).status_code == 200
+
+
+def test_a_stale_running_entry_does_not_block_forever(client, monkeypatch):
+    """A worker that died without marking its run finished must not lock the demo out."""
+    stale = run_store.create_run()
+    run_store.get_active(stale)["created_at"] -= run_store.STALE_RUN_SECONDS + 1
+
+    assert client.post("/api/v1/runs", headers=AUTH).status_code == 200
