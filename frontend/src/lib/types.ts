@@ -67,6 +67,28 @@ export type Proposal = {
   business_logic_en?: string;
 };
 
+export type GroundingStatus = "pass" | "warn" | "fail";
+
+export type GroundingFlag = {
+  type: "unsupported_number" | "unverified_citation" | "missing_disclosure";
+  severity: "high" | "medium";
+  field: string;
+  value: string | null;
+  excerpt: string;
+  message: string;
+};
+
+/** Rule-based hallucination check run after the debate (docs/API.md "幻覺檢測"); absent on records before 2026-09-05 15:00. */
+export type Grounding = {
+  status: GroundingStatus;
+  checker_version: string;
+  checked_claims: number;
+  grounded_claims: number;
+  flag_count: number;
+  evidence_sources: string[];
+  flags: GroundingFlag[];
+};
+
 export type Debate = { pm: string; underwriter: string };
 
 export type ProposalData = {
@@ -100,6 +122,7 @@ export type RunRecord = {
   matched_products: MatchedProduct[];
   actuarial_data: ActuarialData;
   proposal_data: ProposalData;
+  grounding?: Grounding | null;
   blockchain_receipt: Receipt;
   report_path: string;
 };
@@ -111,6 +134,7 @@ export type RunSummary = {
   news_title: string | null;
   product_name: string | null;
   is_mock_proposal: boolean | null;
+  grounding_status?: GroundingStatus | null;
   chain_is_mock: boolean | null;
   tx_hash: string | null;
   verification_url: string | null;
@@ -140,6 +164,7 @@ export type Stage =
   | "pm"
   | "underwriter"
   | "actuary"
+  | "grounding"
   | "report"
   | "chain_pending"
   | "chain_done"

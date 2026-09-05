@@ -60,4 +60,18 @@ describe("run reducer", () => {
     expect(s.status).toBe("error");
     expect(s.error).toBe("boom");
   });
+
+  it("stores the grounding verdict and advances past the actuary stage", () => {
+    let s = startRunState("r1", 0);
+    s = applyEvent(s, { stage: "actuary", data: "精算說" }, 1000);
+    const grounding = { status: "warn", checker_version: "grounding-check/v1", checked_claims: 2, grounded_claims: 2,
+      flag_count: 1, evidence_sources: ["actuarial_engine"], flags: [
+        { type: "missing_disclosure", severity: "medium", field: "business_logic", value: null, excerpt: "", message: "m" },
+      ] } as const;
+    s = applyEvent(s, { stage: "grounding", data: grounding }, 1500);
+    expect(s.grounding?.status).toBe("warn");
+    expect(s.grounding?.flags[0].type).toBe("missing_disclosure");
+    expect(s.stageIndex).toBe(7); // news_fetched(0) … actuary(6), grounding(7)
+    expect(s.timings.grounding).toBe(1.5);
+  });
 });

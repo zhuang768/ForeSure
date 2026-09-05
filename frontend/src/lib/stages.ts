@@ -9,6 +9,7 @@ export const STAGES = [
   "pm",
   "underwriter",
   "actuary",
+  "grounding",
   "report",
   "chain_pending",
   "chain_done",

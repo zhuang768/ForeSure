@@ -1,5 +1,5 @@
 import { STAGES, stageIndex } from "@/lib/stages";
-import type { ActuarialData, MatchedProduct, NewsItem, Receipt, RunEvent, RunRecord, Stage } from "@/lib/types";
+import type { ActuarialData, Grounding, MatchedProduct, NewsItem, Receipt, RunEvent, RunRecord, Stage } from "@/lib/types";
 
 export type RunState = {
   runId: string | null;
@@ -12,6 +12,7 @@ export type RunState = {
   matches: MatchedProduct[];
   actuarial: ActuarialData | null;
   debate: { pm?: string; underwriter?: string; actuary?: string };
+  grounding: Grounding | null;
   reportPath: string | null;
   chainPending: boolean;
   receipt: Receipt | null;
@@ -31,6 +32,7 @@ export function initialRunState(): RunState {
     matches: [],
     actuarial: null,
     debate: {},
+    grounding: null,
     reportPath: null,
     chainPending: false,
     receipt: null,
@@ -78,6 +80,9 @@ export function applyEvent(state: RunState, event: RunEvent, atMs: number): RunS
       break;
     case "actuary":
       next.debate.actuary = String(data ?? "");
+      break;
+    case "grounding":
+      next.grounding = data as Grounding;
       break;
     case "report":
       next.reportPath = (data as { report_path?: string } | null)?.report_path ?? null;
