@@ -562,46 +562,6 @@ export default function IntroPage() {
           </div>
         </section>
 
-        {/* Presentation Walkthrough: 4-Step Guide */}
-        <section className="card p-6 md:p-8">
-          <div className="border-b border-border pb-4">
-            <h2 className="text-xl font-bold tracking-tight text-text">
-              {t("intro.flowTitle")}
-            </h2>
-            <p className="mt-1 text-xs text-muted">
-              {lang === "zh"
-                ? "為黑客松現場評審與演示流程設計之完整實機體驗路徑"
-                : "A four-step live presentation flow curated for hackathon judges"}
-            </p>
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface-2 p-4">
-              <span className="mono text-xs font-bold text-primary">STEP 01</span>
-              <h4 className="text-sm font-bold text-text">{t("intro.flowStep1Title")}</h4>
-              <p className="text-xs leading-relaxed text-muted">{t("intro.flowStep1Desc")}</p>
-            </div>
-
-            <div className="flex flex-col gap-2 rounded-lg border border-primary/40 bg-primary-soft/30 p-4">
-              <span className="mono text-xs font-bold text-primary-ink">STEP 02</span>
-              <h4 className="text-sm font-bold text-text">{t("intro.flowStep2Title")}</h4>
-              <p className="text-xs leading-relaxed text-muted">{t("intro.flowStep2Desc")}</p>
-            </div>
-
-            <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface-2 p-4">
-              <span className="mono text-xs font-bold text-primary">STEP 03</span>
-              <h4 className="text-sm font-bold text-text">{t("intro.flowStep3Title")}</h4>
-              <p className="text-xs leading-relaxed text-muted">{t("intro.flowStep3Desc")}</p>
-            </div>
-
-            <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface-2 p-4">
-              <span className="mono text-xs font-bold text-primary">STEP 04</span>
-              <h4 className="text-sm font-bold text-text">{t("intro.flowStep4Title")}</h4>
-              <p className="text-xs leading-relaxed text-muted">{t("intro.flowStep4Desc")}</p>
-            </div>
-          </div>
-        </section>
-
         {/* Bottom CTA Banner */}
         <section className="card flex flex-col items-center justify-between gap-6 border-primary/40 bg-primary-soft/20 p-8 text-center sm:flex-row sm:text-left">
           <div>
