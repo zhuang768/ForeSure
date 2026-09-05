@@ -349,9 +349,10 @@ export default function IntroPage() {
             </Reveal>
             <div className="-mt-10 grid items-start gap-12 lg:grid-cols-2 lg:gap-x-24 xl:gap-x-40">
               {/* left column sits a step in from the container edge so the margin reads as breathing room */}
-              <Reveal className="lg:pl-16 xl:pl-24">
-                <h2 className="t-h2 text-text">{zh ? "準備好體驗未然了嗎？" : "Ready to try ForeSure?"}</h2>
-                <p className="t-lead mt-5 text-muted">
+              {/* reads as the left-hand subheading of the split, so it sits a step lower and at the 24px title size */}
+              <Reveal className="lg:mt-10 lg:pl-16 xl:pl-24">
+                <h2 className="t-h3 text-text">{zh ? "準備好體驗未然了嗎？" : "Ready to try ForeSure?"}</h2>
+                <p className="t-lead mt-4 text-muted">
                   {zh ? "立即啟動 85 秒即時時事新聞感測、多代理人對抗辯論與以太坊 Sepolia 存證流程。" : "Launch 85-second live telemetry, multi-agent adversarial debate, and Ethereum Sepolia attestation."}
                 </p>
               </Reveal>
