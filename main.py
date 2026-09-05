@@ -81,7 +81,11 @@ def run_pipeline(emit=None) -> dict | None:
 
     # 幻覺檢測：純規則、不呼叫 LLM。掛在 proposal_data 上讓 Word 報告與上鏈 payload 都拿得到，
     # 也單獨存進紀錄給歷史列表與前端。
-    grounding = check_grounding(proposal_data, selected_news, gap_analysis["matched_products"])
+    try:
+        grounding = check_grounding(proposal_data, selected_news, gap_analysis["matched_products"])
+    except Exception:  # 檢測是加值步驟，壞掉不該讓整條 pipeline 失去提案與稽核軌跡
+        logger.exception("幻覺檢測失敗，略過")
+        grounding = None
     proposal_data["grounding"] = grounding
     _emit("grounding", grounding)
 

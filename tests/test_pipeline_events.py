@@ -121,3 +121,23 @@ def test_run_pipeline_stores_the_grounding_result_and_hands_it_to_the_report(mon
     assert record["grounding"]["status"] == "pass"
     assert record["grounding"]["checker_version"] == "grounding-check/v1"
     assert seen["proposal_data"]["grounding"] is record["grounding"]
+
+
+def test_a_grounding_check_failure_does_not_abort_the_pipeline(monkeypatch):
+    saved, events = [], []
+    _wire_fakes(monkeypatch, saved)
+
+    def _boom(proposal_data, news, matched_products):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(main, "check_grounding", _boom)
+
+    record = main.run_pipeline(emit=lambda stage, data: events.append(stage))
+
+    assert events == [
+        "news_fetched", "news_selected", "kb_matched", "actuarial",
+        "pm", "underwriter", "actuary", "grounding", "report", "chain_pending", "chain_done", "done",
+    ]
+    assert record["grounding"] is None
+    assert record["proposal_data"]["grounding"] is None
+    assert saved == [record]
