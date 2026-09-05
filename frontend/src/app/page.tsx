@@ -5,6 +5,7 @@ import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
 import BrandLogo from "@/components/BrandLogo";
 import HomeHero from "@/components/HomeHero";
+import AgentsSection from "@/components/AgentsSection";
 import Reveal from "@/components/Reveal";
 import SiteFooter from "@/components/SiteFooter";
 import { chainStatus, listRuns } from "@/lib/api";
@@ -16,47 +17,6 @@ import type { ChainStatus, RunSummary } from "@/lib/types";
 /* ------------------------------------------------------------------ */
 /* static content                                                      */
 /* ------------------------------------------------------------------ */
-
-type RoleKey = "pm" | "uw" | "ac";
-const ROLE_TEXT: Record<RoleKey, string> = { pm: "text-role-pm", uw: "text-role-uw", ac: "text-role-ac" };
-
-type Agent = {
-  key: RoleKey;
-  role: DictKey;
-  desc: DictKey;
-  /** Two facts per role: [zh label, zh value, en label, en value]. */
-  params: [string, string, string, string][];
-};
-
-const AGENTS: Agent[] = [
-  {
-    key: "pm",
-    role: "intro.pmRole",
-    desc: "intro.pmDesc",
-    params: [
-      ["核心偏向", "商業覆蓋最大化", "Strategic bias", "Max coverage"],
-      ["博弈制衡", "抗衡核保過度保守", "Dialectic target", "Challenge over-caution"],
-    ],
-  },
-  {
-    key: "uw",
-    role: "intro.uwRole",
-    desc: "intro.uwDesc",
-    params: [
-      ["核心偏向", "零道德風險防禦", "Strategic bias", "Anti-moral hazard"],
-      ["敞口限額", "單一事件巨災封頂", "Exposure cap", "Per-peril capped"],
-    ],
-  },
-  {
-    key: "ac",
-    role: "intro.actuaryRole",
-    desc: "intro.actuaryDesc",
-    params: [
-      ["損失分佈", "泊松過程與極端值", "Loss model", "Poisson & EVT"],
-      ["定價加成", "1.15x – 1.25x", "Markup", "1.15x – 1.25x"],
-    ],
-  },
-];
 
 type Advantage = { code: [string, string]; title: DictKey; desc: DictKey; icon: ReactNode };
 const ADVANTAGES: Advantage[] = [
@@ -121,27 +81,6 @@ function SectionHead({ ghost, title, lead }: { ghost: string; title: string; lea
         {title}
       </h2>
       {lead ? <p className="t-lead mt-5 max-w-3xl text-muted">{lead}</p> : null}
-    </Reveal>
-  );
-}
-
-/** One agent: big role-coloured number, role name, one line, two facts as plain text rows. */
-function AgentCard({ agent, index, lang, t, delay }: { agent: Agent; index: number; lang: "zh" | "en"; t: (k: DictKey) => string; delay: number }) {
-  return (
-    <Reveal delay={delay} className="h-full">
-      <article className="glass flex h-full flex-col px-10 py-12 md:py-14">
-        <div className={`t-en ${ROLE_TEXT[agent.key]}`}>{String(index + 1).padStart(2, "0")}</div>
-        <h3 className="t-h3 mt-12 text-text md:mt-16">{t(agent.role)}</h3>
-        <p className="t-body mt-3 text-muted">{t(agent.desc)}</p>
-        <dl className="mt-10 border-t border-border">
-          {agent.params.map(([zl, zv, el, ev]) => (
-            <div key={el} className="t-body flex items-baseline justify-between gap-4 border-b border-border py-3">
-              <dt className="shrink-0 text-muted">{lang === "zh" ? zl : el}</dt>
-              <dd className="text-right font-medium text-text">{lang === "zh" ? zv : ev}</dd>
-            </div>
-          ))}
-        </dl>
-      </article>
     </Reveal>
   );
 }
@@ -295,17 +234,8 @@ export default function IntroPage() {
         {/* ---------------- hero ---------------- */}
         <HomeHero />
 
-        {/* ---------------- agents (bento) ---------------- */}
-        <section className="py-20 md:py-28">
-          <Container>
-            <SectionHead ghost="AGENTS" title={t("intro.agentsTitle")} lead={t("intro.agentsSubtitle")} />
-            <div className="mt-14 grid gap-5 md:grid-cols-3">
-              {AGENTS.map((agent, i) => (
-                <AgentCard key={agent.key} agent={agent} index={i} lang={lang} t={t} delay={i * 100} />
-              ))}
-            </div>
-          </Container>
-        </section>
+        {/* ---------------- agents ---------------- */}
+        <AgentsSection />
 
         {/* ---------------- advantages (carousel) ---------------- */}
         <section className="py-20 md:py-28">
@@ -419,7 +349,8 @@ export default function IntroPage() {
               lead={zh ? "立即啟動 85 秒即時時事新聞感測、多代理人對抗辯論與以太坊 Sepolia 存證流程。" : "Launch 85-second live telemetry, multi-agent adversarial debate, and Ethereum Sepolia attestation."}
             />
             <div className="mt-14 grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
-              <Reveal>
+              {/* the left column sits a step in from the container edge so the margin reads as breathing room */}
+              <Reveal className="lg:pl-16 xl:pl-24">
                 <BrandLogo decorative className="h-14 w-auto" />
                 <h3 className="t-h3 mt-6 text-text">{zh ? "未然 ForeSure · 多代理人保險決策桌" : "ForeSure · multi-agent insurance decision desk"}</h3>
                 <ul className="t-body mt-6 flex flex-col gap-3">
@@ -445,7 +376,7 @@ export default function IntroPage() {
               </Reveal>
               <Reveal delay={120}>
                 <div className="glass p-10">
-                  <div className="label">{zh ? "Demo 流程" : "Demo flow"}</div>
+                  <div className="label">{zh ? "流程" : "Process"}</div>
                   <ol className="mt-4 flex flex-col gap-3">
                     {[
                       [zh ? "抓取即時新聞並比對既有商品" : "Fetch live news, match existing products", "~10s"],
