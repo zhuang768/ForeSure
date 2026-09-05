@@ -43,3 +43,37 @@ export function fmtUnix(ts: number | null | undefined): string {
   const p = (x: number) => String(x).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
+
+const COMPACT_UNITS: [number, string][] = [
+  [1e9, "B"],
+  [1e6, "M"],
+  [1e3, "K"],
+];
+
+/** Number part only: full digits below 100,000; otherwise K/M/B with one decimal ("14.4M", "468M"). */
+function compactAmount(n: number): string {
+  const abs = Math.abs(n);
+  if (abs < 1e5) return Math.round(n).toLocaleString("en-US");
+  let i = COMPACT_UNITS.findIndex(([scale]) => abs >= scale);
+  let scaled = Number((n / COMPACT_UNITS[i][0]).toFixed(1));
+  // 999.96M rounds to 1000.0M; carry into the next larger unit instead.
+  if (Math.abs(scaled) >= 1000 && i > 0) {
+    i -= 1;
+    scaled = Number((n / COMPACT_UNITS[i][0]).toFixed(1));
+  }
+  return `${scaled}${COMPACT_UNITS[i][1]}`;
+}
+
+/** "USD 41,839" below 100,000; "USD 14.4M" above. Tile-sized alternative to fmtUsd. */
+export function fmtUsdCompact(n: number | null | undefined): string {
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  return "USD " + compactAmount(n);
+}
+
+/** "USD 15.9M – 26.6M": one prefix, both ends compacted. */
+export function fmtUsdRangeCompact(range: readonly [number, number] | null | undefined): string {
+  if (!range) return "—";
+  const [lo, hi] = range;
+  if ([lo, hi].some((v) => v === null || v === undefined || Number.isNaN(v))) return "—";
+  return `USD ${compactAmount(lo)} – ${compactAmount(hi)}`;
+}

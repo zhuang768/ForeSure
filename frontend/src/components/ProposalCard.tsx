@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { fmtPct, fmtUsd } from "@/lib/format";
+import { fmtPct, fmtUsdCompact, fmtUsdRangeCompact } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import type { ActuarialData, Proposal } from "@/lib/types";
 
@@ -22,13 +22,13 @@ function BasisTag({ source, lowSample }: { source: string | undefined; lowSample
 
 export function NumberTiles({ actuarial }: { actuarial: ActuarialData | null }) {
   const t = useT();
-  const premium = actuarial
-    ? `${fmtUsd(actuarial.premium_range_usd[0])} – ${Math.round(actuarial.premium_range_usd[1]).toLocaleString("en-US")}`
-    : "—";
+  // Tiles are three narrow columns; NFA-backed figures reach hundreds of millions, so compact here
+  // and leave the full digits to the pricing tab in DecisionDetail.
+  const premium = fmtUsdRangeCompact(actuarial?.premium_range_usd);
   const basis = actuarial?.basis ?? null;
   const tiles: [string, string, React.ReactNode][] = [
     [t("num.probability"), fmtPct(actuarial?.probability_pct), <BasisTag key="p" source={basis?.probability_source} lowSample={basis?.low_sample} />],
-    [t("num.loss"), fmtUsd(actuarial?.expected_loss_usd), <BasisTag key="l" source={basis?.loss_source} />],
+    [t("num.loss"), fmtUsdCompact(actuarial?.expected_loss_usd), <BasisTag key="l" source={basis?.loss_source} />],
     [t("num.premium"), premium, null],
   ];
   return (
