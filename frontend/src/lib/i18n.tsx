@@ -110,6 +110,12 @@ export const DICT = {
     "stage.chain_pending": "上鏈中",
     "stage.chain_done": "已存證",
     "stage.done": "完成",
+    "history.title": "歷史分析與存證紀錄",
+    "history.subtitle": "過去生成之保險提案、代理人辯論與以太坊 Sepolia 存證鏈結",
+    "history.viewDetail": "檢視完整決策",
+    "history.onchainPill": "已上鏈 Sepolia",
+    "history.mockPill": "模擬存證",
+    "history.empty": "目前尚無歷史紀錄",
   },
   en: {
     "app.title": "Atlas Insurance Decision Desk",
@@ -216,6 +222,12 @@ export const DICT = {
     "stage.chain_pending": "Anchoring",
     "stage.chain_done": "Anchored",
     "stage.done": "Done",
+    "history.title": "Historical Decisions & On-Chain Audit",
+    "history.subtitle": "Archived insurance proposals, agent debates, and Ethereum Sepolia audit trails",
+    "history.viewDetail": "View Decision",
+    "history.onchainPill": "Sepolia Anchored",
+    "history.mockPill": "Mock Record",
+    "history.empty": "No historical records available",
   },
 } as const;
 

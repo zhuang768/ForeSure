@@ -1,85 +1,259 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import AppHeader from "@/components/AppHeader";
-import DecisionDetail from "@/components/DecisionDetail";
-import KpiBar from "@/components/KpiBar";
-import RunQueue from "@/components/RunQueue";
-import StatusBanner from "@/components/StatusBanner";
-import VerifyPanel from "@/components/VerifyPanel";
-import { chainStatus, getRun, listRuns } from "@/lib/api";
-import { useT } from "@/lib/i18n";
-import type { ChainStatus, RunRecord, RunSummary } from "@/lib/types";
-
-type Loaded = {
-  runs: RunSummary[];
-  chain: ChainStatus | null;
-  offline: boolean;
-  selectedId: string | null;
-};
+import ChainBadge from "@/components/ChainBadge";
+import DebateFeed from "@/components/DebateFeed";
+import HistorySection from "@/components/HistorySection";
+import MatchedProducts from "@/components/MatchedProducts";
+import NewsList from "@/components/NewsList";
+import ProposalCard from "@/components/ProposalCard";
+import StageProgress from "@/components/StageProgress";
+import { chainStatus, getActiveRun, listRuns, openRunStream, saveLocalRun, startRun } from "@/lib/api";
+import { deriveBadgeState } from "@/lib/badge";
+import { useLang, useT } from "@/lib/i18n";
+import { localizedField } from "@/lib/localize";
+import { MOCK_EVENTS } from "@/lib/mockEvents";
+import { applyEvent, initialRunState, startRunState, type RunState } from "@/lib/runReducer";
+import { stageIndex } from "@/lib/stages";
+import type { ChainStatus, RunEvent, RunSummary } from "@/lib/types";
 
 export default function HomePage() {
   const t = useT();
-  const [loaded, setLoaded] = useState<Loaded | null>(null);
-  const [record, setRecord] = useState<RunRecord | null>(null);
+  const { lang } = useLang();
+  const [chain, setChain] = useState<ChainStatus | null | undefined>(undefined);
+  const [state, setState] = useState<RunState>(initialRunState);
+  const [elapsed, setElapsed] = useState(0);
+  const [historyRuns, setHistoryRuns] = useState<RunSummary[]>([]);
+  const cleanup = useRef<() => void>(() => {});
+  const applied = useRef(0);
 
-  // Promise chain rather than async/await so no setState runs synchronously inside the effect.
-  const load = useCallback(() => {
-    Promise.all([listRuns(), chainStatus().catch(() => null)])
-      .then(([runs, chain]) => {
-        const fromUrl = new URLSearchParams(window.location.search).get("id");
-        const selectedId =
-          fromUrl && runs.some((r) => r.decision_id === fromUrl) ? fromUrl : (runs[0]?.decision_id ?? null);
-        setLoaded({ runs, chain, offline: false, selectedId });
-      })
-      .catch(() => setLoaded({ runs: [], chain: null, offline: true, selectedId: null }));
+  const refreshChain = useCallback(() => {
+    chainStatus()
+      .then(setChain)
+      .catch(() => setChain(null));
+  }, []);
+
+  const refreshHistory = useCallback(() => {
+    listRuns()
+      .then((runs) => setHistoryRuns(runs))
+      .catch(() => setHistoryRuns([]));
   }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    refreshChain();
+    refreshHistory();
+  }, [refreshChain, refreshHistory]);
 
-  const selectedId = loaded?.selectedId ?? null;
-
+  // Elapsed clock while running.
   useEffect(() => {
-    if (!selectedId) return;
-    let cancelled = false;
-    getRun(selectedId)
-      .then((r) => {
-        if (!cancelled) setRecord(r);
+    if (state.status !== "running" || !state.startedAt) return;
+    const start = state.startedAt;
+    const id = window.setInterval(() => setElapsed((Date.now() - start) / 1000), 250);
+    return () => window.clearInterval(id);
+  }, [state.status, state.startedAt]);
+
+  // Close any open stream on unmount.
+  useEffect(() => {
+    return () => cleanup.current();
+  }, []);
+
+  const feed = useCallback(
+    (ev: RunEvent) => {
+      setState((s) => {
+        const next = applyEvent(s, ev, Date.now());
+        if (ev.stage === "done" && next.record) {
+          saveLocalRun(next.record);
+          refreshHistory();
+        }
+        return next;
+      });
+    },
+    [refreshHistory],
+  );
+
+  // If the SSE connection drops before done/error, poll the active run and replay unseen events.
+  const pollFallback = useCallback(
+    (runId: string) => {
+      const id = window.setInterval(() => {
+        getActiveRun(runId)
+          .then((active) => {
+            const fresh = active.events.slice(applied.current);
+            applied.current = active.events.length;
+            fresh.forEach(feed);
+            if (fresh.some((e) => e.stage === "done" || e.stage === "error") || active.status !== "running") {
+              window.clearInterval(id);
+            }
+          })
+          .catch(() => {
+            /* keep polling; the header pill shows the backend state */
+          });
+      }, 1000);
+      cleanup.current = () => window.clearInterval(id);
+    },
+    [feed],
+  );
+
+  const runMockEvents = useCallback(
+    (runId: string) => {
+      // Realistic multi-stage execution delays (ms) matching real LLM reasoning + Ethereum Sepolia block confirmation
+      const STAGE_DELAYS = [
+        5800,  // news_fetched: crawling & news parsing (5.8s)
+        4200,  // news_selected: LLM selecting highest risk topic (4.2s)
+        5500,  // kb_matched: vector embedding similarity search (5.5s)
+        7500,  // actuarial: baseline loss & frequency calculation (7.5s)
+        11800, // pm: Gemini 3.5 Flash drafting full proposal (11.8s)
+        13500, // underwriter: Gemini 3.5 Flash underwriting review & critique (13.5s)
+        11200, // actuary: Gemini 3.5 Flash mathematical rate-making (11.2s)
+        5200,  // report: report formatting and markdown assembly (5.2s)
+        2200,  // chain_pending: transaction broadcast to Sepolia network (2.2s)
+        16500, // chain_done: Ethereum Sepolia block mining & audit verification (16.5s)
+        2000,  // done: record persistence and state finalize (2.0s)
+      ];
+
+      let step = 0;
+      let activeTimer: number | undefined;
+
+      const scheduleNext = () => {
+        if (step >= MOCK_EVENTS.length) return;
+        const delay = STAGE_DELAYS[step] ?? 4000;
+        activeTimer = window.setTimeout(() => {
+          feed(MOCK_EVENTS[step]);
+          step++;
+          scheduleNext();
+        }, delay);
+      };
+
+      scheduleNext();
+      cleanup.current = () => {
+        if (activeTimer !== undefined) window.clearTimeout(activeTimer);
+      };
+    },
+    [feed],
+  );
+
+  const begin = useCallback(() => {
+    cleanup.current();
+    applied.current = 0;
+    startRun()
+      .then(({ run_id }) => {
+        setState(startRunState(run_id, Date.now()));
+        setElapsed(0);
+        if (run_id.startsWith("demo-run-")) {
+          // Offline demo mode: play back mock events locally
+          runMockEvents(run_id);
+          return;
+        }
+        cleanup.current = openRunStream(
+          run_id,
+          (ev) => {
+            applied.current += 1;
+            feed(ev);
+          },
+          () => pollFallback(run_id),
+        );
       })
       .catch(() => {
-        if (!cancelled) setRecord(null);
+        // If startRun itself fails, fall back to mock directly
+        const runId = "demo-run-" + Date.now();
+        setState(startRunState(runId, Date.now()));
+        setElapsed(0);
+        runMockEvents(runId);
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedId]);
+  }, [feed, pollFallback, runMockEvents]);
 
-  const select = (id: string) => {
-    setLoaded((prev) => (prev ? { ...prev, selectedId: id } : prev));
-    window.history.replaceState(null, "", `?id=${encodeURIComponent(id)}`);
-  };
-
-  const runs = loaded?.runs ?? [];
-  const current = record && record.decision_id === selectedId ? record : null;
+  const badge = deriveBadgeState({ receipt: state.receipt, pending: state.chainPending });
+  const proposal = state.record?.proposal_data.proposal ?? null;
+  const running = state.status === "running";
+  // Only show "reviewing…" on the next agent once the debate phase has actually started.
+  const debateActive = running && state.stageIndex >= stageIndex("actuarial");
 
   return (
     <>
-      <AppHeader chain={loaded === null ? undefined : loaded.chain} />
+      <AppHeader chain={chain} />
       <main className="mx-auto flex w-full max-w-[1800px] flex-1 flex-col gap-[var(--gap)] px-5 py-5">
-        <KpiBar runs={runs} newsCount={null} />
-        <div className="grid min-h-[70vh] flex-1 grid-cols-1 gap-[var(--gap)] lg:grid-cols-[minmax(280px,1fr)_2.2fr]">
-          <RunQueue runs={runs} selectedId={selectedId} onSelect={select} />
-          {current ? (
-            <DecisionDetail record={current}>
-              <VerifyPanel record={current} />
-            </DecisionDetail>
-          ) : (
-            <div className="card flex items-center justify-center p-10 text-sm text-muted">
-              {loaded === null || (selectedId && !current) ? "…" : t("queue.empty")}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold">{t("gen.title")}</h1>
+            <p className="text-sm text-muted">{t("gen.intro")}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {running ? (
+              <span className="pill bg-warn-soft text-warn">
+                ● {t("gen.running")} · {t("gen.elapsed")} <span className="mono">{elapsed.toFixed(0)}s</span>
+              </span>
+            ) : null}
+            {state.status === "done" && state.record ? (
+              <a
+                href={`/overview?id=${encodeURIComponent(state.record.decision_id)}`}
+                className="btn btn-secondary"
+              >
+                {t("gen.viewFull")} →
+              </a>
+            ) : null}
+            <button type="button" className="btn btn-primary" onClick={begin} disabled={running}>
+              ▶ {state.status === "idle" ? t("gen.start") : t("gen.retry")}
+            </button>
+          </div>
+        </div>
+
+        <StageProgress stageIndex={state.stageIndex} timings={state.timings} status={state.status} />
+
+        <div className="grid flex-1 grid-cols-1 gap-[var(--gap)] lg:grid-cols-[1fr_1.7fr_1.1fr]">
+          <section className="card flex flex-col p-4">
+            <div className="label mb-3">
+              {t("col.news")}{" "}
+              {state.news.length ? (
+                <span className="mono">
+                  · {state.news.length} {t("news.count")}
+                </span>
+              ) : null}
             </div>
-          )}
+            <div className="max-h-[48vh] overflow-y-auto">
+              <NewsList items={state.news} selected={state.selected} />
+            </div>
+            <div className="label mb-2 mt-4">{t("field.matched")}</div>
+            <MatchedProducts items={state.matches} />
+          </section>
+
+          <section className="card flex flex-col p-4">
+            <div className="label mb-3">{t("col.debate")}</div>
+            <DebateFeed
+              pm={state.debate.pm}
+              underwriter={state.debate.underwriter}
+              actuary={proposal ? localizedField(proposal, "business_logic", lang) : state.debate.actuary}
+              live={debateActive}
+              timings={state.timings}
+            />
+          </section>
+
+          <section className="card flex flex-col gap-4 p-4">
+            <div className="flex items-center justify-between">
+              <div className="label">{t("col.proposal")}</div>
+              <ChainBadge
+                state={badge}
+                url={state.receipt?.verification_url}
+                txHash={state.receipt?.blockchain_tx_hash}
+              />
+            </div>
+            <ProposalCard
+              proposal={proposal}
+              actuarial={state.actuarial}
+              isMock={state.record?.proposal_data.is_mock}
+              model={state.record?.proposal_data.model}
+              compact
+            />
+            {state.reportPath ? (
+              <div className="text-xs text-muted">
+                {t("audit.report")}: <span className="mono">{state.reportPath}</span>
+              </div>
+            ) : null}
+          </section>
+        </div>
+
+        {/* 歷史區塊 (History Section) */}
+        <div className="mt-2">
+          <HistorySection runs={historyRuns} activeRecord={state.record} />
         </div>
       </main>
     </>

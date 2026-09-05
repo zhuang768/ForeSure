@@ -32,7 +32,7 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
   const { lang, setLang } = useLang();
   const { theme, setTheme, present, setPresent } = usePrefs();
   const pathname = usePathname();
-  const onGenerator = pathname?.startsWith("/generator");
+  const onOverview = pathname?.startsWith("/overview");
 
   // Show connected status for both real sepolia and mock (offline demo) mode
   const chainPill =
@@ -41,7 +41,7 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
         <StableLabel k="header.chain.sepolia" lang={lang} prefix="● " />
       </span>
     ) : (
-      <span className="pill bg-primary-soft text-primary-ink">● Sepolia Demo</span>
+      <span className="pill bg-primary-soft text-primary-ink">● {t("header.chain.sepolia")}</span>
     );
 
   return (
@@ -84,13 +84,13 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
           >
             <StableLabel k="header.present" lang={lang} />
           </button>
-          {onGenerator ? (
-            <Link href="/" className="btn btn-secondary">
-              <StableLabel k="header.home" lang={lang} />
+          {onOverview ? (
+            <Link href="/" className="btn btn-primary">
+              <StableLabel k="header.run" lang={lang} prefix="▶ " />
             </Link>
           ) : (
-            <Link href="/generator" className="btn btn-primary">
-              <StableLabel k="header.run" lang={lang} prefix="▶ " />
+            <Link href="/overview" className="btn btn-secondary">
+              <StableLabel k="header.home" lang={lang} />
             </Link>
           )}
         </div>
