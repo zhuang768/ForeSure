@@ -43,7 +43,8 @@ export default function SiteFooter({ chain }: { chain?: ChainStatus | null }) {
   return (
     <footer className="mt-auto border-t border-border bg-surface/70 backdrop-blur">
       <div className="mx-auto grid max-w-[1800px] gap-10 px-5 py-12 md:grid-cols-[1.4fr_1fr_0.8fr]">
-        <div>
+        {/* brand column sits a step in from the page edge, like the hero and start sections */}
+        <div className="lg:pl-16 xl:pl-24">
           <BrandLogo decorative className="h-12 w-auto" />
           <p className="t-body mt-4 max-w-md text-muted">{t("footer.tagline")}</p>
         </div>
