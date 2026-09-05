@@ -247,13 +247,13 @@ export default function IntroPage() {
                   : "Four things the traditional workflow cannot do, covered by live news, a three-agent debate and on-chain proof."
               }
             />
-            <div className="mt-20 grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className="mx-auto mt-16 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2">
               {metrics.map(([label, value, desc], i) => (
                 <Reveal key={label} delay={i * 80}>
-                  <div className="glass h-full p-6 md:p-10">
+                  <div className="glass h-full p-6 md:p-7">
                     <div className="font-mono text-xs uppercase leading-5 tracking-wider text-muted">{label}</div>
-                    <div className="mt-5 font-mono text-4xl font-semibold leading-9 tabular-nums text-primary">{value}</div>
-                    <p className="t-body mt-3 text-muted">{desc}</p>
+                    <div className="mt-4 font-mono text-4xl font-semibold leading-9 tabular-nums text-primary">{value}</div>
+                    <p className="t-body mt-2 text-muted">{desc}</p>
                   </div>
                 </Reveal>
               ))}
