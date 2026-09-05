@@ -28,6 +28,7 @@ export type MatchedProduct = {
 export type ActuarialBasis = {
   peril?: string;
   probability_source?: string; // data source string, or "assumption"
+  probability_source_en?: string; // English name of the same source; absent for "assumption"
   probability_method?: string;
   years_observed?: number | null;
   events_observed?: number | null;
@@ -50,6 +51,7 @@ export type ActuarialData = {
   basis?: ActuarialBasis | null;
 };
 
+/** Six sections, each in Traditional Chinese plus an English twin (`_en`, docs/API.md); `_en` is absent on records before 2026-09-05 13:00. */
 export type Proposal = {
   product_name: string;
   target_audience: string;
@@ -57,6 +59,12 @@ export type Proposal = {
   coverage_details: string;
   exclusions: string;
   business_logic: string;
+  product_name_en?: string;
+  target_audience_en?: string;
+  market_gap_en?: string;
+  coverage_details_en?: string;
+  exclusions_en?: string;
+  business_logic_en?: string;
 };
 
 export type Debate = { pm: string; underwriter: string };

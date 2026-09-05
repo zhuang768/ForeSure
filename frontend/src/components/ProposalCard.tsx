@@ -2,7 +2,8 @@
 
 import type React from "react";
 import { fmtPct, fmtUsdCompact, fmtUsdRangeCompact } from "@/lib/format";
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
+import { localizedField } from "@/lib/localize";
 import type { ActuarialData, Proposal } from "@/lib/types";
 
 /** Small provenance tag under a number: official statistics vs assumption (docs/API.md "精算依據"). */
@@ -67,12 +68,14 @@ export default function ProposalCard({
   compact?: boolean;
 }) {
   const t = useT();
+  const { lang } = useLang();
+  const f = (field: Parameters<typeof localizedField>[1]) => localizedField(proposal, field, lang);
   return (
     <div className="flex flex-col gap-4">
       <div>
         <div className="label">{t("field.product")}</div>
         <h3 className={`font-bold leading-tight ${compact ? "text-lg" : "text-2xl"} ${proposal ? "" : "text-muted"}`}>
-          {proposal?.product_name ?? "—"}
+          {proposal ? f("product_name") : "—"}
         </h3>
         {isMock ? <div className="mt-1 text-xs text-warn">{t("field.mockProposal")}</div> : null}
         {model ? (
@@ -84,10 +87,10 @@ export default function ProposalCard({
       <NumberTiles actuarial={actuarial} />
       {!compact && proposal ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label={t("field.audience")} value={proposal.target_audience} />
-          <Field label={t("field.gap")} value={proposal.market_gap} />
-          <Field label={t("field.coverage")} value={proposal.coverage_details} />
-          <Field label={t("field.exclusions")} value={proposal.exclusions} />
+          <Field label={t("field.audience")} value={f("target_audience")} />
+          <Field label={t("field.gap")} value={f("market_gap")} />
+          <Field label={t("field.coverage")} value={f("coverage_details")} />
+          <Field label={t("field.exclusions")} value={f("exclusions")} />
         </div>
       ) : null}
     </div>

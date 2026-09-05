@@ -11,13 +11,15 @@ import StageProgress from "@/components/StageProgress";
 import StatusBanner from "@/components/StatusBanner";
 import { chainStatus, getActiveRun, openRunStream, startRun } from "@/lib/api";
 import { deriveBadgeState } from "@/lib/badge";
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
+import { localizedField } from "@/lib/localize";
 import { applyEvent, initialRunState, startRunState, type RunState } from "@/lib/runReducer";
 import { stageIndex } from "@/lib/stages";
 import type { ChainStatus, RunEvent } from "@/lib/types";
 
 export default function GeneratorPage() {
   const t = useT();
+  const { lang } = useLang();
   const [chain, setChain] = useState<ChainStatus | null | undefined>(undefined);
   const [state, setState] = useState<RunState>(initialRunState);
   const [elapsed, setElapsed] = useState(0);
@@ -157,7 +159,7 @@ export default function GeneratorPage() {
             <DebateFeed
               pm={state.debate.pm}
               underwriter={state.debate.underwriter}
-              actuary={state.debate.actuary}
+              actuary={proposal ? localizedField(proposal, "business_logic", lang) : state.debate.actuary}
               live={debateActive}
               timings={state.timings}
             />

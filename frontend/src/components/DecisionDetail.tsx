@@ -7,7 +7,8 @@ import MatchedProducts from "@/components/MatchedProducts";
 import ProposalCard, { NumberTiles } from "@/components/ProposalCard";
 import { deriveBadgeState } from "@/lib/badge";
 import { fmtStamp, shortHash } from "@/lib/format";
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
+import { localizedField, localizedSource } from "@/lib/localize";
 import type { RunRecord } from "@/lib/types";
 
 type Tab = "summary" | "debate" | "pricing" | "audit";
@@ -23,6 +24,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 
 export default function DecisionDetail({ record, children }: { record: RunRecord; children?: ReactNode }) {
   const t = useT();
+  const { lang } = useLang();
   const [tab, setTab] = useState<Tab>("summary");
   const receipt = record.blockchain_receipt;
   const pd = record.proposal_data;
@@ -42,7 +44,7 @@ export default function DecisionDetail({ record, children }: { record: RunRecord
           <div className="mono text-xs text-muted">
             {record.decision_id} · {fmtStamp(record.timestamp)}
           </div>
-          <h2 className="truncate text-2xl font-bold leading-tight">{pd.proposal.product_name}</h2>
+          <h2 className="truncate text-2xl font-bold leading-tight">{localizedField(pd.proposal, "product_name", lang)}</h2>
         </div>
         <ChainBadge state={badge} url={receipt.verification_url} txHash={receipt.blockchain_tx_hash} />
       </div>
@@ -83,7 +85,7 @@ export default function DecisionDetail({ record, children }: { record: RunRecord
           </div>
         ) : null}
         {tab === "debate" ? (
-          <DebateFeed pm={pd.debate.pm} underwriter={pd.debate.underwriter} actuary={pd.proposal.business_logic} replayable />
+          <DebateFeed pm={pd.debate.pm} underwriter={pd.debate.underwriter} actuary={localizedField(pd.proposal, "business_logic", lang)} replayable />
         ) : null}
         {tab === "pricing" ? (
           <div className="flex flex-col gap-4">
@@ -100,7 +102,7 @@ export default function DecisionDetail({ record, children }: { record: RunRecord
                 <Row label={t("basis.probability")}>
                   {record.actuarial_data.basis.probability_source === "assumption"
                     ? t("basis.assumption")
-                    : record.actuarial_data.basis.probability_source}
+                    : localizedSource(record.actuarial_data.basis, lang)}
                 </Row>
                 {record.actuarial_data.basis.probability_method ? (
                   <Row label={t("basis.method")}>{record.actuarial_data.basis.probability_method}</Row>
@@ -128,7 +130,7 @@ export default function DecisionDetail({ record, children }: { record: RunRecord
             )}
             <div>
               <div className="label mb-1">{t("field.businessLogic")}</div>
-              <p className="whitespace-pre-line text-sm leading-relaxed">{pd.proposal.business_logic}</p>
+              <p className="whitespace-pre-line text-sm leading-relaxed">{localizedField(pd.proposal, "business_logic", lang)}</p>
             </div>
           </div>
         ) : null}
