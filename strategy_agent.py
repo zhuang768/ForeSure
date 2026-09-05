@@ -172,7 +172,7 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
                 {"role": "user", "content": pm_message},
             ],
             temperature=0.8,
-            max_tokens=800,
+            max_tokens=3000,  # Gemini 推理 token 也計入上限，800 會把正文截到只剩幾十字
             **extra,
         )
         pm_idea = pm_response.choices[0].message.content or ""
@@ -186,7 +186,7 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
                 {"role": "user", "content": f"這是 PM 提出的點子，請嚴厲批評並指出可能導致虧損的 3 大漏洞：\n\n{pm_idea}"},
             ],
             temperature=0.4,
-            max_tokens=800,
+            max_tokens=3000,
             **extra,
         )
         uw_critique = uw_response.choices[0].message.content or ""
@@ -207,7 +207,7 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
             tools=_TOOLS,
             tool_choice=_TOOL_CHOICE,
             temperature=0.7,
-            max_tokens=1500,
+            max_tokens=3000,
             **extra,
         )
         tool_calls = final_response.choices[0].message.tool_calls
