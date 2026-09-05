@@ -54,12 +54,6 @@ export default function IntroPage() {
             >
               {t("intro.ctaHistory")}
             </Link>
-            <Link
-              href="/overview"
-              className="btn btn-secondary px-5 py-3 text-sm font-semibold hover:border-primary/50 transition-all"
-            >
-              {t("intro.ctaOverview")}
-            </Link>
           </div>
         </section>
 

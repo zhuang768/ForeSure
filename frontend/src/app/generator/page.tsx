@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
 import ChainBadge from "@/components/ChainBadge";
 import DebateFeed from "@/components/DebateFeed";
@@ -171,12 +172,9 @@ export default function GeneratorPage() {
               </span>
             ) : null}
             {state.status === "done" && state.record ? (
-              <a
-                href={`/overview?id=${encodeURIComponent(state.record.decision_id)}`}
-                className="btn btn-secondary"
-              >
-                {t("gen.viewFull")} →
-              </a>
+              <Link href="/history" className="btn btn-secondary">
+                {t("intro.ctaHistory")} →
+              </Link>
             ) : null}
             <button type="button" className="btn btn-primary" onClick={begin} disabled={running}>
               ▶ {state.status === "idle" ? t("gen.start") : t("gen.retry")}

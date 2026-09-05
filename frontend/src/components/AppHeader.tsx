@@ -32,7 +32,6 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
   const { lang, setLang } = useLang();
   const { theme, setTheme, present, setPresent } = usePrefs();
   const pathname = usePathname();
-  const onOverview = pathname?.startsWith("/overview");
   const onHistory = pathname?.startsWith("/history");
   const onGenerator = pathname?.startsWith("/generator");
   const onHome = pathname === "/" || pathname === "";
@@ -91,15 +90,10 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
           >
             <StableLabel k="header.history" lang={lang} />
           </Link>
-          {/* Navigation to intro/overview/generator */}
+          {/* Navigation to intro or generator */}
           {!onHome ? (
             <Link href="/" className="btn btn-secondary px-2.5 py-1 text-xs">
               <StableLabel k="header.intro" lang={lang} />
-            </Link>
-          ) : null}
-          {!onOverview ? (
-            <Link href="/overview" className="btn btn-secondary px-2.5 py-1 text-xs">
-              <StableLabel k="header.home" lang={lang} />
             </Link>
           ) : null}
           {!onGenerator ? (

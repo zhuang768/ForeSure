@@ -149,10 +149,10 @@ export default function HistoryPage() {
             <p className="mt-1 text-sm text-muted">{t("history.pageSubtitle")}</p>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/overview" className="btn btn-secondary text-xs">
-              {t("header.home")}
+            <Link href="/" className="btn btn-secondary text-xs">
+              {t("header.intro")}
             </Link>
-            <Link href="/" className="btn btn-primary text-xs">
+            <Link href="/generator" className="btn btn-primary text-xs font-semibold">
               ▶ {t("header.run")}
             </Link>
           </div>
@@ -361,12 +361,6 @@ export default function HistoryPage() {
                         >
                           {isExpanded ? t("history.collapse") : t("history.expand")}
                         </button>
-                        <Link
-                          href={`/overview?id=${encodeURIComponent(r.decision_id)}`}
-                          className="btn btn-secondary px-3 py-1.5 text-xs whitespace-nowrap"
-                        >
-                          {t("history.verifyInOverview")} →
-                        </Link>
                       </div>
                     </div>
 
@@ -452,7 +446,7 @@ export default function HistoryPage() {
                             </div>
                           ) : null}
 
-                          {/* Blockchain Fingerprint & Verify CTA */}
+                          {/* Blockchain Fingerprint */}
                           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3.5 text-xs text-muted">
                             <div className="flex items-center gap-2">
                               <span className="font-semibold text-text">SHA-256 Fingerprint:</span>
@@ -460,12 +454,6 @@ export default function HistoryPage() {
                                 {rec.blockchain_receipt.data_hash}
                               </span>
                             </div>
-                            <Link
-                              href={`/overview?id=${encodeURIComponent(r.decision_id)}`}
-                              className="btn btn-secondary px-3 py-1 text-xs"
-                            >
-                              Verify Fingerprint Integrity in Overview →
-                            </Link>
                           </div>
                         </>
                       ) : (
