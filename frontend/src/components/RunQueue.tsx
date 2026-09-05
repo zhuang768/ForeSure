@@ -1,5 +1,6 @@
 "use client";
 
+import GroundingBadge from "@/components/GroundingBadge";
 import { fmtStamp } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import type { RunSummary } from "@/lib/types";
@@ -42,11 +43,16 @@ export default function RunQueue({
                     <div className="truncate text-xs text-muted">{r.news_title ?? "—"}</div>
                     <div className="mono mt-1 text-[0.65rem] text-muted">{fmtStamp(r.timestamp)}</div>
                   </div>
-                  <span
-                    className={`pill ${onchain ? "bg-primary-soft text-primary-ink" : "border border-border bg-surface-2 text-muted"}`}
-                  >
-                    {onchain ? t("queue.onchain") : t("queue.mock")}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span
+                      className={`pill ${onchain ? "bg-primary-soft text-primary-ink" : "border border-border bg-surface-2 text-muted"}`}
+                    >
+                      {onchain ? t("queue.onchain") : t("queue.mock")}
+                    </span>
+                    {r.grounding_status === "warn" || r.grounding_status === "fail" ? (
+                      <GroundingBadge status={r.grounding_status} />
+                    ) : null}
+                  </div>
                 </div>
               </button>
             );

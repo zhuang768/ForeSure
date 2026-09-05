@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import AppHeader from "@/components/AppHeader";
 import ChainBadge from "@/components/ChainBadge";
 import DebateFeed from "@/components/DebateFeed";
+import GroundingBadge from "@/components/GroundingBadge";
 import HistorySection from "@/components/HistorySection";
 import MatchedProducts from "@/components/MatchedProducts";
 import NewsList from "@/components/NewsList";
@@ -230,11 +231,14 @@ export default function HomePage() {
           <section className="card flex flex-col gap-4 p-4">
             <div className="flex items-center justify-between">
               <div className="label">{t("col.proposal")}</div>
-              <ChainBadge
-                state={badge}
-                url={state.receipt?.verification_url}
-                txHash={state.receipt?.blockchain_tx_hash}
-              />
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <GroundingBadge grounding={state.grounding ?? state.record?.grounding} />
+                <ChainBadge
+                  state={badge}
+                  url={state.receipt?.verification_url}
+                  txHash={state.receipt?.blockchain_tx_hash}
+                />
+              </div>
             </div>
             <ProposalCard
               proposal={proposal}

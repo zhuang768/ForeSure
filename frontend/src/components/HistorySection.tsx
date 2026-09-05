@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import GroundingBadge from "@/components/GroundingBadge";
 import { fmtStamp, shortHash } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import type { RunRecord, RunSummary } from "@/lib/types";
@@ -75,6 +76,7 @@ export default function HistorySection({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 pt-2 md:pt-0">
+                  <GroundingBadge status={r.grounding_status} />
                   {onchain ? (
                     r.verification_url ? (
                       <a

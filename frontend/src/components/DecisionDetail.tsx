@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import ChainBadge from "@/components/ChainBadge";
 import DebateFeed from "@/components/DebateFeed";
+import GroundingBadge, { GroundingFlags } from "@/components/GroundingBadge";
 import MatchedProducts from "@/components/MatchedProducts";
 import ProposalCard, { NumberTiles } from "@/components/ProposalCard";
 import { deriveBadgeState } from "@/lib/badge";
@@ -46,7 +47,10 @@ export default function DecisionDetail({ record, children }: { record: RunRecord
           </div>
           <h2 className="truncate text-2xl font-bold leading-tight">{localizedField(pd.proposal, "product_name", lang)}</h2>
         </div>
-        <ChainBadge state={badge} url={receipt.verification_url} txHash={receipt.blockchain_tx_hash} />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <GroundingBadge grounding={record.grounding} />
+          <ChainBadge state={badge} url={receipt.verification_url} txHash={receipt.blockchain_tx_hash} />
+        </div>
       </div>
       <div className="flex gap-5 border-b border-border px-5 text-sm">
         {tabs.map(([key, label]) => (
@@ -164,6 +168,19 @@ export default function DecisionDetail({ record, children }: { record: RunRecord
               <Row label={t("audit.report")}>
                 <span className="mono text-xs">{record.report_path}</span>
               </Row>
+            </div>
+            <div>
+              <div className="label mb-2">{t("grounding.title")}</div>
+              {record.grounding ? (
+                <div className="flex flex-col gap-2">
+                  <div>
+                    <GroundingBadge grounding={record.grounding} />
+                  </div>
+                  <GroundingFlags grounding={record.grounding} />
+                </div>
+              ) : (
+                <p className="text-xs text-muted">{t("grounding.legacy")}</p>
+              )}
             </div>
             {children}
           </div>
