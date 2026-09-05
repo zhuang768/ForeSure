@@ -34,6 +34,7 @@ def _wire_fakes(monkeypatch, saved):
     monkeypatch.setattr(main, "generate_report", lambda pd: "reports/x.docx")
     monkeypatch.setattr(main, "audit_proposal_on_chain", lambda pd: RECEIPT)
     monkeypatch.setattr(main, "save_run", lambda rec: saved.append(rec))
+    monkeypatch.setattr(main, "load_runs", lambda: [], raising=False)
 
 
 def test_run_pipeline_emits_stages_in_order_and_persists(monkeypatch):
@@ -75,3 +76,31 @@ def test_run_pipeline_hands_title_and_summary_to_the_actuarial_engine(monkeypatc
 
     assert "n1" in seen["summary"] and "s1" in seen["summary"]
     assert seen["gap"] == "p"
+
+
+def _two_items():
+    return [NEWS[0], {"title": "n2", "summary": "s2", "link": "https://y", "is_mock": False}]
+
+
+def test_run_pipeline_skips_news_already_used_in_history(monkeypatch):
+    saved, offered = [], []
+    _wire_fakes(monkeypatch, saved)
+    monkeypatch.setattr(main, "fetch_trending_news", lambda limit=5: _two_items())
+    monkeypatch.setattr(main, "load_runs", lambda: [{"news": {"title": "n1"}, "proposal_data": {"source_news": "n1"}}])
+    monkeypatch.setattr(main, "select_best_news", lambda items: offered.append([n["title"] for n in items]) or items[0])
+
+    main.run_pipeline()
+
+    assert offered == [["n2"]]
+
+
+def test_run_pipeline_offers_every_item_again_once_all_were_used(monkeypatch):
+    saved, offered = [], []
+    _wire_fakes(monkeypatch, saved)
+    monkeypatch.setattr(main, "fetch_trending_news", lambda limit=5: _two_items())
+    monkeypatch.setattr(main, "load_runs", lambda: [{"proposal_data": {"source_news": "n1"}}, {"news": {"title": "n2"}}])
+    monkeypatch.setattr(main, "select_best_news", lambda items: offered.append([n["title"] for n in items]) or items[0])
+
+    main.run_pipeline()
+
+    assert offered == [["n1", "n2"]]

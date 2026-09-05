@@ -10,7 +10,7 @@ from chain_writer import audit_proposal_on_chain
 from market_observer import fetch_trending_news
 from product_analyzer import find_market_gap
 from report_generator import generate_report
-from run_store import save_run
+from run_store import load_runs, save_run
 from strategy_agent import generate_product_proposal, select_best_news
 
 logging.basicConfig(
@@ -19,6 +19,30 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger("Atlas.Core")
+
+
+def _used_titles() -> set[str]:
+    """Headlines that already produced a proposal, from the persisted run history."""
+    try:
+        runs = load_runs()
+    except Exception as exc:  # history is a convenience here, never a reason to stop the pipeline
+        logger.warning(f"讀取歷史紀錄失敗，略過重複新聞過濾：{exc}")
+        return set()
+    titles = set()
+    for record in runs:
+        title = (record.get("news") or {}).get("title") or (record.get("proposal_data") or {}).get("source_news")
+        if title:
+            titles.add(title)
+    return titles
+
+
+def _fresh_news(news_items: list[dict]) -> list[dict]:
+    """Prefer headlines not yet used, so consecutive runs (and a stage demo) do not repeat the same story."""
+    used = _used_titles()
+    fresh = [n for n in news_items if n.get("title") not in used]
+    if fresh and len(fresh) < len(news_items):
+        logger.info(f"排除 {len(news_items) - len(fresh)} 則歷史已用過的新聞，剩 {len(fresh)} 則供挑選")
+    return fresh or news_items
 
 
 def run_pipeline(emit=None) -> dict | None:
@@ -41,7 +65,7 @@ def run_pipeline(emit=None) -> dict | None:
         return None
     _emit("news_fetched", news_items)
 
-    selected_news = select_best_news(news_items)
+    selected_news = select_best_news(_fresh_news(news_items))
     logger.info(f"鎖定時事主題：{selected_news['title']}")
     _emit("news_selected", selected_news)
 
