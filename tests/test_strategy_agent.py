@@ -73,3 +73,27 @@ def test_chat_raises_when_both_models_are_rate_limited(monkeypatch):
 
     with pytest.raises(openai.RateLimitError):
         strategy_agent._chat(client, messages=[])
+
+
+def test_actuarial_brief_cites_the_source_of_each_figure():
+    brief = strategy_agent._actuarial_brief({
+        "probability_pct": 51.61, "expected_loss_usd": 14447368.42, "premium_range_usd": [15938709.68, 26564516.13],
+        "basis": {"probability_source": "內政部消防署 臺灣地區天然災害損失統計表 1958-2025 (nfa.gov.tw)",
+                  "probability_method": "share of years 1995-2025 with at least one severe typhoon",
+                  "loss_source": "assumption",
+                  "assumed_loss_note": "NT$1,500,000 full-loss benefit at NT$32/USD",
+                  "low_sample": True},
+    })
+
+    assert "51.61%" in brief and "14447368.42" in brief
+    assert "消防署" in brief
+    assert "假設" in brief and "NT$1,500,000" in brief
+    assert "樣本" in brief          # low_sample warning surfaces to the agents
+
+
+def test_actuarial_brief_without_basis_only_lists_the_numbers():
+    brief = strategy_agent._actuarial_brief(
+        {"probability_pct": 1.0, "expected_loss_usd": 10.0, "premium_range_usd": [1, 2]})
+
+    assert "1.0%" in brief
+    assert "依據" not in brief

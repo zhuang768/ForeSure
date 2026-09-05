@@ -156,6 +156,29 @@ def _mock_proposal(news_item: dict) -> dict:
     }
 
 
+
+def _actuarial_brief(actuarial_data: dict) -> str:
+    """Numbers from the actuarial engine plus, when available, where each of them comes from."""
+    lines = [
+        "【精算引擎數據提供】",
+        f"- 預估風險發生機率：{actuarial_data['probability_pct']}%",
+        f"- 預估單次事故損失：USD {actuarial_data['expected_loss_usd']}",
+        f"- 建議保費區間：USD {actuarial_data['premium_range_usd'][0]} ~ {actuarial_data['premium_range_usd'][1]}",
+    ]
+    basis = actuarial_data.get("basis")
+    if basis:
+        source = basis.get("probability_source")
+        if source and source != "assumption":
+            lines.append(f"- 機率依據：{source}；方法：{basis.get('probability_method', '')}")
+        else:
+            lines.append(f"- 機率依據：假設值，無官方統計（{basis.get('probability_method', '')}）")
+        lines.append(f"- 損失依據：假設值（{basis.get('assumed_loss_note') or basis.get('loss_method', '')}）")
+        if basis.get("low_sample"):
+            lines.append("- 注意：嚴重事件樣本少於 5 筆，機率估計不確定性高，提案中請揭露。")
+        lines.append("- 引用以上數字時請如實標明真實統計與假設值，不要捏造其他資料來源。")
+    return "\n".join(lines) + "\n"
+
+
 def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_data: dict, on_stage=None) -> dict:
     """
     多代理人辯論：PM 提案 → 核保批評 → 精算師整合並以 function calling 產出正式提案。
@@ -170,10 +193,7 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
 
     pm_message = (
         f"{gap_analysis['gap_analysis_prompt']}\n\n"
-        f"【精算引擎數據提供】\n"
-        f"- 預估風險發生機率：{actuarial_data['probability_pct']}%\n"
-        f"- 預估單次事故損失：USD {actuarial_data['expected_loss_usd']}\n"
-        f"- 建議保費區間：USD {actuarial_data['premium_range_usd'][0]} ~ {actuarial_data['premium_range_usd'][1]}\n\n"
+        f"{_actuarial_brief(actuarial_data)}\n"
         f"請初步草擬一份具市場破壞力、但仍可商業化的保險商品點子。"
     )
 

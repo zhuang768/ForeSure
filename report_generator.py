@@ -7,6 +7,24 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 logger = logging.getLogger(__name__)
 
+
+def _add_actuarial_basis(doc, basis: dict) -> None:
+    """Spell out where each actuarial figure comes from, separating real statistics from assumptions."""
+    doc.add_heading('數據依據 (Basis)', level=3)
+    source = basis.get("probability_source")
+    if source and source != "assumption":
+        doc.add_paragraph(f"發生機率依據：{source}；方法：{basis.get('probability_method', '')}")
+    else:
+        doc.add_paragraph(f"發生機率依據：假設值，無官方統計（{basis.get('probability_method', '')}）")
+    if basis.get("low_sample"):
+        doc.add_paragraph("注意：嚴重事件樣本少於 5 筆，機率估計的不確定性高。")
+    loss_line = f"單次損失依據：假設值（{basis.get('loss_method', '')}）"
+    if basis.get("assumed_loss_per_household_usd"):
+        loss_line += f"；每戶假設損失 USD {basis['assumed_loss_per_household_usd']}（{basis.get('assumed_loss_note', '')}）"
+    doc.add_paragraph(loss_line)
+    doc.add_paragraph(f"保費計算：{basis.get('premium_method', '')}")
+
+
 def generate_report(proposal_data: dict, output_dir: str = "reports") -> str:
     """
     將 Agent 生成的提案資料排版並輸出為 Word (.docx) 檔案。
@@ -66,6 +84,10 @@ def generate_report(proposal_data: dict, output_dir: str = "reports") -> str:
     p_act.add_run(f"預估風險發生機率：{actuarial.get('probability_pct', '0')}%\n")
     p_act.add_run(f"單次事故預期損失：USD {actuarial.get('expected_loss_usd', '0')}\n")
     p_act.add_run(f"建議保費定價區間：USD {actuarial['premium_range_usd'][0]} ~ USD {actuarial['premium_range_usd'][1]}")
+
+    basis = actuarial.get("basis")
+    if basis:
+        _add_actuarial_basis(doc, basis)
     
     doc.add_heading('商業邏輯與獲利模式', level=2)
     doc.add_paragraph(proposal.get('business_logic', 'N/A'))

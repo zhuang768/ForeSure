@@ -25,7 +25,7 @@ POST 端點每個 IP 每分鐘限 30 次。
 | 1 | `news_fetched` | 新聞陣列 `[{title, link, published, summary, source, is_mock}]` | 左欄新聞列表 |
 | 2 | `news_selected` | 單則新聞物件 | 高亮被選中的新聞 |
 | 3 | `kb_matched` | `[{id, name, category, description, distance}]` 最相關 5 項既有商品 | 左欄「比對到的既有商品」 |
-| 4 | `actuarial` | `{probability_pct, expected_loss_usd, premium_range_usd:[min,max], markup_multiplier:[min,max]}` | 右欄數字 |
+| 4 | `actuarial` | `{probability_pct, expected_loss_usd, premium_range_usd:[min,max], markup_multiplier:[min,max], basis}`，`basis` 見下方「精算依據」 | 右欄數字，並依 `basis` 標示「真實統計」或「假設值」 |
 | 5 | `pm` | 字串，PM 提案全文 | 中欄第一段 |
 | 6 | `underwriter` | 字串，核保批評全文 | 中欄第二段 |
 | 7 | `actuary` | 字串，精算師的 business_logic | 中欄第三段 |
@@ -104,3 +104,31 @@ POST 端點每個 IP 每分鐘限 30 次。
 ## 執行時間參考
 
 一次完整執行約 60 到 100 秒：抓新聞 3 秒、挑新聞 5 秒、比對 1 秒、三段辯論 40 到 60 秒、上鏈確認 10 到 15 秒。
+
+## 精算依據（`actuarial_data.basis`）
+
+每個精算數字都附來源，前端請把「真實統計」與「假設值」分開標示，評審追問時才站得住。
+
+```json
+{
+  "peril": "typhoon",
+  "probability_source": "內政部消防署 臺灣地區天然災害損失統計表 1958-2025 (https://www.nfa.gov.tw/cht/index.php?code=list&ids=233)",
+  "probability_method": "share of years 1995-2025 with at least one typhoon event destroying >= 50 households (full + half)",
+  "years_observed": 31, "events_observed": 151, "severe_events_observed": 19,
+  "annual_frequency": 0.6129,
+  "low_sample": false,
+  "loss_source": "assumption",
+  "loss_method": "mean households destroyed per severe event (half-destroyed counted 0.5) x assumed loss per household",
+  "mean_households_per_severe_event": 308.21,
+  "assumed_loss_per_household_usd": 46875.0,
+  "assumed_loss_note": "NT$1,500,000 full-loss benefit of the residential earthquake basic insurance, at NT$32/USD",
+  "premium_method": "annual expected loss (annual frequency x loss per event) x markup"
+}
+```
+
+- `peril`：`typhoon`、`flood`、`earthquake` 三類有消防署統計，`probability_source` 是資料來源字串；
+  `cyber`、`health`、`climate`、`general` 沒有官方統計，`probability_source` 為 `"assumption"`。
+- `loss_source` 永遠是 `"assumption"`：消防署資料只有受災戶數、沒有金額，單次損失 = 歷史平均受災戶數 × 假設的每戶損失。
+- `low_sample` 為 `true` 時（嚴重事件少於 5 筆，目前水災如此）請顯示「樣本少」警示；沒有統計的類別此欄為 `null`。
+- 建議畫面：機率旁標「依據：消防署 1995–2025」並可點開 `probability_method`；損失旁標「假設值」並可點開 `assumed_loss_note`。
+- 舊紀錄（2026-09-05 之前產生）沒有 `basis` 欄位，前端要能容忍缺欄。
