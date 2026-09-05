@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import AmdRocmStressCard from "@/components/AmdRocmStressCard";
+import AmdRocmVisionCard from "@/components/AmdRocmVisionCard";
 import ChainBadge from "@/components/ChainBadge";
 import DebateFeed from "@/components/DebateFeed";
 import GroundingBadge, { GroundingFlags } from "@/components/GroundingBadge";
@@ -101,6 +103,17 @@ export default function DecisionDetail({ record, children }: { record: RunRecord
                 </span>
               </Row>
             </div>
+
+            {/* AMD ROCm GPU 1,000,000 Runs Catastrophe Stress Testing */}
+            <AmdRocmStressCard
+              basis={record.actuarial_data.basis}
+              expectedLossUsd={record.actuarial_data.expected_loss_usd}
+            />
+
+            {/* AMD ROCm Multi-Modal Vision Underwriting & BGE-M3 Clause Retrieval */}
+            <AmdRocmVisionCard
+              basis={record.actuarial_data.basis}
+            />
             {record.actuarial_data.basis ? (
               <div>
                 <Row label={t("basis.probability")}>

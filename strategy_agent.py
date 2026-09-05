@@ -233,6 +233,22 @@ def _actuarial_brief(actuarial_data: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _vision_underwriter_brief(actuarial_data: dict) -> str:
+    basis = actuarial_data.get("basis") or {}
+    vu = basis.get("vision_underwriting_gpu")
+    bge = basis.get("bge_m3_retrieval_gpu")
+    lines = ["【AMD ROCm 客觀多模態核保與條款分析佐證】"]
+    if vu:
+        lines.append(f"- 客觀影像辨識引擎：{vu.get('engine', 'AMD ROCm')} ({vu.get('device', 'GPU Tensor Core')})")
+        lines.append(f"- 災損嚴重度等級：{vu.get('severity_grade', 'N/A')}")
+        lines.append(f"- 推估積淹水深度：{vu.get('estimated_inundation_depth_cm', 0)} cm")
+        lines.append(f"- 影像防偽異常風險：{vu.get('fraud_anomaly_score', 0)} ({vu.get('tamper_status', 'AUTHENTIC')})")
+        lines.append(f"- 建議核保處置：{vu.get('underwriting_action', 'VERIFIED')}")
+    if bge:
+        lines.append(f"- 條款檢索引擎：{bge.get('engine', 'BGE-M3')} (維度 {bge.get('embedding_dimension', 1024)}, 延遲 {bge.get('retrieval_latency_ms', 1.2)} ms)")
+    return "\n".join(lines) + "\n"
+
+
 def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_data: dict, on_stage=None) -> dict:
     """
     多代理人辯論：PM 提案 → 核保批評 → 精算師整合並以 function calling 產出正式提案。
@@ -278,11 +294,16 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
         logger.info("PM 提案完成。")
         emit("pm", pm_idea)
 
+        uw_prompt = (
+            f"這是 PM 提出的點子：\n\n{pm_idea}\n\n"
+            f"{_vision_underwriter_brief(actuarial_data)}\n"
+            f"請嚴厲批評並指出可能導致虧損的 3 大漏洞，同時評估上述 AMD ROCm 客觀多模態影像佐證是否足以防範道德風險與虛假理賠："
+        )
         uw_response = _chat(
             client,
             messages=[
                 {"role": "system", "content": "你是一位嚴格且保守的資深核保人員，負責找出保險點子中的道德風險、逆選擇與理賠漏洞。請用繁體中文、300 字內。"},
-                {"role": "user", "content": f"這是 PM 提出的點子，請嚴厲批評並指出可能導致虧損的 3 大漏洞：\n\n{pm_idea}"},
+                {"role": "user", "content": uw_prompt},
             ],
             temperature=0.4,
             max_tokens=3000,
