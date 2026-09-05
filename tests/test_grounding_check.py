@@ -126,3 +126,9 @@ def test_result_is_deterministic_and_versioned():
 def test_extract_numbers_handles_separators_scales_and_percent():
     values = [v for v, _ in gc.extract_numbers("損失 1,444 萬美元、機率 51.6%、農損 8億元、預算 14.4M")]
     assert values == [14_440_000.0, 51.6, 800_000_000.0, 14_400_000.0]
+
+
+def test_unit_skip_survives_trailing_punctuation_and_no_space():
+    assert gc.extract_numbers("本商品最多理賠12次。") == []
+    assert gc.extract_numbers("保單有效期間內申請理賠 10次以內免審核。") == []
+    assert gc.extract_numbers("需 24 小時內出險") == []

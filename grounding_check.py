@@ -25,13 +25,14 @@ _UNIT_SKIP = ("日", "天", "小時", "分鐘", "月", "週", "年", "次", "人
 _SCALE = {"萬": 1e4, "億": 1e8, "千": 1e3, "k": 1e3, "K": 1e3, "M": 1e6, "B": 1e9}
 
 _LIST_MARKER_RE = re.compile(r"(?m)^\s*\d+[.、)．]\s*")
+_UNIT_ALT = "|".join(re.escape(u) for u in sorted(_UNIT_SKIP, key=len, reverse=True))
 _NUMBER_RE = re.compile(
     r"(?<![A-Za-z0-9_.])"            # 不接在 ASCII 字母、數字或小數點後面（\w 會誤吃中文字）
     r"(\d{1,3}(?:,\d{3})+|\d+)"      # 整數部分，可含千分位
     r"(?:\.(\d+))?"                  # 小數部分
     r"\s*(萬|億|千|[kKMB])?"         # 中文或 SI 倍數
     r"\s*(%|％)?"                    # 百分比
-    r"\s*([^\s\d,.%％]{0,2})"        # 後面緊接的一到兩個字，用來判斷單位（涵蓋「小時」「分鐘」等雙字單位）
+    rf"\s*({_UNIT_ALT})?"            # 後面緊接的計數單位（僅限 _UNIT_SKIP 中的詞，不吃標點或其他字）
 )
 _CITATION_RES = (
     re.compile(r"(?:根據|依據|參考)\s*([^，。；,;：:\n]{2,40}?)(?:的)?(?:統計|資料|數據|報告|研究|調查)"),
