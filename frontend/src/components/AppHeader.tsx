@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { translate, useLang, useT, type DictKey, type Lang } from "@/lib/i18n";
 import { usePrefs } from "@/lib/prefs";
 import type { ChainStatus } from "@/lib/types";
+import BrandLogo from "@/components/BrandLogo";
 
 /**
  * A label whose box is as wide as the longer of its two translations, so switching language does not
@@ -48,12 +49,12 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-[1800px] items-center justify-between gap-4 px-5">
-        <Link href="/" className="flex items-baseline gap-3">
-          <span className="text-base font-bold tracking-tight">{t("app.title")}</span>
-          <span className="hidden text-xs text-muted md:inline">{t("app.subtitle")}</span>
+      <div className="mx-auto flex min-h-18 max-w-[1800px] flex-wrap items-center justify-between gap-x-5 gap-y-3 px-5 py-3">
+        <Link href="/" aria-label={t("app.title")} className="flex shrink-0 items-center gap-4 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
+          <BrandLogo decorative className="h-12 w-auto" />
+          <span className="hidden border-l border-border pl-4 text-xs text-muted xl:inline">{t("app.subtitle")}</span>
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex max-w-full flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
           {chainPill}
           {/* Language segmented toggle: explicit selection */}
           <div className="inline-flex items-center rounded-md border border-border bg-surface-2 p-0.5 text-xs">

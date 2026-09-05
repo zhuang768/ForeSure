@@ -29,8 +29,8 @@ export default function IntroPage() {
             {t("intro.badge")}
           </div>
 
-          <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-text sm:text-5xl md:text-6xl">
-            {t("intro.heroTitle")}
+          <h1 className="mt-6 max-w-full text-4xl font-extrabold tracking-tight text-text sm:text-5xl md:text-6xl">
+            ForeSure未然
           </h1>
           <p className="mt-3 text-lg font-medium text-primary-ink sm:text-xl md:text-2xl">
             {t("intro.heroTagline")}

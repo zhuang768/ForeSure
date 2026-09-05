@@ -91,6 +91,17 @@ body {
 }
 
 /* shared primitives */
+.brand-logo {
+  display: block;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+/* The transparent artwork keeps its original green on light surfaces. */
+:root[data-theme="dark"] .brand-logo:not(.brand-logo--tile) {
+  filter: brightness(0) invert(1);
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
