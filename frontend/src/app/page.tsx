@@ -261,6 +261,21 @@ export default function IntroPage() {
   const showcase = runs ? pickShowcaseRuns(runs, 3) : undefined;
   const contract = chain?.contract_address ?? null;
 
+  // What the traditional workflow needs versus what ForeSure does: [aspect, traditional, ForeSure].
+  const shiftRows: [string, string, string][] = zh
+    ? [
+        ["開發週期", "6 到 12 個月：市調、精算會議、送審", "約 85 秒"],
+        ["定價依據", "5 到 10 年歷史損失率", "即時新聞 + 三方辯論"],
+        ["理賠", "收單據、公證、等數週", "客觀參數自動觸發"],
+        ["稽核", "內部文件", "Sepolia 鏈上 SHA-256 指紋"],
+      ]
+    : [
+        ["Development cycle", "6 to 12 months of research, actuarial panels and filing", "About 85 seconds"],
+        ["Pricing basis", "5 to 10 years of loss history", "Live news + three-agent debate"],
+        ["Claims", "Receipts, adjusters, weeks of waiting", "Triggered by objective parameters"],
+        ["Audit", "Internal documents", "SHA-256 fingerprint on Sepolia"],
+      ];
+
   const metrics: [string, string, string][] = [
     ["PARAM // LATENCY", "~85s", zh ? "時事爬取、三方辯論與精算定價" : "News, debate & pricing"],
     ["PARAM // CONSENSUS", "3 Agents", zh ? "PM × 核保 × 精算 跨角色博弈" : "PM, Underwriter & Actuary"],
@@ -306,68 +321,57 @@ export default function IntroPage() {
           </Container>
         </section>
 
-        {/* ---------------- paradigm shift (wide image-style cards) ---------------- */}
+        {/* ---------------- paradigm shift (comparison table) ---------------- */}
         <section className="py-20 md:py-28">
           <Container>
             <SectionHead
               ghost="SHIFT"
-              title={zh ? "典範轉移：傳統保險瓶頸 vs 未然自主決策" : "Paradigm Shift: Traditional Limits vs ForeSure"}
-              lead={zh ? "解決缺乏歷史理賠數據時的定價真空，以參數型合約取代冗長人工理賠" : "Solving the pricing vacuum of zero historical loss data with autonomous parametric insurance"}
+              title={zh ? "沒有歷史理賠數據，也能定價" : "Pricing without historical loss data"}
+              lead={
+                zh
+                  ? "傳統流程做不到的四件事，未然用即時新聞、三方辯論與鏈上存證補上。"
+                  : "Four things the traditional workflow cannot do, covered by live news, a three-agent debate and on-chain proof."
+              }
             />
-            <div className="mt-14 flex flex-col gap-5">
-              <Reveal>
-                <article className="glass relative overflow-hidden px-10 py-12">
-                  <div className="blob right-[-10%] top-[-40%] h-[80%] w-[40%] bg-muted/15" aria-hidden />
-                  <div className="relative flex items-center gap-3">
-                    <span className="pill bg-surface-2 font-mono text-muted">Legacy Model</span>
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted">{zh ? "傳統新商品研發痛點" : "Traditional product R&D"}</span>
+            <Reveal>
+              <div className="glass mt-20 px-6 pb-3 pt-8 md:px-10 md:pt-10">
+                {/* header row: hidden on small screens where each cell carries its own label */}
+                <div className="hidden border-b border-border pb-5 md:grid md:grid-cols-[200px_1fr_1fr] md:gap-x-10">
+                  <div />
+                  <div className="t-h3 text-text">{zh ? "傳統流程" : "Traditional workflow"}</div>
+                  <div className="t-h3 flex items-center gap-3 text-primary-ink">
+                    <span className="h-2.5 w-2.5 rounded-full bg-primary" aria-hidden />
+                    {zh ? "未然 ForeSure" : "ForeSure"}
                   </div>
-                  <div className="relative mt-6 grid gap-6 md:grid-cols-3">
-                    {[
-                      [zh ? "開發週期冗長" : "Long R&D cycle", zh ? "平均需耗費 6 至 12 個月進行市場調研、精算會議與主管機關送審，無法趕上新興風險爆發速度。" : "6 to 12 months of research, actuarial panels and filing, trailing emerging peril events."],
-                      [zh ? "歷史數據依賴" : "Historical data dependency", zh ? "傳統精算完全依賴 5-10 年之歷史損失率，面對全球暖化劇變或生成式 AI 斷線等新風險產生定價真空。" : "Requires 5-10 years of loss history, creating a pricing vacuum for unprecedented climate or AI outage risks."],
-                      [zh ? "理賠審查爭議" : "Claim disputes & overhead", zh ? "採損害填補原則，需保戶自行收集單據與繁瑣公證程序，耗時數週且極易產生認定歧見。" : "Indemnity claims demand receipts, adjusters and weeks of delay, leading to friction and distrust."],
-                    ].map(([h, p]) => (
-                      <div key={h}>
-                        <h3 className="t-h3 text-text">{h}</h3>
-                        <p className="t-body mt-3 text-muted">{p}</p>
-                      </div>
-                    ))}
+                </div>
+                {shiftRows.map(([k, old, us], i) => (
+                  <div
+                    key={k}
+                    className={`grid gap-y-2 py-7 md:grid-cols-[200px_1fr_1fr] md:items-baseline md:gap-x-10 ${i < shiftRows.length - 1 ? "border-b border-border" : ""}`}
+                  >
+                    <h3 className="t-h3 text-text">{k}</h3>
+                    <p className="text-[20px] font-medium leading-8 text-muted">
+                      <span className="mr-2 text-sm font-normal md:hidden">{zh ? "傳統流程" : "Traditional"}</span>
+                      {old}
+                    </p>
+                    <p className="t-h3 text-primary-ink">
+                      <span className="mr-2 text-sm font-normal md:hidden">{zh ? "未然" : "ForeSure"}</span>
+                      {us}
+                    </p>
                   </div>
-                </article>
-              </Reveal>
-              <Reveal delay={100}>
-                <article className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-primary via-primary to-primary-ink px-10 py-12 text-white shadow-lg">
-                  <div className="blob right-[-10%] top-[-40%] h-[90%] w-[45%] bg-white/25" aria-hidden />
-                  <div className="relative flex items-center gap-3">
-                    <span className="pill bg-white/20 font-mono text-white">Next-Gen</span>
-                    <span className="text-xs font-bold uppercase tracking-wider text-white/85">{zh ? "未然 ForeSure 智能方案" : "ForeSure parametric architecture"}</span>
-                  </div>
-                  <div className="relative mt-6 grid gap-6 md:grid-cols-3">
-                    {[
-                      [zh ? "85 秒極速生成" : "85-second synthesis", zh ? "時事新聞感測與既有保險知識庫向量比對，即時捕捉未被滿足之新興保障缺口。" : "Live news telemetry matched against existing product vectors to pinpoint uninsured gaps."],
-                      [zh ? "多代理人對抗博弈" : "Tri-agent adversarial debate", zh ? "PM、核保、精算多輪交鋒，以泊松分佈與極端值理論在缺乏經驗數據下建立審慎定價加成。" : "PM, Underwriter and Actuary stress-test proposals with Poisson and extreme-value modeling."],
-                      [zh ? "參數型觸發與鏈上存證" : "Parametric trigger & on-chain audit", zh ? "對接公正第三方數據源自動理賠，SHA-256 指紋同步寫入以太坊 Sepolia。" : "Objective oracle data triggers payouts while decision hashes are published to Ethereum Sepolia."],
-                    ].map(([h, p]) => (
-                      <div key={h}>
-                        <h3 className="t-h3">{h}</h3>
-                        <p className="t-body mt-3 text-white/85">{p}</p>
-                      </div>
-                    ))}
-                  </div>
-                </article>
-              </Reveal>
-              <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
-                {metrics.map(([label, value, desc], i) => (
-                  <Reveal key={label} delay={i * 80}>
-                    <div className="glass h-full p-6">
-                      <div className="font-mono text-xs uppercase tracking-wider text-muted">{label}</div>
-                      <div className="mt-4 font-mono text-4xl font-semibold tabular-nums text-primary">{value}</div>
-                      <p className="t-body mt-2 text-muted">{desc}</p>
-                    </div>
-                  </Reveal>
                 ))}
               </div>
+            </Reveal>
+            <div className="mt-5 grid grid-cols-2 gap-5 lg:grid-cols-4">
+              {metrics.map(([label, value, desc], i) => (
+                <Reveal key={label} delay={i * 80}>
+                  <div className="glass h-full p-6 md:p-10">
+                    <div className="font-mono text-xs uppercase leading-5 tracking-wider text-muted">{label}</div>
+                    <div className="mt-5 font-mono text-4xl font-semibold leading-9 tabular-nums text-primary">{value}</div>
+                    <p className="t-body mt-3 text-muted">{desc}</p>
+                  </div>
+                </Reveal>
+              ))}
             </div>
           </Container>
         </section>
