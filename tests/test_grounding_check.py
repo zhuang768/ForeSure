@@ -119,7 +119,7 @@ def test_missing_news_and_products_are_tolerated():
 def test_result_is_deterministic_and_versioned():
     assert _check() == _check()
     result = _check()
-    assert result["checker_version"] == gc.CHECKER_VERSION == "grounding-check/v1"
+    assert result["checker_version"] == gc.CHECKER_VERSION
     assert result["evidence_sources"] == ["actuarial_engine", "news", "matched_products"]
 
 
@@ -187,3 +187,22 @@ def test_measurement_units_are_skipped():
 
 def test_amounts_followed_by_currency_words_are_still_extracted():
     assert [v for v, _ in gc.extract_numbers("總保費收入 1.8 億元")] == [1.8e8]
+
+
+def test_the_engines_own_severe_threshold_counts_as_evidence():
+    """The actuarial brief quotes probability_method (">= 50 households"), so the agent legitimately
+    repeats that threshold; it must not be flagged as an ungrounded number."""
+    basis = dict(ACTUARIAL["basis"],
+                 probability_method="share of years 1995-2025 with at least one typhoon event destroying "
+                                    ">= 50 households (full + half)")
+    result = gc.check_grounding(
+        {"proposal": dict(_proposal()["proposal"], market_gap="消防署統計以單次受災 50 戶以上為嚴重事件，現有商品未覆蓋。"),
+         "actuarial_data": dict(ACTUARIAL, basis=basis)},
+        NEWS, PRODUCTS)
+
+    assert [f["value"] for f in result["flags"] if f["type"] == "unsupported_number"] == []
+    assert result["status"] == "pass"
+
+
+def test_rule_change_is_visible_in_the_checker_version():
+    assert gc.CHECKER_VERSION == "grounding-check/v1.1"

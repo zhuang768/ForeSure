@@ -156,7 +156,7 @@ Word 報告會中英並列。2026-09-05 13:00 之前產生的舊紀錄沒有 `_e
 ```json
 {
   "status": "fail",
-  "checker_version": "grounding-check/v1",
+  "checker_version": "grounding-check/v1.1",
   "checked_claims": 3,
   "grounded_claims": 2,
   "flag_count": 1,
@@ -170,6 +170,7 @@ Word 報告會中英並列。2026-09-05 13:00 之前產生的舊紀錄沒有 `_e
 ```
 
 - `status`：`pass`（沒有標記）、`warn`（只有 medium）、`fail`（有 high）。
+- `checker_version`：規則改變就換版號，舊紀錄封在鏈上的是當時的版本。`v1.1`（2026-09-06）起，`basis` 說明文字裡的數字（例如「>= 50 households」的嚴重事件門檻）也算證據；`v1` 會把提案引用的「50 戶」判成無來源。
 - `flags[].type`：`unsupported_number`（`market_gap`／`business_logic` 裡對不回精算引擎、新聞或既有商品的數字，容許 2% 誤差；`coverage_details`／`exclusions` 是商品設計參數不受檢）、`unverified_citation`（「根據 X 統計」的 X 不在本次證據裡）、`missing_disclosure`（數字含假設值但敘述沒寫「假設」或「估計」）。
 - `flags[].severity`：`high` 或 `medium`；`field` 是提案欄位名；`value` 是被標記的數字或來源名（`missing_disclosure` 為 `null`）；`excerpt` 是原文片段。
 - 建議畫面：右欄徽章「✓ 幻覺檢測通過」綠、「! 幻覺檢測警示 (n)」琥珀、「✕ 幻覺檢測未通過 (n)」紅；證據與稽核分頁列出每一項標記（類型、欄位、值、原文片段）；佇列與歷史列表在 warn／fail 時顯示徽章。

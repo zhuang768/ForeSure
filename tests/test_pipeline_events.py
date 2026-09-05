@@ -1,3 +1,4 @@
+import grounding_check
 import main
 
 NEWS = [{"title": "n1", "summary": "s1", "link": "https://x", "is_mock": False}]
@@ -119,7 +120,7 @@ def test_run_pipeline_stores_the_grounding_result_and_hands_it_to_the_report(mon
     record = main.run_pipeline()
 
     assert record["grounding"]["status"] == "pass"
-    assert record["grounding"]["checker_version"] == "grounding-check/v1"
+    assert record["grounding"]["checker_version"] == grounding_check.CHECKER_VERSION
     assert seen["proposal_data"]["grounding"] is record["grounding"]
 
 
