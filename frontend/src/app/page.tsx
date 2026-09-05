@@ -300,7 +300,7 @@ export default function IntroPage() {
 
         {/* ---------------- hero ---------------- */}
         <section className="relative">
-          <Container className="relative flex min-h-[calc(100vh-66px)] flex-col pb-14 pt-10 md:pt-14">
+          <Container className="relative flex min-h-[calc(100vh-66px)] flex-col pb-14 pt-10 md:px-16 md:pt-14 lg:px-24">
             <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 md:left-[66%] md:top-[-1rem] lg:left-[64%]" aria-hidden>
               <div className="relative">
                 <div className="absolute inset-[-20%] rounded-full bg-primary/25 blur-3xl" />
@@ -333,7 +333,7 @@ export default function IntroPage() {
                   <span>Parametric Oracles (CWA / NOAA)</span>
                 </div>
               </div>
-              <Reveal delay={200} className="t-tag flex flex-col text-left text-text md:items-end md:pr-20 md:text-right">
+              <Reveal delay={200} className="t-tag flex flex-col text-left text-text md:items-end md:text-right">
                 <span>{zh ? "新興風險參數型定價" : "Parametric pricing for emerging risks"}</span>
                 <span>{zh ? "三方 AI 代理人對抗辯論" : "Tri-agent adversarial debate"}</span>
                 <span>{zh ? "以太坊 Sepolia 鏈上存證" : "Ethereum Sepolia attestation"}</span>

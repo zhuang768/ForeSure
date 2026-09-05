@@ -50,8 +50,6 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
 
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
   const onGenerator = isActive("/generator");
-  // The homepage reads as an editorial page (1400px); the dashboards stretch to 1800px, so the bar follows the content.
-  const width = isActive("/") ? "max-w-[1400px]" : "max-w-[1800px]";
 
   // Show connected status for both real sepolia and mock (offline demo) mode
   const chainPill =
@@ -116,38 +114,50 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
     </div>
   );
 
-  const presentToggle = (
+  const presentToggle = (withLabel: boolean) => (
     <button
       type="button"
       onClick={() => setPresent(!present)}
-      className={`rounded-md border px-2 py-1 text-xs font-medium transition-all ${
+      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-all ${
         present ? "border-primary bg-primary-soft text-primary-ink" : "border-border bg-surface-2 text-muted hover:text-text"
       }`}
       aria-pressed={present}
+      aria-label={t("header.present")}
       title={t("header.present")}
     >
-      <StableLabel k="header.present" lang={lang} />
+      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+        <rect x="3" y="4" width="18" height="12" rx="2" />
+        <path strokeLinecap="round" d="M8 20h8M12 16v4" />
+      </svg>
+      {withLabel ? <StableLabel k="header.present" lang={lang} /> : null}
     </button>
   );
 
-  const cta = onGenerator ? null : (
-    <Link href="/generator" className="btn btn-primary px-3.5 py-1.5 text-xs font-semibold shadow-sm">
+  // Always rendered so the right-hand group keeps the same width on every page; on the generator
+  // page it is invisible (the page has its own start button) but still takes up its space.
+  const cta = (
+    <Link
+      href="/generator"
+      className={`btn btn-primary px-3.5 py-1.5 text-xs font-semibold shadow-sm ${onGenerator ? "invisible" : ""}`}
+      aria-hidden={onGenerator || undefined}
+      tabIndex={onGenerator ? -1 : undefined}
+    >
       <StableLabel k="header.run" lang={lang} prefix="▶ " />
     </Link>
   );
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-bg/75 backdrop-blur-md">
-      <div className={`mx-auto flex min-h-[66px] ${width} items-center justify-between gap-4 px-5`}>
+      <div className="mx-auto grid min-h-[66px] max-w-[1800px] grid-cols-[1fr_auto] items-center gap-4 px-5 xl:grid-cols-[1fr_auto_1fr]">
         <Link
           href="/"
           aria-label={t("app.title")}
-          className="flex shrink-0 items-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+          className="flex shrink-0 items-center justify-self-start rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
         >
           <BrandLogo decorative className="h-10 w-auto" />
         </Link>
 
-        <nav className="hidden items-center gap-7 lg:flex" aria-label="primary">
+        <nav className="hidden items-center gap-6 justify-self-center xl:flex" aria-label="primary">
           {NAV.map((n) => {
             const active = isActive(n.href);
             return (
@@ -155,7 +165,7 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
                 key={n.href}
                 href={n.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative py-1 text-base transition-colors ${active ? "font-medium text-text" : "font-normal text-muted hover:text-text"}`}
+                className={`relative py-1 text-base font-medium transition-colors ${active ? "text-text" : "text-muted hover:text-text"}`}
               >
                 <StableLabel k={n.k} lang={lang} />
                 {active ? <span className="absolute -bottom-1 left-0 h-0.5 w-full rounded bg-primary" aria-hidden /> : null}
@@ -164,18 +174,18 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
           })}
         </nav>
 
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center justify-end gap-2 justify-self-end xl:flex">
           {chainPill}
           {langToggle}
           {themeToggle}
-          {presentToggle}
+          {presentToggle(false)}
           {cta}
         </div>
 
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-md text-text lg:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center justify-self-end rounded-md text-text xl:hidden"
           aria-expanded={open}
           aria-controls="mobile-menu"
           aria-label={t("nav.menu")}
@@ -191,8 +201,8 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
       </div>
 
       {open ? (
-        <div id="mobile-menu" className="border-t border-border/60 bg-surface/95 backdrop-blur lg:hidden">
-          <div className={`mx-auto flex ${width} flex-col gap-5 px-5 py-5`}>
+        <div id="mobile-menu" className="border-t border-border/60 bg-surface/95 backdrop-blur xl:hidden">
+          <div className="mx-auto flex max-w-[1800px] flex-col gap-5 px-5 py-5">
             <nav className="flex flex-col" aria-label="primary mobile">
               {NAV.map((n) => (
                 <Link
@@ -210,9 +220,9 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
               {chainPill}
               {langToggle}
               {themeToggle}
-              {presentToggle}
+              {presentToggle(true)}
             </div>
-            {cta ? <div className="flex">{cta}</div> : null}
+            {onGenerator ? null : <div className="flex">{cta}</div>}
           </div>
         </div>
       ) : null}
