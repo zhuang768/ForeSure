@@ -45,7 +45,7 @@ def test_run_pipeline_emits_stages_in_order_and_persists(monkeypatch):
 
     assert events == [
         "news_fetched", "news_selected", "kb_matched", "actuarial",
-        "pm", "underwriter", "actuary", "report", "chain_pending", "chain_done", "done",
+        "pm", "underwriter", "actuary", "grounding", "report", "chain_pending", "chain_done", "done",
     ]
     assert record["decision_id"] == "atlas-1"
     assert record["matched_products"][0]["name"] == "農業保險"
@@ -104,3 +104,20 @@ def test_run_pipeline_offers_every_item_again_once_all_were_used(monkeypatch):
     main.run_pipeline()
 
     assert offered == [["n1", "n2"]]
+
+
+def test_run_pipeline_stores_the_grounding_result_and_hands_it_to_the_report(monkeypatch):
+    saved, seen = [], {}
+    _wire_fakes(monkeypatch, saved)
+
+    def _capture_report(proposal_data):
+        seen["proposal_data"] = proposal_data
+        return "reports/x.docx"
+
+    monkeypatch.setattr(main, "generate_report", _capture_report)
+
+    record = main.run_pipeline()
+
+    assert record["grounding"]["status"] == "pass"
+    assert record["grounding"]["checker_version"] == "grounding-check/v1"
+    assert seen["proposal_data"]["grounding"] is record["grounding"]

@@ -7,6 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from actuarial_engine import estimate_risk_premium
 from chain_writer import audit_proposal_on_chain
+from grounding_check import check_grounding
 from market_observer import fetch_trending_news
 from product_analyzer import find_market_gap
 from report_generator import generate_report
@@ -78,6 +79,12 @@ def run_pipeline(emit=None) -> dict | None:
 
     proposal_data = generate_product_proposal(selected_news, gap_analysis, actuarial_data, on_stage=_emit)
 
+    # 幻覺檢測：純規則、不呼叫 LLM。掛在 proposal_data 上讓 Word 報告與上鏈 payload 都拿得到，
+    # 也單獨存進紀錄給歷史列表與前端。
+    grounding = check_grounding(proposal_data, selected_news, gap_analysis["matched_products"])
+    proposal_data["grounding"] = grounding
+    _emit("grounding", grounding)
+
     report_path = generate_report(proposal_data)
     _emit("report", {"report_path": report_path})
 
@@ -92,6 +99,7 @@ def run_pipeline(emit=None) -> dict | None:
         "matched_products": gap_analysis["matched_products"],
         "actuarial_data": actuarial_data,
         "proposal_data": proposal_data,
+        "grounding": grounding,
         "blockchain_receipt": receipt,
         "report_path": report_path,
     }
