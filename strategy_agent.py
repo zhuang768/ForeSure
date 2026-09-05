@@ -4,6 +4,7 @@ import os
 import random
 import re
 
+import openai
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -61,6 +62,26 @@ def _extra_params() -> dict:
     return {}
 
 
+def _fallback_model():
+    return os.getenv("OPENAI_FALLBACK_MODEL") or None
+
+
+def _chat(client, **kwargs):
+    """
+    chat.completions.create 以主模型呼叫；被限流 (429) 時改用 OPENAI_FALLBACK_MODEL 重試一次。
+    Gemini 免費層每個模型的每日額度分開計算，備援模型能撐過主模型額度用盡的情況。
+    """
+    primary = _model()
+    try:
+        return client.chat.completions.create(model=primary, **kwargs)
+    except openai.RateLimitError:
+        fallback = _fallback_model()
+        if not fallback or fallback == primary:
+            raise
+        logger.warning(f"模型 {primary} 被限流 (429)，改用備援模型 {fallback}")
+        return client.chat.completions.create(model=fallback, **kwargs)
+
+
 def _parse_choice_index(text: str, total: int):
     """從 LLM 回覆中取出 0..total-1 的索引；取不到或超出範圍回傳 None。"""
     m = re.search(r"\d+", text or "")
@@ -80,8 +101,8 @@ def select_best_news(news_items: list[dict]) -> dict:
     try:
         client = _make_client(timeout=60.0)
         news_text = "\n".join(f"[{i}] {n['title']} - {n.get('summary', '')[:200]}" for i, n in enumerate(news_items))
-        response = client.chat.completions.create(
-            model=_model(),
+        response = _chat(
+            client,
             messages=[
                 {"role": "system", "content": (
                     "你是一個保險風險分析師。請從以下新聞中，挑選出「最適合用來設計創新保險商品」的一則："
@@ -165,8 +186,8 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
         extra = _extra_params()
         logger.info(f"呼叫 LLM ({model}) 多代理人辯論 (PM vs Underwriter vs Actuary)...")
 
-        pm_response = client.chat.completions.create(
-            model=model,
+        pm_response = _chat(
+            client,
             messages=[
                 {"role": "system", "content": "你是一位激進的保險產品經理，目標是發明最吸引眼球、但仍可商業化的新形態保險。請用繁體中文、300 字內。"},
                 {"role": "user", "content": pm_message},
@@ -179,8 +200,8 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
         logger.info("PM 提案完成。")
         emit("pm", pm_idea)
 
-        uw_response = client.chat.completions.create(
-            model=model,
+        uw_response = _chat(
+            client,
             messages=[
                 {"role": "system", "content": "你是一位嚴格且保守的資深核保人員，負責找出保險點子中的道德風險、逆選擇與理賠漏洞。請用繁體中文、300 字內。"},
                 {"role": "user", "content": f"這是 PM 提出的點子，請嚴厲批評並指出可能導致虧損的 3 大漏洞：\n\n{pm_idea}"},
@@ -198,8 +219,8 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
             f"【核保人員批評】\n{uw_critique}\n\n"
             f"請扮演精算師，修正這些漏洞，並嚴謹地呼叫 propose_new_insurance_product 生成最終正式提案（繁體中文）。"
         )
-        final_response = client.chat.completions.create(
-            model=model,
+        final_response = _chat(
+            client,
             messages=[
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user", "content": final_message},
@@ -225,7 +246,7 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
             "debate": {"pm": pm_idea, "underwriter": uw_critique},
             "proposal": args,
             "is_mock": False,
-            "model": model,
+            "model": getattr(final_response, "model", None) or model,
         }
 
     except Exception as e:
