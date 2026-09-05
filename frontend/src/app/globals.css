@@ -1,13 +1,162 @@
 @import "tailwindcss";
 
-@layer base {
-  body {
-    @apply bg-gray-50 text-slate-900 font-sans antialiased;
-  }
+/* ---- design tokens (docs/superpowers/specs/2026-09-05-frontend-redesign-design.md §6) ---- */
+:root {
+  --bg: #f3f6f4;
+  --surface: #ffffff;
+  --surface-2: #f7faf8;
+  --border: #e1e8e4;
+  --text: #17211c;
+  --muted: #5b6a62;
+  --primary: #26a862;
+  --primary-soft: #edf8f1;
+  --primary-ink: #1b7d48;
+  --warn: #c24d00;
+  --warn-soft: #fff0e3;
+  --danger: #b3261e;
+  --danger-soft: #fdecea;
+  --role-pm: #2b5cc7;
+  --role-pm-soft: #e8f0ff;
+  --role-uw: #c24d00;
+  --role-uw-soft: #fff0e3;
+  --role-ac: #1b7d48;
+  --role-ac-soft: #e3f4ea;
+  --font-base: 16px;
+  --gap: 16px;
+  color-scheme: light;
 }
 
-@layer utilities {
-  .glass-card {
-    @apply bg-slate-900/95 backdrop-blur-md border border-slate-700/50 shadow-2xl rounded-2xl text-slate-100;
+:root[data-theme="dark"] {
+  --bg: #0f1613;
+  --surface: #151f1a;
+  --surface-2: #0f1613;
+  --border: #243129;
+  --text: #e4ede7;
+  --muted: #a9b8af;
+  --primary: #3fc47c;
+  --primary-soft: #16301f;
+  --primary-ink: #6fdc9c;
+  --warn: #ffc99b;
+  --warn-soft: #5a2d0c;
+  --danger: #ff8a80;
+  --danger-soft: #4a1512;
+  --role-pm: #bfdbfe;
+  --role-pm-soft: #1e3a8a;
+  --role-uw: #ffc99b;
+  --role-uw-soft: #5a2d0c;
+  --role-ac: #6fdc9c;
+  --role-ac-soft: #16301f;
+  color-scheme: dark;
+}
+
+:root[data-present="1"] {
+  --font-base: 20px;
+  --gap: 24px;
+}
+
+/* expose tokens as Tailwind utilities: bg-surface, text-muted, border-border, bg-primary … */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-ink: var(--primary-ink);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-role-pm: var(--role-pm);
+  --color-role-pm-soft: var(--role-pm-soft);
+  --color-role-uw: var(--role-uw);
+  --color-role-uw-soft: var(--role-uw-soft);
+  --color-role-ac: var(--role-ac);
+  --color-role-ac-soft: var(--role-ac-soft);
+  --font-sans: var(--font-geist-sans), "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html {
+  font-size: var(--font-base);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* shared primitives */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+.label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+:root[data-theme="dark"] .btn-primary {
+  color: #082014;
+}
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn-secondary:hover {
+  background: var(--surface-2);
+}
+.mono {
+  font-family: var(--font-mono);
+}
+@keyframes pulse-soft {
+  from {
+    opacity: 0.45;
   }
+  to {
+    opacity: 1;
+  }
+}
+.pulse {
+  animation: pulse-soft 0.9s ease-in-out infinite alternate;
 }
