@@ -114,6 +114,7 @@ export function saveLocalRun(record: RunRecord) {
       chain_is_mock: false,
       tx_hash: record.blockchain_receipt.blockchain_tx_hash,
       verification_url: record.blockchain_receipt.verification_url,
+      grounding_status: record.grounding?.status ?? null,
     };
     const nextSummaries = [summary, ...summaries.filter((s) => s.decision_id !== record.decision_id)];
     const nextRecords = [record, ...records.filter((r) => r.decision_id !== record.decision_id)];

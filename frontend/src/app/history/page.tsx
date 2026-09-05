@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
 import DebateFeed from "@/components/DebateFeed";
+import GroundingBadge from "@/components/GroundingBadge";
 import { chainStatus, getLocalStoredRuns, getRun, listRuns } from "@/lib/api";
 import { fmtPct, fmtStamp, fmtUsdCompact, fmtUsdRangeCompact, shortHash } from "@/lib/format";
 import { useLang, useT } from "@/lib/i18n";
@@ -306,7 +307,8 @@ export default function HistoryPage() {
                       ) : null}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <GroundingBadge status={r.grounding_status} />
                       {onchain ? (
                         r.verification_url ? (
                           <a

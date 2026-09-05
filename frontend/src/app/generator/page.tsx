@@ -5,6 +5,7 @@ import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
 import ChainBadge from "@/components/ChainBadge";
 import DebateFeed from "@/components/DebateFeed";
+import GroundingBadge from "@/components/GroundingBadge";
 import MatchedProducts from "@/components/MatchedProducts";
 import NewsList from "@/components/NewsList";
 import ProposalCard from "@/components/ProposalCard";
@@ -93,6 +94,7 @@ export default function GeneratorPage() {
         11800, // pm: Gemini 3.5 Flash drafting full proposal (11.8s)
         13500, // underwriter: Gemini 3.5 Flash underwriting review & critique (13.5s)
         11200, // actuary: Gemini 3.5 Flash mathematical rate-making (11.2s)
+        1500,  // grounding: rule-based check (1.5s)
         5200,  // report: report formatting and markdown assembly (5.2s)
         2200,  // chain_pending: transaction broadcast to Sepolia network (2.2s)
         16500, // chain_done: Ethereum Sepolia block mining & audit verification (16.5s)
@@ -215,11 +217,14 @@ export default function GeneratorPage() {
           <section className="card flex flex-col gap-4 p-4">
             <div className="flex items-center justify-between">
               <div className="label">{t("col.proposal")}</div>
-              <ChainBadge
-                state={badge}
-                url={state.receipt?.verification_url}
-                txHash={state.receipt?.blockchain_tx_hash}
-              />
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <GroundingBadge grounding={state.grounding ?? state.record?.grounding} />
+                <ChainBadge
+                  state={badge}
+                  url={state.receipt?.verification_url}
+                  txHash={state.receipt?.blockchain_tx_hash}
+                />
+              </div>
             </div>
             <ProposalCard
               proposal={proposal}
