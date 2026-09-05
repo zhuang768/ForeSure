@@ -138,7 +138,9 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
           <BrandLogo decorative className="h-10 w-auto" />
         </Link>
 
-        <nav className="hidden items-center gap-6 justify-self-center xl:flex" aria-label="primary">
+        {/* Plain labels here (no hidden twin) so the visible gaps between links are equal; the grid keeps the
+            group centred, so a language switch only grows it symmetrically by a few pixels. */}
+        <nav className="hidden items-center gap-9 justify-self-center xl:flex" aria-label="primary">
           {NAV.map((n) => {
             const active = isActive(n.href);
             return (
@@ -146,9 +148,9 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
                 key={n.href}
                 href={n.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative py-1 text-base font-medium transition-colors ${active ? "text-text" : "text-muted hover:text-text"}`}
+                className={`relative whitespace-nowrap py-1 text-base font-medium transition-colors ${active ? "text-text" : "text-muted hover:text-text"}`}
               >
-                <StableLabel k={n.k} lang={lang} />
+                {t(n.k)}
                 {active ? <span className="absolute -bottom-1 left-0 h-0.5 w-full rounded bg-primary" aria-hidden /> : null}
               </Link>
             );
