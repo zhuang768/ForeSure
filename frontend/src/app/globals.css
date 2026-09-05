@@ -159,7 +159,15 @@ body {
 }
 .mono {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
+
+/* Accessibility: WCAG 2.1 Focus Ring */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 @keyframes pulse-soft {
   from {
     opacity: 0.45;
@@ -170,6 +178,16 @@ body {
 }
 .pulse {
   animation: pulse-soft 0.9s ease-in-out infinite alternate;
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* presentation mode: bigger, calmer, for the projector */
