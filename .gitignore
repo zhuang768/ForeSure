@@ -28,3 +28,12 @@ out/
 
 # git worktrees for isolated plan execution
 .worktrees/
+
+# Local tooling state and working artifacts (screenshots, mockups, design skill packs)
+.agents/
+.impeccable/
+.wrangler/
+skills-lock.json
+output/
+prototypes/
+:memory:*

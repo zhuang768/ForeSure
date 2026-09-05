@@ -27,4 +27,4 @@
 ```
 
 Next.js 圖示放在 `src/app/`：`favicon.ico`（16、32、48 px）、`icon.png`（192 px）、`apple-icon.png`（180 px）。
-原始參考圖、透明提取圖與提取提示詞保留於專案根目錄的 `output/imagegen/foresure-first-leaf-*`。
+原始參考圖、透明提取圖與提取提示詞保留在本機的 `output/imagegen/foresure-first-leaf-*`，不收進版本庫。
