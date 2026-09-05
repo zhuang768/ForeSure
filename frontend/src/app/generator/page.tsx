@@ -15,6 +15,7 @@ import { useT } from "@/lib/i18n";
 import { applyEvent, initialRunState, startRunState, type RunState } from "@/lib/runReducer";
 import { stageIndex } from "@/lib/stages";
 import type { ChainStatus, RunEvent } from "@/lib/types";
+import { MOCK_EVENTS } from "@/lib/mockEvents";
 
 export default function GeneratorPage() {
   const t = useT();
@@ -94,6 +95,26 @@ export default function GeneratorPage() {
       });
   }, [feed, pollFallback]);
 
+  const beginMock = useCallback(() => {
+    cleanup.current();
+    applied.current = 0;
+    const runId = "demo-run-" + Date.now();
+    setState(startRunState(runId, Date.now()));
+    setElapsed(0);
+    
+    let i = 0;
+    const id = window.setInterval(() => {
+      if (i < MOCK_EVENTS.length) {
+        feed(MOCK_EVENTS[i]);
+        i++;
+      } else {
+        window.clearInterval(id);
+      }
+    }, 2000); // 2 seconds per stage for dramatic effect
+
+    cleanup.current = () => window.clearInterval(id);
+  }, [feed]);
+
   const badge = deriveBadgeState({ receipt: state.receipt, pending: state.chainPending });
   const proposal = state.record?.proposal_data.proposal ?? null;
   const running = state.status === "running";
@@ -103,7 +124,6 @@ export default function GeneratorPage() {
   return (
     <>
       <AppHeader chain={chain} />
-      {chain === null ? <StatusBanner onRetry={refreshChain} /> : null}
       <main className="mx-auto flex w-full max-w-[1800px] flex-1 flex-col gap-[var(--gap)] px-5 py-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -121,6 +141,9 @@ export default function GeneratorPage() {
                 {t("gen.viewFull")} →
               </a>
             ) : null}
+            <button type="button" className="btn border border-border bg-surface-2" onClick={beginMock} disabled={running}>
+              🧪 模擬執行
+            </button>
             <button type="button" className="btn btn-primary" onClick={begin} disabled={running}>
               ▶ {state.status === "idle" ? t("gen.start") : t("gen.retry")}
             </button>
