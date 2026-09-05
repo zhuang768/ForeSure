@@ -1,0 +1,5 @@
+# 鏈上存證素材
+
+Built-in image_gen. Reference: `reference.png`, fourth/rightmost panel.
+
+Use case: precise-object-edit. Production website illustration, one standalone asset. Input image is an approved four-panel art board. Recreate ONLY its FOURTH / rightmost panel (x1329–1754,y86–730): three thick transparent optical-glass ledger blocks arranged diagonally in depth, connected by emerald edged glass chain links, etched green fingerprint on the large front block and minimal abstract ledger marks on the rear two. Preserve exact subject, glass material, green edges, studio camera and gentle caustics/reflections. Other three panels are style references only, EXCLUDE them. Output ONE 1024x1280 portrait 4:5 image filling the canvas with the same pale gray-sage studio floor/background. Center the entire group with generous breathing room, no object cropped. No captions, no numbers or readable text, no outer card frame or rounded image corners, no extra objects. The image will fill a homepage carousel illustration card; final rounded frame is CSS. Faithful production extraction at higher resolution, do not redesign.

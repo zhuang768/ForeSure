@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import BrandLogo from "@/components/BrandLogo";
 import HomeHero from "@/components/HomeHero";
@@ -18,47 +20,31 @@ import type { ChainStatus, RunSummary } from "@/lib/types";
 /* static content                                                      */
 /* ------------------------------------------------------------------ */
 
-type Advantage = { code: [string, string]; title: DictKey; desc: DictKey; icon: ReactNode };
+type Advantage = { code: [string, string]; title: DictKey; desc: DictKey; image: string };
 const ADVANTAGES: Advantage[] = [
   {
     code: ["LIVE MARKET", "SENSING"],
     title: "intro.tech1Title",
     desc: "intro.tech1Desc",
-    icon: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4} aria-hidden>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h4l3-8 4 16 3-8h4" />
-      </svg>
-    ),
+    image: "/illustrations/advantages/taiwan-sensing.webp",
   },
   {
     code: ["ANTI-HALLUCINATION", "DEBATE"],
     title: "intro.tech2Title",
     desc: "intro.tech2Desc",
-    icon: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4} aria-hidden>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h8M8 14h5M21 12a8 8 0 01-11.6 7.1L4 20l1.1-4.2A8 8 0 1121 12z" />
-      </svg>
-    ),
+    image: "/illustrations/advantages/agent-review.webp",
   },
   {
     code: ["PARAMETRIC", "SMART TRIGGER"],
     title: "intro.tech3Title",
     desc: "intro.tech3Desc",
-    icon: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4} aria-hidden>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" />
-      </svg>
-    ),
+    image: "/illustrations/advantages/parametric-trigger.webp",
   },
   {
     code: ["ETHEREUM", "IMMUTABLE AUDIT"],
     title: "intro.tech4Title",
     desc: "intro.tech4Desc",
-    icon: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4} aria-hidden>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l7 11-7 4-7-4 7-11zm0 15l7-4-7 9-7-9 7 4z" />
-      </svg>
-    ),
+    image: "/illustrations/advantages/onchain-ledger.webp",
   },
 ];
 
@@ -93,21 +79,39 @@ function AdvantageSlider({ lang, t }: { lang: "zh" | "en"; t: (k: DictKey) => st
   const go = (d: number) => setI((cur) => wrapIndex(cur + d, n));
   const pad = (v: number) => String(v).padStart(2, "0");
   return (
-    <div className="mt-14 grid items-center gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
-      <div key={`v${i}`} className="slide-in glass relative flex aspect-[5/4] items-center justify-center overflow-hidden lg:aspect-[4/5]">
-        <div className="blob left-[-20%] top-[-20%] h-[70%] w-[70%] bg-primary/30" aria-hidden />
-        <div className="blob bottom-[-25%] right-[-20%] h-[70%] w-[70%] bg-role-pm/15" aria-hidden />
-        <span className="absolute left-6 top-5 font-mono text-sm text-muted">{pad(i + 1)}</span>
-        <div className="relative h-32 w-32 text-primary md:h-44 md:w-44">{adv.icon}</div>
+    <div
+      className="mt-14 grid items-center gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14"
+      role="region"
+      aria-roledescription={lang === "zh" ? "輪播" : "carousel"}
+      aria-label={t("intro.techTitle")}
+    >
+      <div className="relative mx-auto aspect-[4/5] w-full max-w-[440px] overflow-hidden rounded-[28px] border border-border bg-[#e8ede7] lg:max-w-none" aria-hidden="true">
+        {ADVANTAGES.map((item, index) => (
+          <Image
+            key={item.image}
+            src={item.image}
+            alt=""
+            fill
+            unoptimized
+            className={`object-cover transition-opacity duration-500 ${index === i ? "opacity-100" : "opacity-0"}`}
+          />
+        ))}
+        <span className="absolute left-5 top-5 rounded-full border border-white/60 bg-white/65 px-3 py-1 font-mono text-xs text-[#234434] backdrop-blur-md">
+          {pad(i + 1)} / {pad(n)}
+        </span>
       </div>
-      <div key={`t${i}`} className="slide-in">
-        <div className="t-en uppercase text-primary">
-          {adv.code[0]}
-          <br />
-          {adv.code[1]}
+      <div className="min-w-0">
+        <div aria-live="polite" aria-atomic="true">
+          <div key={`t${i}`} className="slide-in">
+            <div className="t-en uppercase text-primary">
+              {adv.code[0]}
+              <br />
+              {adv.code[1]}
+            </div>
+            <h3 className="t-h2s mt-6 text-text">{t(adv.title)}</h3>
+            <p className="t-lead mt-5 max-w-lg text-muted">{t(adv.desc)}</p>
+          </div>
         </div>
-        <h3 className="t-h2s mt-6 text-text">{t(adv.title)}</h3>
-        <p className="t-lead mt-5 max-w-lg text-muted">{t(adv.desc)}</p>
         <div className="mt-10 flex items-center gap-4">
           <button
             type="button"
@@ -115,9 +119,7 @@ function AdvantageSlider({ lang, t }: { lang: "zh" | "en"; t: (k: DictKey) => st
             className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-surface text-text transition-colors hover:border-primary hover:text-primary"
             aria-label={lang === "zh" ? "上一項" : "Previous"}
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            <ChevronLeft className="h-5 w-5" aria-hidden />
           </button>
           <span className="font-mono text-base text-muted">
             <span className="text-text">{pad(i + 1)}</span> / {pad(n)}
@@ -128,9 +130,7 @@ function AdvantageSlider({ lang, t }: { lang: "zh" | "en"; t: (k: DictKey) => st
             className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-surface text-text transition-colors hover:border-primary hover:text-primary"
             aria-label={lang === "zh" ? "下一項" : "Next"}
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
+            <ChevronRight className="h-5 w-5" aria-hidden />
           </button>
         </div>
       </div>
@@ -222,7 +222,7 @@ export default function IntroPage() {
         <AgentsSection />
 
         {/* ---------------- advantages (carousel) ---------------- */}
-        <section className="py-20 md:py-28">
+        <section id="advantages" className="scroll-mt-16 py-20 md:py-28">
           <Container>
             <SectionHead
               ghost="ADVANTAGES"
