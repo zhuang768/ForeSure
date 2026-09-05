@@ -21,7 +21,7 @@
 | **7. 次世代金融級前端戰情室** | Next.js 16 + React 19 + TypeScript + Cloudflare Pages 全球邊緣 | [`frontend/src/`](frontend/src/)<br>[線上展示站](https://atlas-insurance-dashboard.pages.dev/) | 嚴格零 Emoji、高冷金融儀器風格、深淺色切換、中英文即時切換、0ms 快照載入、20 筆歷史庫檢索、紅隊檢測面板。 |
 | **8. 商業模式與財務可行性** | 3 大量化營收引擎、研發週期縮短 99.6%、理賠費用降低 85% | [`docs/gamma_input_7slides.md`](docs/gamma_input_7slides.md)<br>本說明文件「問題與目標」段落 | B2B SaaS 席位、0.5%-1.5% 參數發行手續費、85% LAE 減省分潤，開拓極端氣候百億藍海市場。 |
 | **9. 簡報與公文產物** | 正式路演 7 頁黃金簡報檔、中英雙語 Word 報審公文 | [`ForeSure未然_Completed.pptx`](ForeSure未然_Completed.pptx)<br>[`reports/`](reports/) | 包含中英並列段落、外部可點擊新聞鏈結、精算依據標籤與 Sepolia 鏈上稽核章之正式 `.docx` 報審公文。 |
-| **10. 完整自動化測試套件** | 後端測試、紅隊驗證、前端單元測試 100% 通過 | [`tests/`](tests/)<br>[`frontend/src/lib/__tests__/`](frontend/src/lib/__tests__/) | `pytest tests/` (124 passed)；`python redteam.py` (0 誤報、0 漏抓)；`npm test` (47 passed)；`npm run lint` (0 警告)。 |
+| **10. 完整自動化測試套件** | 後端測試、紅隊驗證、前端單元測試 100% 通過 | [`tests/`](tests/)<br>[`frontend/src/lib/__tests__/`](frontend/src/lib/__tests__/) | `pytest tests/` (137 passed)；`python redteam.py` (0 誤報、0 漏抓)；`npm test` (71 passed)；`npm run lint` (0 警告)。 |
 
 ---
 
@@ -48,7 +48,7 @@
 - **以太坊 Sepolia 智能合約不可篡改存證 (`chain_writer.py`, `AuditRegistry.sol`)**：將 13 項核心決策欄位編譯成 32-Byte SHA-256 決策指紋上鏈，不洩漏任何商業機密，但實現「事後改動任何數字即刻驗證失敗」的公開透明度，前端支援現場破壞性竄改測試。
 - **AMD ROCm 硬體深度算力加速與多模態核保 (`scripts/amd_rocm_*.py`)**：透過 AMD ROCm GPU 張量核心，1.89 毫秒完成 1,000,000 次蒙地卡羅壓力測試；利用多模態電腦視覺客觀判定無人機/CCTV 淹水深度（防偽評分 <5%），降低 85% 理賠勘損行政費用。
 - **自動化中英雙語 Word 報審公文產生器 (`report_generator.py`)**：一鍵產出中英並列段落、外部可點擊新聞超連結、精算依據標籤與鏈上 Sepolia 稽核章的正式 `.docx` 報審公文。
-- **次世代金融儀器級全球邊緣戰情室 (`frontend/src`)**：採用 Next.js 16 + React 19，部署於 Cloudflare Pages 全球邊緣，支援 0ms 歷史快照即時載入、85 秒實機分析串流、深淺色即時切換與嚴格零 Emoji 設計。
+- **次世代金融儀器級全球邊緣戰情室 (`frontend/src`)**：採用 Next.js 16 + React 19，部署於 Cloudflare Pages 全球邊緣，支援 0ms 歷史快照即時載入、85 秒實機分析串流、Three.js 3D 玻璃葉子品牌動畫、4 大優勢玻璃態插圖、深淺色即時切換與嚴格零 Emoji 設計。
 
 ---
 
@@ -119,10 +119,10 @@ npm install
 npm run dev                       # http://localhost:3000
 
 # 3. 測試與建置
-python -m pytest -q               # 後端單元測試（專案根目錄，124 項全數通過）
+python -m pytest -q               # 後端單元測試（專案根目錄，137 項全數通過）
 python redteam.py                 # 紅隊測試台：印出檢出率、誤報率與 report_hash，有漏抓或誤報回傳碼 1
 python scripts/export_redteam_report.py   # 重新產生前端離線快照
-cd frontend && npm test           # 前端 Vitest 單元測試（47 項全數通過）
+cd frontend && npm test           # 前端 Vitest 單元測試（71 項全數通過）
 npm run lint                      # ESLint 語法檢驗（0 errors, 0 warnings）
 npm run build                     # 靜態匯出到 frontend/out/
 
@@ -193,8 +193,8 @@ docker compose up --build         # 同時起排程與 API 兩個容器
 
 | 姓名 | 分工 |
 | --- | --- |
-| **莊子進 (TZU-CHIN CHUANG)** | 專案架構設計、三代理人博弈辯論引擎 (`strategy_agent.py`)、消防署 67 年巨災經驗數據泊松精算模型 (`actuarial_engine.py`)、純規則非 LLM 確定性防幻覺審計 (`grounding_check.py`)、以太坊 Sepolia 智能合約存證 (`AuditRegistry.sol`)、Apigee 安全閘道、紅隊測試台 (`redteam.py`) 與後端 124 項單元測試。 |
-| **李文翰 (WEN-HAN LEE)** | 次世代金融級前端戰情室架構 (`frontend/`)、Next.js 16 + React 19 全球邊緣部署 (Cloudflare Pages)、全響應式深淺色與繁中/英文多語系系統、前端 47 項 Vitest 單元測試、Three.js 葉子動態 (`LeafHero.tsx`)、AMD ROCm 硬體張量加速與多模態電腦視覺核保整合 (`scripts/amd_rocm_*.py`)。 |
+| **莊子進 (TZU-CHIN CHUANG)** | 專案架構設計、三代理人博弈辯論引擎 (`strategy_agent.py`)、消防署 67 年巨災經驗數據泊松精算模型 (`actuarial_engine.py`)、純規則非 LLM 確定性防幻覺審計 (`grounding_check.py`)、以太坊 Sepolia 智能合約存證 (`AuditRegistry.sol`)、Apigee 安全閘道、紅隊測試台 (`redteam.py`) 與後端 137 項單元測試。 |
+| **李文翰 (WEN-HAN LEE)** | 次世代金融級前端戰情室架構 (`frontend/`)、Next.js 16 + React 19 全球邊緣部署 (Cloudflare Pages)、全響應式深淺色與繁中/英文多語系系統、前端 71 項 Vitest 單元測試、Three.js 葉子動態 (`LeafHero.tsx`)、AMD ROCm 硬體張量加速與多模態電腦視覺核保整合 (`scripts/amd_rocm_*.py`)。 |
 
 ---
 
