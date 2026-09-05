@@ -149,7 +149,7 @@ def build_decision_payload(decision_id: str, proposal_data: dict) -> dict:
 
 def audit_proposal_on_chain(proposal_data: dict) -> dict:
     """report_generator 呼叫的包裝：產生 decision_id、組 payload、上鏈，回傳可存進 audit_log 的收據。"""
-    decision_id = f"atlas-{time.strftime('%Y%m%d')}-{uuid.uuid4().hex[:8]}"
+    decision_id = f"foresure-{time.strftime('%Y%m%d')}-{uuid.uuid4().hex[:8]}"
     payload = build_decision_payload(decision_id, proposal_data)
     result = record_decision_on_chain(decision_id, payload)
     return {

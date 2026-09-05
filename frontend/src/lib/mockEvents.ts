@@ -117,8 +117,8 @@ export const MOCK_EVENTS: RunEvent[] = [
   {
     stage: "done",
     data: {
-      decision_id: "atlas-20260905-" + Math.random().toString(36).slice(2, 10),
-      run_id: "run-atlas-20260905-" + Math.random().toString(36).slice(2, 10),
+      decision_id: "foresure-20260905-" + Math.random().toString(36).slice(2, 10),
+      run_id: "run-foresure-20260905-" + Math.random().toString(36).slice(2, 10),
       timestamp: new Date().toISOString(),
       report_path: "reports/run-latest.json",
       proposal_data: {

@@ -26,7 +26,7 @@ RSS_URLS = [
     _gn("disaster OR cyberattack OR outage OR recall when:1d", lang="en"),
 ]
 
-_HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AtlasInsuranceAgent/1.0"}
+_HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ForeSureInsuranceAgent/1.0"}
 _TIMEOUT = 15
 
 MOCK_NEWS = {

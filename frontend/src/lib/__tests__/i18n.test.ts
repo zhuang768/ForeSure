@@ -10,7 +10,7 @@ describe("i18n dictionary", () => {
   });
 
   it("translates a key in both languages", () => {
-    expect(translate("zh", "app.title")).toBe("Atlas 保險決策桌");
-    expect(translate("en", "app.title")).toBe("Atlas Insurance Decision Desk");
+    expect(translate("zh", "app.title")).toBe("未然 ForeSure");
+    expect(translate("en", "app.title")).toBe("ForeSure");
   });
 });

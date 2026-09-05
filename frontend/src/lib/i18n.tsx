@@ -6,8 +6,8 @@ export type Lang = "zh" | "en";
 
 export const DICT = {
   zh: {
-    "app.title": "Atlas 保險決策桌",
-    "app.subtitle": "多代理人保險商品提案與鏈上存證",
+    "app.title": "未然 ForeSure",
+    "app.subtitle": "提前發現尚未被保障的風險",
     "header.run": "執行新一輪分析",
     "header.chain.sepolia": "Sepolia 已連線",
     "header.chain.mock": "模擬模式",
@@ -118,8 +118,8 @@ export const DICT = {
     "history.empty": "目前尚無歷史紀錄",
   },
   en: {
-    "app.title": "Atlas Insurance Decision Desk",
-    "app.subtitle": "Multi-agent product proposals with on-chain audit",
+    "app.title": "ForeSure",
+    "app.subtitle": "Find uninsured risks before they happen",
     "header.run": "Run new analysis",
     "header.chain.sepolia": "Sepolia connected",
     "header.chain.mock": "Mock mode",

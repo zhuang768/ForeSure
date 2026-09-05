@@ -1,10 +1,12 @@
-# 🛡️ Atlas: 企業級 AI 智慧保險戰情室 (AI Insurance GenAI Platform)
+# 🛡️ 未然 ForeSure：企業級 AI 智慧保險戰情室 (AI Insurance GenAI Platform)
 
 > **FUTUREMODE x SITCON BUILDMODE GEN-AI HACKATHON 2026**
 > **🏆 國泰金控 AI AGENT 賽道專屬解決方案**
 
-Atlas 是一個專為大型金融控股公司（如國泰金控）設計的 **「金融級 Multi-Agent 自動化保險開發與風控平台」**。
+未然 ForeSure 是一個專為大型金融控股公司（如國泰金控）設計的 **「金融級 Multi-Agent 自動化保險開發與風控平台」**。
 本專案打破傳統保險商品開發耗時數月的瓶頸，利用 AI 代理人即時觀測全球災難與時事，自動比對現有商品缺口，並透過**多代理人辯論 (Multi-Agent Debate)** 產出極具商業價值的保險提案與精算定價。同時，具備企業級 API 安全閘道與高質感前端戰情室。
+
+「未然」取自「防患未然」：提前發現尚未被任何保單保障的風險。英文名 ForeSure 取 foresee（預見）與 sure（確保）之意，簡潔、有溫度，適合作為長期品牌。
 
 ---
 

@@ -18,7 +18,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     handlers=[logging.StreamHandler(sys.stdout)],
 )
-logger = logging.getLogger("Atlas.Core")
+logger = logging.getLogger("ForeSure.Core")
 
 
 def _used_titles() -> set[str]:
@@ -104,7 +104,7 @@ def run_pipeline(emit=None) -> dict | None:
 
 
 def main():
-    logger.info("Atlas 企業保險開發 Agent 已啟動。")
+    logger.info("未然 ForeSure 企業保險開發 Agent 已啟動。")
     run_pipeline()
 
     scheduler = BackgroundScheduler(timezone="Asia/Taipei")

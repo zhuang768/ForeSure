@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/// @title Atlas AI Decision Audit Registry
+/// @title ForeSure AI Decision Audit Registry
 /// @notice 極簡存證合約:只允許新增紀錄與查詢,不可修改、不可刪除
 contract AuditRegistry {
 
     struct Record {
         bytes32 contentHash;   // AI 決策文件的 SHA-256
         uint256 timestamp;     // 上鏈時間(區塊時間戳)
-        address submitter;     // 寫入者地址(Atlas 後端服務錢包)
+        address submitter;     // 寫入者地址(ForeSure 後端服務錢包)
     }
 
     // decisionId(字串) => 存證紀錄

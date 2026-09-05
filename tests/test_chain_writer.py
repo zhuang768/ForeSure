@@ -26,3 +26,14 @@ def test_audit_wrapper_labels_mock_network_honestly(monkeypatch):
     assert receipt["is_mock"] is True
     assert receipt["verification_url"] is None
     assert "Sepolia" not in receipt["network"]
+
+
+def test_audit_wrapper_uses_foresure_decision_id_prefix(monkeypatch):
+    _force_mock(monkeypatch)
+
+    receipt = chain_writer.audit_proposal_on_chain(
+        {"proposal": {"product_name": "X", "market_gap": "Y"}, "actuarial_data": {}}
+    )
+
+    assert receipt["decision_id"].startswith("foresure-")
+    assert receipt["payload"]["decision_id"] == receipt["decision_id"]

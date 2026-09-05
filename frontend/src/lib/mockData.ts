@@ -18,7 +18,7 @@ function ts(minutesAgo: number): string {
 function stampId(minutesAgo: number): string {
   const d = new Date(Date.now() - minutesAgo * 60 * 1000);
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `atlas-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${
+  return `foresure-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${
     Math.random().toString(36).slice(2, 10)
   }`;
 }
@@ -574,7 +574,7 @@ const RUN_DATA: Array<{
 const DATA_20 = RUN_DATA.slice(0, 20);
 
 export const MOCK_RUN_SUMMARIES: RunSummary[] = DATA_20.map((d, i) => {
-  const id = i === 0 ? "atlas-20260905-2e27fc30" : stampId(d.minutesAgo);
+  const id = i === 0 ? "foresure-20260905-2e27fc30" : stampId(d.minutesAgo);
   const isMock = i === 19;
   const tx = isMock ? null : i === 0 ? "0x9b76b1e582e27fc304859231892018401829140a" : mockTx();
   return {

@@ -1,4 +1,4 @@
-# Atlas 後端 API 契約（給前端）
+# 未然 ForeSure 後端 API 契約（給前端）
 
 後端：`./venv/bin/uvicorn apigee_target:app --port 8080`
 前端讀 `NEXT_PUBLIC_API_BASE`（預設 `http://localhost:8080`）。
@@ -39,7 +39,7 @@ POST 端點每個 IP 每分鐘限 30 次。
 
 ```json
 {
-  "decision_id": "atlas-20260905-9f9ef0de",
+  "decision_id": "foresure-20260905-9f9ef0de",
   "payload": { "...被雜湊的決策欄位..." },
   "data_hash": "d2bc58…",
   "blockchain_tx_hash": "0x0894…",
@@ -78,7 +78,7 @@ Word 報告會中英並列。2026-09-05 13:00 之前產生的舊紀錄沒有 `_e
 
 ```json
 {
-  "decision_id": "atlas-20260905-9f9ef0de",
+  "decision_id": "foresure-20260905-9f9ef0de",
   "local_hash_hex": "…重新計算的雜湊…",
   "matched": true,
   "onchain_timestamp": 1788545904,

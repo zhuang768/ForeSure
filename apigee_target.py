@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Apigee.Target")
 
 app = FastAPI(
-    title="Atlas Insurance GenAI Target",
+    title="ForeSure Insurance GenAI Target",
     description="Backend API intended to be placed behind Google Cloud Apigee API Gateway.",
     version="1.1.0",
 )
