@@ -95,7 +95,37 @@ export default function DecisionDetail({ record, children }: { record: RunRecord
                 </span>
               </Row>
             </div>
-            <p className="text-xs text-muted">{t("num.source")}</p>
+            {record.actuarial_data.basis ? (
+              <div>
+                <Row label={t("basis.probability")}>
+                  {record.actuarial_data.basis.probability_source === "assumption"
+                    ? t("basis.assumption")
+                    : record.actuarial_data.basis.probability_source}
+                </Row>
+                {record.actuarial_data.basis.probability_method ? (
+                  <Row label={t("basis.method")}>{record.actuarial_data.basis.probability_method}</Row>
+                ) : null}
+                {record.actuarial_data.basis.years_observed ? (
+                  <Row label={t("basis.observed")}>
+                    <span className="mono">
+                      {record.actuarial_data.basis.years_observed} y · {record.actuarial_data.basis.events_observed ?? "—"} events ·{" "}
+                      {record.actuarial_data.basis.severe_events_observed ?? "—"} severe
+                    </span>
+                    {record.actuarial_data.basis.low_sample ? (
+                      <span className="pill ml-2 bg-warn-soft text-warn">{t("basis.lowSample")}</span>
+                    ) : null}
+                  </Row>
+                ) : null}
+                <Row label={t("basis.loss")}>
+                  {record.actuarial_data.basis.assumed_loss_note ?? record.actuarial_data.basis.loss_method ?? t("basis.assumption")}
+                </Row>
+                {record.actuarial_data.basis.premium_method ? (
+                  <Row label={t("basis.premium")}>{record.actuarial_data.basis.premium_method}</Row>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-xs text-muted">{t("num.source")}</p>
+            )}
             <div>
               <div className="label mb-1">{t("field.businessLogic")}</div>
               <p className="whitespace-pre-line text-sm leading-relaxed">{pd.proposal.business_logic}</p>

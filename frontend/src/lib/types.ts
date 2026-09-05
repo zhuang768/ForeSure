@@ -24,11 +24,30 @@ export type MatchedProduct = {
   distance: number;
 };
 
+/** Provenance of the actuarial figures (docs/API.md "精算依據"); absent on records made before 2026-09-05. */
+export type ActuarialBasis = {
+  peril?: string;
+  probability_source?: string; // data source string, or "assumption"
+  probability_method?: string;
+  years_observed?: number | null;
+  events_observed?: number | null;
+  severe_events_observed?: number | null;
+  annual_frequency?: number | null;
+  low_sample?: boolean | null;
+  loss_source?: string; // always "assumption" for now
+  loss_method?: string;
+  mean_households_per_severe_event?: number | null;
+  assumed_loss_per_household_usd?: number | null;
+  assumed_loss_note?: string;
+  premium_method?: string;
+};
+
 export type ActuarialData = {
   probability_pct: number;
   expected_loss_usd: number;
   premium_range_usd: [number, number];
   markup_multiplier: [number, number];
+  basis?: ActuarialBasis | null;
 };
 
 export type Proposal = {
