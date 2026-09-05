@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
 import BrandLogo from "@/components/BrandLogo";
+import HomeHero from "@/components/HomeHero";
 import Reveal from "@/components/Reveal";
 import SiteFooter from "@/components/SiteFooter";
 import { chainStatus, listRuns } from "@/lib/api";
@@ -15,8 +16,6 @@ import type { ChainStatus, RunSummary } from "@/lib/types";
 /* ------------------------------------------------------------------ */
 /* static content                                                      */
 /* ------------------------------------------------------------------ */
-
-const HERO_LINES = ["FORESURE", "未然", "AI."];
 
 type RoleKey = "pm" | "uw" | "ac";
 const ROLE_TEXT: Record<RoleKey, string> = { pm: "text-role-pm", uw: "text-role-uw", ac: "text-role-ac" };
@@ -123,26 +122,6 @@ function SectionHead({ ghost, title, lead }: { ghost: string; title: string; lea
       </h2>
       {lead ? <p className="t-lead mt-5 max-w-3xl text-muted">{lead}</p> : null}
     </Reveal>
-  );
-}
-
-function HeroType() {
-  let offset = 0;
-  return (
-    <h1 className="hero-type relative z-10 text-text" aria-label="ForeSure 未然 AI">
-      {HERO_LINES.map((line, li) => (
-        <span key={li} className={`block ${li === 1 ? "text-primary" : ""}`} aria-hidden>
-          {[...line].map((ch, ci) => {
-            const style = { ["--i" as string]: offset++ } as CSSProperties;
-            return (
-              <span key={ci} className="hero-letter" style={style}>
-                {ch}
-              </span>
-            );
-          })}
-        </span>
-      ))}
-    </h1>
   );
 }
 
@@ -299,52 +278,7 @@ export default function IntroPage() {
         <div className="blob bottom-[8%] left-[30%] h-[30rem] w-[30rem] bg-primary/15" aria-hidden />
 
         {/* ---------------- hero ---------------- */}
-        <section className="relative">
-          <Container className="relative flex min-h-[calc(100vh-66px)] flex-col pb-14 pt-10 md:px-16 md:pt-14 lg:px-24">
-            <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 md:left-[66%] md:top-[-1rem] lg:left-[64%]" aria-hidden>
-              <div className="relative">
-                <div className="absolute inset-[-20%] rounded-full bg-primary/25 blur-3xl" />
-                <BrandLogo
-                  variant="mark"
-                  decorative
-                  className="float-slow relative h-[24vh] w-auto max-h-[420px] opacity-95 drop-shadow-[0_30px_60px_rgba(38,168,98,0.35)] md:h-[38vh]"
-                />
-              </div>
-            </div>
-
-            <div className="relative z-10 mt-[22vh] md:mt-0">
-              <HeroType />
-            </div>
-
-            <div className="relative z-10 mt-10 flex flex-col gap-10 md:mt-auto md:flex-row md:items-end md:justify-between">
-              <div className="flex max-w-xl flex-col gap-5">
-                <div className="flex flex-wrap items-center gap-3">
-                  <Link href="/generator" className="btn btn-primary px-7 py-3.5 text-base font-semibold shadow-md">
-                    ▶ {t("intro.ctaLive")}
-                  </Link>
-                  <Link href="/history" className="btn btn-secondary px-6 py-3.5 text-base font-semibold">
-                    {t("intro.ctaHistory")}
-                  </Link>
-                </div>
-                <div className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs text-muted">
-                  <span>Network: Ethereum Sepolia</span>
-                  <span>Multi-Agent Consensus (3 Roles)</span>
-                  <span>SHA-256 Decision Proof</span>
-                  <span>Parametric Oracles (CWA / NOAA)</span>
-                </div>
-              </div>
-              <Reveal delay={200} className="t-tag flex flex-col text-left text-text md:items-end md:text-right">
-                <span>{zh ? "新興風險參數型定價" : "Parametric pricing for emerging risks"}</span>
-                <span>{zh ? "三方 AI 代理人對抗辯論" : "Tri-agent adversarial debate"}</span>
-                <span>{zh ? "以太坊 Sepolia 鏈上存證" : "Ethereum Sepolia attestation"}</span>
-              </Reveal>
-            </div>
-
-            <div className="pointer-events-none absolute bottom-3 left-1/2 hidden -translate-x-1/2 animate-bounce font-mono text-[10px] tracking-widest text-muted md:block" aria-hidden>
-              SCROLL ↓
-            </div>
-          </Container>
-        </section>
+        <HomeHero />
 
         {/* ---------------- agents (bento) ---------------- */}
         <section className="py-20 md:py-28">
