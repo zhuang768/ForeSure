@@ -29,6 +29,17 @@ _FIELD_DESCRIPTIONS = {
 }
 PROPOSAL_FIELDS = tuple(_FIELD_DESCRIPTIONS)
 
+# The trigger headline and summary come from news feeds in either language, so the agent hands back both
+# versions; the one already in the original language is a verbatim copy. They live next to source_news /
+# news_summary in proposal_data, not inside the proposal itself.
+_NEWS_TRANSLATION_DESCRIPTIONS = {
+    "source_news_zh": "觸發新聞標題的繁體中文版（原文已是中文則逐字照抄）",
+    "source_news_en": "English version of the trigger headline (copy it verbatim if it is already English)",
+    "news_summary_zh": "觸發新聞摘要的繁體中文版（原文已是中文則逐字照抄）",
+    "news_summary_en": "English version of the trigger news summary (copy it verbatim if it is already English)",
+}
+NEWS_TRANSLATION_FIELDS = tuple(_NEWS_TRANSLATION_DESCRIPTIONS)
+
 
 def _tool_properties() -> dict:
     properties = {}
@@ -38,7 +49,14 @@ def _tool_properties() -> dict:
             "type": "string",
             "description": f"English version of {field}: the same content as {field}, written in fluent English",
         }
+    for field, description in _NEWS_TRANSLATION_DESCRIPTIONS.items():
+        properties[field] = {"type": "string", "description": description}
     return properties
+
+
+def _split_news_translation(args: dict) -> dict:
+    """Move the news translations out of the tool-call arguments so `proposal` keeps only the six sections."""
+    return {field: (args.pop(field, "") or "") for field in NEWS_TRANSLATION_FIELDS}
 
 
 _TOOLS = [
@@ -50,7 +68,8 @@ _TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": _tool_properties(),
-                "required": [name for field in PROPOSAL_FIELDS for name in (field, f"{field}_en")],
+                "required": [name for field in PROPOSAL_FIELDS for name in (field, f"{field}_en")]
+                            + list(NEWS_TRANSLATION_FIELDS),
             },
         },
     }
@@ -270,10 +289,12 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
         emit("underwriter", uw_critique)
 
         final_message = (
+            f"【觸發新聞】\n標題：{news_item['title']}\n摘要：{news_item.get('summary', '')}\n\n"
             f"【原始提案】\n{pm_idea}\n\n"
             f"【核保人員批評】\n{uw_critique}\n\n"
             f"請扮演精算師，修正這些漏洞，並嚴謹地呼叫 propose_new_insurance_product 生成最終正式提案。"
             f"每個欄位都要同時提供繁體中文版與英文版（*_en 欄位），兩個版本內容必須一致，報告會中英並列呈現。"
+            f"另外把觸發新聞的標題與摘要翻成另一種語言（source_news_zh/en、news_summary_zh/en），原文語言的那一版逐字照抄。"
         )
         final_response = _chat(
             client,
@@ -291,6 +312,7 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
         if not tool_calls:
             raise ValueError("LLM 未回傳 tool_calls")
         args = json.loads(tool_calls[0].function.arguments)
+        news_translation = _split_news_translation(args)
         logger.info(f"多代理人策略生成成功！商品名稱：{args['product_name']}")
         emit("actuary", args.get("business_logic", ""))
 
@@ -298,6 +320,7 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
             "source_news": news_item["title"],
             "news_summary": news_item.get("summary", ""),
             "news_link": news_item.get("link", ""),
+            **news_translation,
             "actuarial_data": actuarial_data,
             "debate": {"pm": pm_idea, "underwriter": uw_critique},
             "proposal": args,

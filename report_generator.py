@@ -2,8 +2,11 @@ import os
 import logging
 from datetime import datetime
 from docx import Document
-from docx.shared import RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.opc.constants import RELATIONSHIP_TYPE
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import RGBColor
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +14,8 @@ logger = logging.getLogger(__name__)
 # the agent is printed twice, Chinese first, then the English version the agent produced in the "<field>_en" key.
 _ENGLISH_GREY = RGBColor(0x55, 0x55, 0x55)
 _MISSING_EN = "（未提供英文版 / English version not provided）"
+_MISSING_TRANSLATION = "（未提供翻譯 / translation not provided）"
+_LINK_BLUE = "0563C1"
 _ENGLISH_NAME_MAX_CHARS = 60  # keeps file names within filesystem limits for long English product names
 
 
@@ -27,6 +32,56 @@ def _english(paragraph, text: str):
     run.italic = True
     run.font.color.rgb = _ENGLISH_GREY
     return run
+
+
+def _add_hyperlink(paragraph, url: str, text: str) -> None:
+    """python-docx has no hyperlink API, so build the w:hyperlink element and its relationship by hand."""
+    r_id = paragraph.part.relate_to(url, RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
+    hyperlink = OxmlElement("w:hyperlink")
+    hyperlink.set(qn("r:id"), r_id)
+    run = OxmlElement("w:r")
+    props = OxmlElement("w:rPr")
+    color = OxmlElement("w:color")
+    color.set(qn("w:val"), _LINK_BLUE)
+    underline = OxmlElement("w:u")
+    underline.set(qn("w:val"), "single")
+    props.append(color)
+    props.append(underline)
+    run.append(props)
+    text_el = OxmlElement("w:t")
+    text_el.text = text
+    text_el.set(qn("xml:space"), "preserve")
+    run.append(text_el)
+    hyperlink.append(run)
+    paragraph._p.append(hyperlink)
+
+
+def _translated_pair(original: str, zh, en) -> tuple[str, str | None]:
+    """(Chinese, English) for a news field whose original may be in either language and may lack a translation."""
+    zh_text = zh or original
+    en_text = en or (original if zh else None)
+    return zh_text, en_text
+
+
+def _add_trigger_news(doc, proposal_data: dict) -> None:
+    """Headline and summary in both languages, with the headline and the URL as clickable links to the source."""
+    link = proposal_data.get("news_link") or ""
+    title_zh, title_en = _translated_pair(proposal_data.get("source_news") or "N/A",
+                                          proposal_data.get("source_news_zh"), proposal_data.get("source_news_en"))
+    p = doc.add_paragraph("新聞標題 / Headline：")
+    if link:
+        _add_hyperlink(p, link, title_zh)
+    else:
+        p.add_run(title_zh)
+    _english(doc.add_paragraph(), title_en or _MISSING_TRANSLATION)
+
+    summary_zh, summary_en = _translated_pair(proposal_data.get("news_summary") or "N/A",
+                                              proposal_data.get("news_summary_zh"), proposal_data.get("news_summary_en"))
+    doc.add_paragraph(_label("新聞摘要", "Summary", summary_zh))
+    _english(doc.add_paragraph(), summary_en or _MISSING_TRANSLATION)
+
+    if link:
+        _add_hyperlink(doc.add_paragraph("新聞連結 / Source link："), link, link)
 
 
 def _bilingual_section(doc, zh_text, en_text) -> None:
@@ -113,8 +168,7 @@ def generate_report(proposal_data: dict, output_dir: str = "reports") -> str:
     doc.add_paragraph(_label("商品名稱", "Product name", name)).style = 'Heading 3'
 
     _heading(doc, '觸發時事', 'Trigger Event', level=2)
-    doc.add_paragraph(_label("新聞標題", "Headline", proposal_data.get('source_news', 'N/A')))
-    doc.add_paragraph(_label("新聞摘要", "Summary", proposal_data.get('news_summary', 'N/A')))
+    _add_trigger_news(doc, proposal_data)
 
     _heading(doc, '市場缺口分析', 'Market Gap Analysis', level=2)
     _bilingual_section(doc, proposal.get('market_gap'), proposal.get('market_gap_en'))

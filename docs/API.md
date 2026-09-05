@@ -66,6 +66,10 @@ POST 端點每個 IP 每分鐘限 30 次。
 是繁體中文；每個欄位另有同名加 `_en` 的英文版（例如 `product_name_en`），由同一次 function calling 產出，
 Word 報告會中英並列。2026-09-05 13:00 之前產生的舊紀錄沒有 `_en` 欄位，前端要能容忍缺欄。
 
+`proposal_data` 另有 `source_news_zh`、`source_news_en`、`news_summary_zh`、`news_summary_en`：觸發新聞標題與摘要的
+中英文版，原文語言的那一版是逐字照抄（新聞來源有中有英）。Word 報告的新聞標題與「新聞連結」是可點的超連結，
+連到 `news_link`。mock 提案沒有這四個欄位。
+
 ## 鏈上驗證（Demo 的關鍵互動）
 
 `POST /api/v1/runs/{decision_id}/verify`（需 token），body 可省略或 `{"tampered": {"probability_pct": 9.99}}`。

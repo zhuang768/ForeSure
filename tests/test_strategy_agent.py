@@ -116,3 +116,21 @@ def test_mock_proposals_are_bilingual():
         for field in strategy_agent.PROPOSAL_FIELDS:
             assert proposal[field], field
             assert proposal[f"{field}_en"], f"{field}_en"
+
+
+def test_tool_schema_requires_both_languages_of_the_trigger_news():
+    params = strategy_agent._TOOLS[0]["function"]["parameters"]
+
+    for field in ("source_news_zh", "source_news_en", "news_summary_zh", "news_summary_en"):
+        assert field in params["properties"] and field in params["required"]
+
+
+def test_news_translation_is_split_out_of_the_proposal():
+    args = {"product_name": "X", "source_news_zh": "標題", "source_news_en": "Title",
+            "news_summary_zh": "摘要", "news_summary_en": None}
+
+    translation = strategy_agent._split_news_translation(args)
+
+    assert args == {"product_name": "X"}                     # proposal keeps only its own sections
+    assert translation == {"source_news_zh": "標題", "source_news_en": "Title",
+                           "news_summary_zh": "摘要", "news_summary_en": ""}

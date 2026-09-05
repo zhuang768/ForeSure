@@ -99,3 +99,55 @@ def test_error_report_is_bilingual(tmp_path):
     text = _text_of(generate_report({"error": "boom"}, output_dir=str(tmp_path)))
 
     assert "無法生成完整報告" in text and "could not be generated" in text and "boom" in text
+
+
+def _hyperlinks_of(path):
+    """(text, target url) of every hyperlink in the document body."""
+    import re
+    import zipfile
+    z = zipfile.ZipFile(path)
+    body = z.read("word/document.xml").decode()
+    rels = dict(re.findall(r'Id="(rId\d+)"[^>]*Target="([^"]+)"[^>]*TargetMode="External"', z.read("word/_rels/document.xml.rels").decode()))
+    links = []
+    for rid, inner in re.findall(r'<w:hyperlink[^>]*r:id="(rId\d+)"[^>]*>(.*?)</w:hyperlink>', body, flags=re.S):
+        links.append(("".join(re.findall(r"<w:t[^>]*>(.*?)</w:t>", inner)), rels.get(rid)))
+    return links
+
+
+def test_trigger_news_is_translated_and_the_headline_links_to_the_source(tmp_path):
+    data = {"proposal": PROPOSAL, "actuarial_data": ACTUARIAL,
+            "source_news": "Families lost weeks of food", "news_summary": "Power outages spoiled groceries.",
+            "news_link": "https://news.example.com/story",
+            "source_news_zh": "家庭損失數週糧食", "source_news_en": "Families lost weeks of food",
+            "news_summary_zh": "停電讓食材腐壞。", "news_summary_en": "Power outages spoiled groceries."}
+
+    path = generate_report(data, output_dir=str(tmp_path))
+    text = _text_of(path)
+
+    assert "家庭損失數週糧食" in text and "Families lost weeks of food" in text
+    assert "停電讓食材腐壞。" in text and "Power outages spoiled groceries." in text
+    assert "translation not provided" not in text
+    assert ("家庭損失數週糧食", "https://news.example.com/story") in _hyperlinks_of(path)
+    assert ("https://news.example.com/story", "https://news.example.com/story") in _hyperlinks_of(path)
+
+
+def test_trigger_news_without_translation_keeps_the_original_and_says_so(tmp_path):
+    data = {"proposal": PROPOSAL, "actuarial_data": ACTUARIAL,
+            "source_news": "颱風來襲", "news_summary": "南部淹水。", "news_link": ""}
+
+    path = generate_report(data, output_dir=str(tmp_path))
+    text = _text_of(path)
+
+    assert "颱風來襲" in text and "南部淹水。" in text
+    assert "translation not provided" in text
+    assert _hyperlinks_of(path) == []       # no link, no hyperlink, no crash
+
+
+def test_one_sided_translation_uses_the_original_for_the_other_language(tmp_path):
+    data = {"proposal": PROPOSAL, "actuarial_data": ACTUARIAL,
+            "source_news": "Storm hits the south", "news_summary": "s", "news_link": "https://x",
+            "source_news_zh": "風暴襲擊南部"}
+
+    text = _text_of(generate_report(data, output_dir=str(tmp_path)))
+
+    assert "風暴襲擊南部" in text and "Storm hits the south" in text
