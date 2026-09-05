@@ -7,7 +7,7 @@ import BrandLogo from "@/components/BrandLogo";
 import HomeHero from "@/components/HomeHero";
 import AgentsSection from "@/components/AgentsSection";
 import Reveal from "@/components/Reveal";
-import SiteFooter, { FACT_ICON, FactIcon } from "@/components/SiteFooter";
+import SiteFooter from "@/components/SiteFooter";
 import { chainStatus, listRuns } from "@/lib/api";
 import { fmtStamp, shortHash } from "@/lib/format";
 import { useLang, useT, type DictKey } from "@/lib/i18n";
@@ -198,7 +198,6 @@ export default function IntroPage() {
 
   const zh = lang === "zh";
   const showcase = runs ? pickShowcaseRuns(runs, 3) : undefined;
-  const contract = chain?.contract_address ?? null;
 
   // What the traditional workflow needs versus what ForeSure does: [aspect, traditional, ForeSure].
   const shiftRows: [string, string, string][] = zh
@@ -355,28 +354,6 @@ export default function IntroPage() {
                 <p className="t-lead mt-5 text-muted">
                   {zh ? "立即啟動 85 秒即時時事新聞感測、多代理人對抗辯論與以太坊 Sepolia 存證流程。" : "Launch 85-second live telemetry, multi-agent adversarial debate, and Ethereum Sepolia attestation."}
                 </p>
-                <BrandLogo decorative className="mt-15 h-12 w-auto" />
-                <h3 className="t-h3 mt-5 text-text">{zh ? "未然 ForeSure · 多代理人保險決策桌" : "ForeSure · multi-agent insurance decision desk"}</h3>
-                <ul className="t-body mt-5 flex flex-col gap-[13px]">
-                  {[
-                    [FACT_ICON.globe, zh ? "網路" : "Network", "Ethereum Sepolia", null],
-                    [FACT_ICON.doc, zh ? "合約" : "Contract", contract ? shortHash(contract) : "—", contract ? `https://sepolia.etherscan.io/address/${contract}` : null],
-                    [FACT_ICON.code, zh ? "原始碼" : "Source", "github.com/zhuang768/ForeSure", "https://github.com/zhuang768/ForeSure"],
-                    [FACT_ICON.flag, zh ? "賽事" : "Event", t("footer.event"), null],
-                  ].map(([icon, k, v, href]) => (
-                    <li key={k as string} className="flex items-start gap-2.5">
-                      <FactIcon d={icon as string} className="mt-1 h-5 w-5" />
-                      <span className="w-14 shrink-0 text-muted">{k}</span>
-                      {href ? (
-                        <a href={href as string} target="_blank" rel="noreferrer" className="mono font-medium text-primary-ink underline-offset-4 hover:underline">
-                          {v}
-                        </a>
-                      ) : (
-                        <span className="font-medium text-text">{v}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
               </Reveal>
 
               <Reveal delay={120} className="lg:pt-3">
