@@ -17,23 +17,40 @@ _SYSTEM_PROMPT = (
     "這是給商品企劃部門的內部提案草稿，仍需人工審核與送審，請務實、具體、可執行。"
 )
 
+# The six sections of a proposal. Each is produced twice by the agent: in Traditional Chinese (the key itself)
+# and in English (the key with an "_en" suffix), so the Word report can print both languages side by side.
+_FIELD_DESCRIPTIONS = {
+    "product_name": "創新保險商品名稱 (具備行銷吸引力)",
+    "target_audience": "目標客群分析 (哪些人最需要這個保險)",
+    "market_gap": "市場缺口說明 (為何現有保險無法涵蓋此風險)",
+    "coverage_details": "保障範圍與理賠條件 (條列式說明)",
+    "exclusions": "除外不保事項 (道德風險防範)",
+    "business_logic": "商業邏輯與精算數據結合說明 (解釋保費是否具備競爭力，預期獲利模式)",
+}
+PROPOSAL_FIELDS = tuple(_FIELD_DESCRIPTIONS)
+
+
+def _tool_properties() -> dict:
+    properties = {}
+    for field, description in _FIELD_DESCRIPTIONS.items():
+        properties[field] = {"type": "string", "description": f"{description}，繁體中文"}
+        properties[f"{field}_en"] = {
+            "type": "string",
+            "description": f"English version of {field}: the same content as {field}, written in fluent English",
+        }
+    return properties
+
+
 _TOOLS = [
     {
         "type": "function",
         "function": {
             "name": "propose_new_insurance_product",
-            "description": "生成全新保險商品開發提案",
+            "description": "生成全新保險商品開發提案（每個欄位同時提供繁體中文版與英文版）",
             "parameters": {
                 "type": "object",
-                "properties": {
-                    "product_name": {"type": "string", "description": "創新保險商品名稱 (具備行銷吸引力)"},
-                    "target_audience": {"type": "string", "description": "目標客群分析 (哪些人最需要這個保險)"},
-                    "market_gap": {"type": "string", "description": "市場缺口說明 (為何現有保險無法涵蓋此風險)"},
-                    "coverage_details": {"type": "string", "description": "保障範圍與理賠條件 (條列式說明)"},
-                    "exclusions": {"type": "string", "description": "除外不保事項 (道德風險防範)"},
-                    "business_logic": {"type": "string", "description": "商業邏輯與精算數據結合說明 (解釋保費是否具備競爭力，預期獲利模式)"},
-                },
-                "required": ["product_name", "target_audience", "market_gap", "coverage_details", "exclusions", "business_logic"],
+                "properties": _tool_properties(),
+                "required": [name for field in PROPOSAL_FIELDS for name in (field, f"{field}_en")],
             },
         },
     }
@@ -131,28 +148,46 @@ def _mock_proposal(news_item: dict) -> dict:
     if any(k in text for k in ["cyber", "hack", "ransomware", "data", "outage", "cloud", "駭客", "勒索", "資安", "中斷"]):
         return {
             "product_name": "企業數位營運中斷綜合險 (Mock)",
+            "product_name_en": "Enterprise Digital Business Interruption Insurance (Mock)",
             "target_audience": "高度依賴雲端服務與線上交易的中小企業與數位平台。",
+            "target_audience_en": "SMEs and digital platforms that depend heavily on cloud services and online transactions.",
             "market_gap": "現有資安險僅賠償資料庫重建，不涵蓋第三方雲端服務中斷造成的營業損失與談判專家費用。",
+            "market_gap_en": "Existing cyber policies only pay for database rebuilds; they exclude business income lost to third-party cloud outages and negotiator fees.",
             "coverage_details": "1. 第三方雲端服務中斷逾 4 小時，每日補償 5000 美金。\n2. 補助最高 10 萬美金之資安事件應變顧問費。",
+            "coverage_details_en": "1. USD 5,000 per day once a third-party cloud outage exceeds 4 hours.\n2. Up to USD 100,000 for incident-response consultants.",
             "exclusions": "1. 企業未安裝基礎防火牆與防毒軟體。\n2. 內部人員蓄意行為。",
+            "exclusions_en": "1. No basic firewall or antivirus in place.\n2. Deliberate acts by insiders.",
             "business_logic": "數位依賴度攀升，潛在需求大。以參數化觸發條件降低理賠勘查成本，並透過再保分散風險。",
+            "business_logic_en": "Digital dependence keeps rising, so demand is large. Parametric triggers cut claims-adjustment cost and reinsurance spreads the risk.",
         }
     if any(k in text for k in ["health", "pandemic", "disease", "virus", "疫情", "傳染"]):
         return {
             "product_name": "新興傳染病營業中斷與防疫險 (Mock)",
+            "product_name_en": "Emerging Infectious Disease Business Interruption Insurance (Mock)",
             "target_audience": "餐飲業、旅遊業與零售實體店家。",
+            "target_audience_en": "Restaurants, travel operators and brick-and-mortar retailers.",
             "market_gap": "傳統營業中斷險需有「實體財物損毀」才理賠，傳染病停業無法獲賠。",
+            "market_gap_en": "Traditional business interruption cover requires physical damage, so closures caused by an epidemic are not paid.",
             "coverage_details": "1. 政府宣布三級警戒即刻啟動理賠。\n2. 補助員工遠端辦公軟硬體建置費。",
+            "coverage_details_en": "1. Claims trigger the moment the government declares a level-3 alert.\n2. Subsidy for remote-work hardware and software.",
             "exclusions": "1. 已被世界衛生組織宣告為全球大流行後才投保。\n2. 企業自行決定停業(非政府強制)。",
+            "exclusions_en": "1. Policies bought after the WHO has declared a pandemic.\n2. Voluntary closures not mandated by the government.",
             "business_logic": "將理賠條件參數化(政府公告)，省去人工理賠勘驗成本，保費可有效降低。",
+            "business_logic_en": "A parametric trigger (the government announcement) removes manual loss adjustment, which keeps the premium low.",
         }
     return {
         "product_name": "氣候巨災參數型保證險 (Mock)",
+        "product_name_en": "Climate Catastrophe Parametric Insurance (Mock)",
         "target_audience": "容易受極端氣候影響之農漁業及運輸業。",
+        "target_audience_en": "Farming, fishing and transport businesses exposed to extreme weather.",
         "market_gap": "現有保險需人工勘損，耗時數月。此商品結合氣象數據，觸發參數即刻理賠。",
+        "market_gap_en": "Existing cover needs manual loss surveys that take months. This product pays immediately once a weather-data trigger is hit.",
         "coverage_details": "1. 降雨量連續 3 日超過 500mm 自動理賠 100萬。\n2. 因颱風導致之營業中斷固定補償 50萬。",
+        "coverage_details_en": "1. Automatic payout of 1,000,000 when rainfall exceeds 500 mm for 3 consecutive days.\n2. Fixed 500,000 for typhoon-caused business interruption.",
         "exclusions": "1. 未依氣象署發布之警告進行預防。\n2. 人為蓄意破壞。",
+        "exclusions_en": "1. Failure to act on Central Weather Administration warnings.\n2. Deliberate human damage.",
         "business_logic": "預期損失極大但機率較低，透過再保險分散風險，保費利潤率預期可達 35%。",
+        "business_logic_en": "Very large expected loss at low probability; reinsurance spreads the risk and the premium margin is expected to reach 35%.",
     }
 
 
@@ -237,7 +272,8 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
         final_message = (
             f"【原始提案】\n{pm_idea}\n\n"
             f"【核保人員批評】\n{uw_critique}\n\n"
-            f"請扮演精算師，修正這些漏洞，並嚴謹地呼叫 propose_new_insurance_product 生成最終正式提案（繁體中文）。"
+            f"請扮演精算師，修正這些漏洞，並嚴謹地呼叫 propose_new_insurance_product 生成最終正式提案。"
+            f"每個欄位都要同時提供繁體中文版與英文版（*_en 欄位），兩個版本內容必須一致，報告會中英並列呈現。"
         )
         final_response = _chat(
             client,
@@ -248,7 +284,7 @@ def generate_product_proposal(news_item: dict, gap_analysis: dict, actuarial_dat
             tools=_TOOLS,
             tool_choice=_TOOL_CHOICE,
             temperature=0.7,
-            max_tokens=3000,
+            max_tokens=6000,  # twelve fields (six sections x two languages) plus reasoning tokens
             **extra,
         )
         tool_calls = final_response.choices[0].message.tool_calls

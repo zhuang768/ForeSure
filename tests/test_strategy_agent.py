@@ -97,3 +97,22 @@ def test_actuarial_brief_without_basis_only_lists_the_numbers():
 
     assert "1.0%" in brief
     assert "依據" not in brief
+
+
+def test_tool_schema_requires_an_english_twin_for_every_proposal_field():
+    params = strategy_agent._TOOLS[0]["function"]["parameters"]
+
+    for field in strategy_agent.PROPOSAL_FIELDS:
+        assert field in params["properties"]
+        assert f"{field}_en" in params["properties"]
+        assert field in params["required"] and f"{field}_en" in params["required"]
+
+
+def test_mock_proposals_are_bilingual():
+    for news in [{"title": "Ransomware hits cloud provider", "summary": ""},
+                 {"title": "New virus outbreak", "summary": ""},
+                 {"title": "Typhoon floods the south", "summary": ""}]:
+        proposal = strategy_agent._mock_proposal(news)
+        for field in strategy_agent.PROPOSAL_FIELDS:
+            assert proposal[field], field
+            assert proposal[f"{field}_en"], f"{field}_en"

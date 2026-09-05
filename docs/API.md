@@ -62,6 +62,10 @@ POST 端點每個 IP 每分鐘限 30 次。
 
 重播：用完整紀錄的欄位，依上表順序自己排時間差播放即可，不需要後端。
 
+`proposal` 的六個欄位（`product_name`、`target_audience`、`market_gap`、`coverage_details`、`exclusions`、`business_logic`）
+是繁體中文；每個欄位另有同名加 `_en` 的英文版（例如 `product_name_en`），由同一次 function calling 產出，
+Word 報告會中英並列。2026-09-05 13:00 之前產生的舊紀錄沒有 `_en` 欄位，前端要能容忍缺欄。
+
 ## 鏈上驗證（Demo 的關鍵互動）
 
 `POST /api/v1/runs/{decision_id}/verify`（需 token），body 可省略或 `{"tampered": {"probability_pct": 9.99}}`。
@@ -113,6 +117,7 @@ POST 端點每個 IP 每分鐘限 30 次。
 {
   "peril": "typhoon",
   "probability_source": "內政部消防署 臺灣地區天然災害損失統計表 1958-2025 (https://www.nfa.gov.tw/cht/index.php?code=list&ids=233)",
+  "probability_source_en": "National Fire Agency, Ministry of the Interior: Natural Disaster Loss Statistics for Taiwan 1958-2025",
   "probability_method": "share of years 1995-2025 with at least one typhoon event destroying >= 50 households (full + half)",
   "years_observed": 31, "events_observed": 151, "severe_events_observed": 19,
   "annual_frequency": 0.6129,
@@ -126,8 +131,8 @@ POST 端點每個 IP 每分鐘限 30 次。
 }
 ```
 
-- `peril`：`typhoon`、`flood`、`earthquake` 三類有消防署統計，`probability_source` 是資料來源字串；
-  `cyber`、`health`、`climate`、`general` 沒有官方統計，`probability_source` 為 `"assumption"`。
+- `peril`：`typhoon`、`flood`、`earthquake` 三類有消防署統計，`probability_source` 是資料來源字串，`probability_source_en` 是同一份統計表的英文名；
+  `cyber`、`health`、`climate`、`general` 沒有官方統計，`probability_source` 為 `"assumption"`，沒有 `probability_source_en`。
 - `loss_source` 永遠是 `"assumption"`：消防署資料只有受災戶數、沒有金額，單次損失 = 歷史平均受災戶數 × 假設的每戶損失。
 - `low_sample` 為 `true` 時（嚴重事件少於 5 筆，目前水災如此）請顯示「樣本少」警示；沒有統計的類別此欄為 `null`。
 - 建議畫面：機率旁標「依據：消防署 1995–2025」並可點開 `probability_method`；損失旁標「假設值」並可點開 `assumed_loss_note`。

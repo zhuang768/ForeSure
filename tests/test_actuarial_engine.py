@@ -21,6 +21,7 @@ def test_typhoon_news_prices_from_nfa_frequency_and_labels_sources():
     basis = result["basis"]
     assert basis["peril"] == "typhoon"
     assert "nfa.gov.tw" in basis["probability_source"]
+    assert "National Fire Agency" in basis["probability_source_en"]   # English name for the bilingual report
     assert basis["loss_source"] == "assumption"
     assert basis["assumed_loss_per_household_usd"] == ae.ASSUMED_LOSS_PER_HOUSEHOLD_USD
     assert basis["years_observed"] == stats["years_observed"]

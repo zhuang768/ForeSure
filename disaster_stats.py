@@ -13,6 +13,8 @@ from pathlib import Path
 
 DEFAULT_CSV = Path(__file__).resolve().parent / "data" / "nfa_disaster_events.csv"
 SOURCE = "內政部消防署 臺灣地區天然災害損失統計表 1958-2025 (https://www.nfa.gov.tw/cht/index.php?code=list&ids=233)"
+# English name of the same table, for the bilingual report.
+SOURCE_EN = "National Fire Agency, Ministry of the Interior: Natural Disaster Loss Statistics for Taiwan 1958-2025"
 
 # 1995 onwards: the NFA has existed since 1995 and collects the data itself, and post-1990s building codes
 # make earlier household-loss counts unrepresentative of today's exposure.
@@ -76,6 +78,7 @@ def peril_statistics(peril: str, since_year: int = DEFAULT_SINCE_YEAR,
     return {
         "peril": peril,
         "source": SOURCE,
+        "source_en": SOURCE_EN,
         "since_year": since_year,
         "until_year": until_year,
         "years_observed": years_observed,

@@ -55,6 +55,7 @@ def _from_statistics(peril: str, stats: dict) -> dict:
     basis = {
         "peril": peril,
         "probability_source": stats["source"],
+        "probability_source_en": stats["source_en"],
         "probability_method": (
             f"share of years {stats['since_year']}-{stats['until_year']} with at least one {peril} event destroying "
             f">= {stats['severe_threshold']} households (full + half)"
