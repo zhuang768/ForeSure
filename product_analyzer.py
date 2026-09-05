@@ -55,6 +55,20 @@ def warmup():
     return _index
 
 
+def reindex_async() -> threading.Thread:
+    """Rebuild the index in the background after the knowledge base changed. The old index keeps serving
+    until the new one is ready, so neither the request that edited the file nor a running pipeline waits."""
+    def _rebuild():
+        global _index
+        fresh = _build_index()
+        with _lock:
+            _index = fresh
+
+    thread = threading.Thread(target=_rebuild, name="embedding-reindex", daemon=True)
+    thread.start()
+    return thread
+
+
 def match_products(query_text: str, n_results: int = 5) -> list[dict]:
     embedder, collection, kb_by_id = warmup()
     query_vec = list(embedder.embed([query_text]))[0].tolist()

@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import threading
 import time
 
@@ -14,6 +15,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 
+import product_analyzer
 import run_store
 from chain_writer import chain_status, verify_decision_on_chain
 from main import run_pipeline
@@ -232,18 +234,30 @@ async def get_knowledge_base():
         return {"error": "無法讀取知識庫"}
 
 
-@app.post("/api/v1/knowledge_base")
+_kb_write_lock = threading.Lock()
+
+
+def _next_kb_id(kb: list[dict]) -> str:
+    """Ids follow the seeded INS-001 … INS-030 pattern; the semantic index is keyed by them."""
+    numbers = [int(m.group(1)) for item in kb if (m := re.fullmatch(r"INS-(\d+)", str(item.get("id", ""))))]
+    return f"INS-{(max(numbers) + 1) if numbers else len(kb) + 1:03d}"
+
+
+@app.post("/api/v1/knowledge_base", dependencies=[Depends(verify_jwt)])
 async def add_knowledge_base(item: KBItem):
-    """允許新增未來的保險商品到知識庫中"""
+    """允許新增未來的保險商品到知識庫中（需 Bearer token）。寫入後在背景重建語意索引。"""
     try:
-        kb = []
-        if os.path.exists(KB_PATH):
-            with open(KB_PATH, "r", encoding="utf-8") as f:
-                kb = json.load(f)
-        kb.append(item.model_dump())
-        with open(KB_PATH, "w", encoding="utf-8") as f:
-            json.dump(kb, f, ensure_ascii=False, indent=4)
-        return {"message": "新增成功", "item": item}
+        with _kb_write_lock:
+            kb = []
+            if os.path.exists(KB_PATH):
+                with open(KB_PATH, "r", encoding="utf-8") as f:
+                    kb = json.load(f)
+            record = {"id": _next_kb_id(kb), **item.model_dump()}
+            kb.append(record)
+            with open(KB_PATH, "w", encoding="utf-8") as f:
+                json.dump(kb, f, ensure_ascii=False, indent=4)
+        product_analyzer.reindex_async()
+        return {"message": "新增成功", "item": record}
     except Exception as e:
         logger.error(f"寫入 KB 失敗: {e}")
         return {"error": "無法新增知識庫"}
