@@ -4,3 +4,121 @@ export type ChainStatus = {
   contract_address: string | null;
   submitter: string | null;
 };
+
+export type Health = { status: string; timestamp: number; chain: "sepolia" | "mock" };
+
+export type NewsItem = {
+  title: string;
+  link: string;
+  published: string;
+  summary: string;
+  source?: string;
+  is_mock: boolean;
+};
+
+export type MatchedProduct = {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  distance: number;
+};
+
+export type ActuarialData = {
+  probability_pct: number;
+  expected_loss_usd: number;
+  premium_range_usd: [number, number];
+  markup_multiplier: [number, number];
+};
+
+export type Proposal = {
+  product_name: string;
+  target_audience: string;
+  market_gap: string;
+  coverage_details: string;
+  exclusions: string;
+  business_logic: string;
+};
+
+export type Debate = { pm: string; underwriter: string };
+
+export type ProposalData = {
+  source_news: string;
+  news_summary: string;
+  news_link?: string;
+  actuarial_data: ActuarialData;
+  debate: Debate;
+  proposal: Proposal;
+  is_mock: boolean;
+  model: string | null;
+};
+
+export type Receipt = {
+  decision_id: string;
+  payload: Record<string, unknown>;
+  data_hash: string;
+  blockchain_tx_hash: string | null;
+  block_number: number | null;
+  verification_url: string | null;
+  network: string;
+  is_mock: boolean;
+  timestamp: string;
+};
+
+export type RunRecord = {
+  decision_id: string;
+  run_id?: string;
+  timestamp: string;
+  news: NewsItem;
+  matched_products: MatchedProduct[];
+  actuarial_data: ActuarialData;
+  proposal_data: ProposalData;
+  blockchain_receipt: Receipt;
+  report_path: string;
+};
+
+export type RunSummary = {
+  decision_id: string;
+  run_id: string | null;
+  timestamp: string;
+  news_title: string | null;
+  product_name: string | null;
+  is_mock_proposal: boolean | null;
+  chain_is_mock: boolean | null;
+  tx_hash: string | null;
+  verification_url: string | null;
+};
+
+export type VerifyResult = {
+  decision_id: string;
+  local_hash_hex?: string;
+  matched: boolean;
+  onchain_timestamp?: number | null;
+  submitter?: string | null;
+  is_mock: boolean;
+  reason?: string;
+  error?: string;
+  tampered_fields: string[];
+  payload: Record<string, unknown>;
+  stored_hash: string | null;
+  tx_hash: string | null;
+  verification_url: string | null;
+};
+
+export type Stage =
+  | "news_fetched"
+  | "news_selected"
+  | "kb_matched"
+  | "actuarial"
+  | "pm"
+  | "underwriter"
+  | "actuary"
+  | "report"
+  | "chain_pending"
+  | "chain_done"
+  | "done"
+  | "error";
+
+export type RunEvent = { stage: Stage; data: unknown };
+
+export type ActiveRun = { run_id: string; status: "running" | "finished" | "error"; events: RunEvent[] };
