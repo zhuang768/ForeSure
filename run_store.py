@@ -86,6 +86,8 @@ def flatten_report(record: dict) -> dict:
         "model": proposal_data.get("model"),
         "matched_products": record.get("matched_products") or [],
         "actuarial_data": actuarial,
+        # 幻覺檢測結果；2026-09-05 之前的舊紀錄沒有這一欄，前端要能容忍 None。
+        "grounding": record.get("grounding") or proposal_data.get("grounding"),
         "blockchain_tx_hash": receipt.get("blockchain_tx_hash"),
         "block_number": receipt.get("block_number"),
         "verification_url": receipt.get("verification_url"),
@@ -110,6 +112,7 @@ def summarize(record: dict) -> dict:
         "chain_is_mock": receipt.get("is_mock"),
         "tx_hash": receipt.get("blockchain_tx_hash"),
         "verification_url": receipt.get("verification_url"),
+        "grounding_status": (record.get("grounding") or {}).get("status"),
     }
 
 
