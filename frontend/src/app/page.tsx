@@ -4,19 +4,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import AppHeader from "@/components/AppHeader";
 import ChainBadge from "@/components/ChainBadge";
 import DebateFeed from "@/components/DebateFeed";
-import HistorySection from "@/components/HistorySection";
 import MatchedProducts from "@/components/MatchedProducts";
 import NewsList from "@/components/NewsList";
 import ProposalCard from "@/components/ProposalCard";
 import StageProgress from "@/components/StageProgress";
-import { chainStatus, getActiveRun, listRuns, openRunStream, saveLocalRun, startRun } from "@/lib/api";
+import { chainStatus, getActiveRun, openRunStream, saveLocalRun, startRun } from "@/lib/api";
 import { deriveBadgeState } from "@/lib/badge";
 import { useLang, useT } from "@/lib/i18n";
 import { localizedField } from "@/lib/localize";
 import { MOCK_EVENTS } from "@/lib/mockEvents";
 import { applyEvent, initialRunState, startRunState, type RunState } from "@/lib/runReducer";
 import { stageIndex } from "@/lib/stages";
-import type { ChainStatus, RunEvent, RunSummary } from "@/lib/types";
+import type { ChainStatus, RunEvent } from "@/lib/types";
 
 export default function HomePage() {
   const t = useT();
@@ -24,7 +23,6 @@ export default function HomePage() {
   const [chain, setChain] = useState<ChainStatus | null | undefined>(undefined);
   const [state, setState] = useState<RunState>(initialRunState);
   const [elapsed, setElapsed] = useState(0);
-  const [historyRuns, setHistoryRuns] = useState<RunSummary[]>([]);
   const cleanup = useRef<() => void>(() => {});
   const applied = useRef(0);
 
@@ -34,16 +32,9 @@ export default function HomePage() {
       .catch(() => setChain(null));
   }, []);
 
-  const refreshHistory = useCallback(() => {
-    listRuns()
-      .then((runs) => setHistoryRuns(runs))
-      .catch(() => setHistoryRuns([]));
-  }, []);
-
   useEffect(() => {
     refreshChain();
-    refreshHistory();
-  }, [refreshChain, refreshHistory]);
+  }, [refreshChain]);
 
   // Elapsed clock while running.
   useEffect(() => {
@@ -58,19 +49,15 @@ export default function HomePage() {
     return () => cleanup.current();
   }, []);
 
-  const feed = useCallback(
-    (ev: RunEvent) => {
-      setState((s) => {
-        const next = applyEvent(s, ev, Date.now());
-        if (ev.stage === "done" && next.record) {
-          saveLocalRun(next.record);
-          refreshHistory();
-        }
-        return next;
-      });
-    },
-    [refreshHistory],
-  );
+  const feed = useCallback((ev: RunEvent) => {
+    setState((s) => {
+      const next = applyEvent(s, ev, Date.now());
+      if (ev.stage === "done" && next.record) {
+        saveLocalRun(next.record);
+      }
+      return next;
+    });
+  }, []);
 
   // If the SSE connection drops before done/error, poll the active run and replay unseen events.
   const pollFallback = useCallback(
@@ -249,11 +236,6 @@ export default function HomePage() {
               </div>
             ) : null}
           </section>
-        </div>
-
-        {/* 歷史區塊 (History Section) */}
-        <div className="mt-2">
-          <HistorySection runs={historyRuns} activeRecord={state.record} />
         </div>
       </main>
     </>
