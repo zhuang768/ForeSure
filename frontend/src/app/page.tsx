@@ -19,70 +19,30 @@ import type { ChainStatus, RunSummary } from "@/lib/types";
 const HERO_LINES = ["FORESURE", "未然", "AI."];
 
 type RoleKey = "pm" | "uw" | "ac";
-const ROLE: Record<RoleKey, { text: string; soft: string; bar: string; dot: string }> = {
-  pm: { text: "text-role-pm", soft: "bg-role-pm-soft", bar: "bg-role-pm", dot: "bg-role-pm" },
-  uw: { text: "text-role-uw", soft: "bg-role-uw-soft", bar: "bg-role-uw", dot: "bg-role-uw" },
-  ac: { text: "text-role-ac", soft: "bg-role-ac-soft", bar: "bg-role-ac", dot: "bg-role-ac" },
-};
-
-const AGENT_ICON: Record<RoleKey, ReactNode> = {
-  pm: (
-    <svg className="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6} aria-hidden>
-      <circle cx="12" cy="12" r="9" strokeDasharray="3 3" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v3m0 12v3M3 12h3m12 0h3m-4.5-4.5L15 9m-6 6l-1.5 1.5" />
-      <circle cx="12" cy="12" r="2" fill="currentColor" />
-    </svg>
-  ),
-  uw: (
-    <svg className="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6} aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-    </svg>
-  ),
-  ac: (
-    <svg className="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6} aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-    </svg>
-  ),
-};
+const ROLE_TEXT: Record<RoleKey, string> = { pm: "text-role-pm", uw: "text-role-uw", ac: "text-role-ac" };
 
 type Agent = {
   key: RoleKey;
-  code: string;
-  tag: string;
   role: DictKey;
   desc: DictKey;
-  quote: [string, string];
-  params: [string, string, string, string][]; // zh label, zh value, en label, en value
+  /** Two facts per role: [zh label, zh value, en label, en value]. */
+  params: [string, string, string, string][];
 };
 
 const AGENTS: Agent[] = [
   {
     key: "pm",
-    code: "AGENT_01 // OPPORTUNITY_RADAR",
-    tag: "EXPANSION",
     role: "intro.pmRole",
     desc: "intro.pmDesc",
-    quote: [
-      "若不主動捕捉第一線的新興風險，保險業將失去在科技世代的存在價值。",
-      "If we do not capture emerging perils first, insurance loses its relevance in the tech era.",
-    ],
     params: [
       ["核心偏向", "商業覆蓋最大化", "Strategic bias", "Max coverage"],
-      ["時事感知", "RAG 向量比對", "Ingestion", "RAG vector match"],
-      ["給付結構", "客觀參數梯級", "Payout model", "Parametric steps"],
       ["博弈制衡", "抗衡核保過度保守", "Dialectic target", "Challenge over-caution"],
     ],
   },
   {
     key: "uw",
-    code: "AGENT_02 // RISK_AUDIT_SHIELD",
-    tag: "PRUDENCE",
     role: "intro.uwRole",
     desc: "intro.uwDesc",
-    quote: [
-      "凡是可被人為操弄、誘發道德風險或累積巨災的條款，一律建立嚴格除外。",
-      "Any clause vulnerable to moral hazard, manipulation or catastrophe accumulation is strictly excluded.",
-    ],
     params: [
       ["核心偏向", "零道德風險防禦", "Strategic bias", "Anti-moral hazard"],
       ["敞口限額", "單一事件巨災封頂", "Exposure cap", "Per-peril capped"],
@@ -90,14 +50,8 @@ const AGENTS: Agent[] = [
   },
   {
     key: "ac",
-    code: "AGENT_03 // STATISTICAL_SOLVENCY",
-    tag: "CALIBRATION",
     role: "intro.actuaryRole",
     desc: "intro.actuaryDesc",
-    quote: [
-      "缺乏歷史數據不是藉口，以泊松分佈與 1.25x 加成守護資本清償邊界。",
-      "Lack of historical loss data is no excuse; defend solvency margins with Poisson modeling and 1.25x markup.",
-    ],
     params: [
       ["損失分佈", "泊松過程與極端值", "Loss model", "Poisson & EVT"],
       ["定價加成", "1.15x – 1.25x", "Markup", "1.15x – 1.25x"],
@@ -192,40 +146,22 @@ function HeroType() {
   );
 }
 
-function AgentCard({ agent, wide, lang, t, delay }: { agent: Agent; wide?: boolean; lang: "zh" | "en"; t: (k: DictKey) => string; delay: number }) {
-  const c = ROLE[agent.key];
-  const iconTile = (
-    <div className={`relative flex shrink-0 items-center justify-center rounded-3xl ${c.soft} ${c.text} ${wide ? "h-40 w-40 md:h-48 md:w-48" : "h-24 w-24"}`}>
-      <div className={wide ? "h-20 w-20 md:h-24 md:w-24" : "h-12 w-12"}>{AGENT_ICON[agent.key]}</div>
-      <span className={`absolute -bottom-2 rounded-full px-2 py-0.5 font-mono text-[10px] font-bold tracking-wider text-white ${c.bar}`}>
-        {agent.tag}
-      </span>
-    </div>
-  );
-  const body = (
-    <div className="min-w-0 flex-1">
-      <div className={`font-mono text-[11px] font-bold uppercase tracking-wider ${c.text}`}>{agent.code}</div>
-      <h3 className="mt-2 text-xl font-semibold text-text md:text-2xl">{t(agent.role)}</h3>
-      <p className={`mt-4 border-l-2 pl-3 text-sm italic leading-relaxed text-text ${c.text.replace("text-", "border-")}`}>
-        「{agent.quote[lang === "zh" ? 0 : 1]}」
-      </p>
-      <p className="mt-4 text-sm leading-relaxed text-muted">{t(agent.desc)}</p>
-      <dl className={`mt-5 grid gap-2 ${wide ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2"}`}>
-        {agent.params.map(([zl, zv, el, ev]) => (
-          <div key={el} className="rounded-xl border border-border/70 bg-surface/60 px-3 py-2">
-            <dt className="font-mono text-[10px] text-muted">{lang === "zh" ? zl : el}</dt>
-            <dd className="mt-0.5 text-xs font-semibold text-text">{lang === "zh" ? zv : ev}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  );
+/** One agent: big role-coloured number, role name, one line, two facts as plain text rows. */
+function AgentCard({ agent, index, lang, t, delay }: { agent: Agent; index: number; lang: "zh" | "en"; t: (k: DictKey) => string; delay: number }) {
   return (
-    <Reveal delay={delay} className={wide ? "lg:col-span-2" : ""}>
-      <article className={`glass relative h-full overflow-hidden p-7 md:p-10 ${wide ? "flex flex-col gap-8 md:flex-row md:items-center md:gap-12" : "flex flex-col gap-6"}`}>
-        <div className={`absolute inset-x-0 top-0 h-1 ${c.bar}`} aria-hidden />
-        {iconTile}
-        {body}
+    <Reveal delay={delay} className="h-full">
+      <article className="glass flex h-full flex-col p-8 md:p-10">
+        <div className={`font-mono text-5xl font-bold tracking-tight md:text-6xl ${ROLE_TEXT[agent.key]}`}>{String(index + 1).padStart(2, "0")}</div>
+        <h3 className="mt-12 text-2xl font-semibold leading-snug text-text md:mt-16">{t(agent.role)}</h3>
+        <p className="mt-3 text-sm leading-relaxed text-muted">{t(agent.desc)}</p>
+        <dl className="mt-10 border-t border-border">
+          {agent.params.map(([zl, zv, el, ev]) => (
+            <div key={el} className="flex items-baseline justify-between gap-4 border-b border-border py-3 text-sm">
+              <dt className="shrink-0 text-muted">{lang === "zh" ? zl : el}</dt>
+              <dd className="text-right font-medium text-text">{lang === "zh" ? zv : ev}</dd>
+            </div>
+          ))}
+        </dl>
       </article>
     </Reveal>
   );
@@ -414,10 +350,10 @@ export default function IntroPage() {
         <section className="py-20 md:py-28">
           <Container>
             <SectionHead ghost="AGENTS" title={t("intro.agentsTitle")} lead={t("intro.agentsSubtitle")} />
-            <div className="mt-14 grid gap-5 lg:grid-cols-2">
-              <AgentCard agent={AGENTS[0]} wide lang={lang} t={t} delay={0} />
-              <AgentCard agent={AGENTS[1]} lang={lang} t={t} delay={100} />
-              <AgentCard agent={AGENTS[2]} lang={lang} t={t} delay={200} />
+            <div className="mt-14 grid gap-5 md:grid-cols-3">
+              {AGENTS.map((agent, i) => (
+                <AgentCard key={agent.key} agent={agent} index={i} lang={lang} t={t} delay={i * 100} />
+              ))}
             </div>
           </Container>
         </section>
