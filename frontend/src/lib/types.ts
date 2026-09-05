@@ -41,6 +41,30 @@ export type ActuarialBasis = {
   assumed_loss_per_household_usd?: number | null;
   assumed_loss_note?: string;
   premium_method?: string;
+  monte_carlo_gpu?: MonteCarloGpuData | null;
+};
+
+export type MonteCarloGpuData = {
+  engine: string;
+  hardware_signature?: string;
+  peril?: string;
+  iterations: number;
+  elapsed_ms?: number;
+  mean_annual_loss_usd?: number;
+  var_90_usd?: number;
+  var_95_usd?: number;
+  var_99_usd?: number;
+  var_99_5_usd: number;
+  tvar_99_5_usd: number;
+  solvency_capital_requirement_usd?: number;
+  calibrated_markup_multiplier?: number;
+  solvency_standard?: string;
+  capital_adequacy_status?: string;
+  tail_distribution_curve?: Array<{
+    loss_usd: number;
+    frequency: number;
+    prob_pct: number;
+  }>;
 };
 
 export type ActuarialData = {
