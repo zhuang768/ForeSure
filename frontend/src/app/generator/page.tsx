@@ -185,6 +185,11 @@ export default function GeneratorPage() {
         </div>
 
         <StageProgress stageIndex={state.stageIndex} timings={state.timings} status={state.status} />
+        {state.status === "error" ? (
+          <div className="rounded-lg border border-danger/30 bg-danger-soft px-4 py-2 text-sm text-danger">
+            {t("gen.error")}: <span className="mono">{state.error ?? "—"}</span>
+          </div>
+        ) : null}
 
         <div className="grid flex-1 grid-cols-1 gap-[var(--gap)] lg:grid-cols-[1fr_1.7fr_1.1fr]">
           <section className="card flex flex-col p-4">

@@ -227,6 +227,10 @@ export function openRunStream(runId: string, onEvent: (event: RunEvent) => void,
   let finished = false;
   for (const stage of ALL_STAGES) {
     es.addEventListener(stage, (e) => {
+      // A dropped connection is also dispatched as an "error" Event; only a server-sent message carries
+      // string data. Without this guard the transport error was reported as the pipeline's error stage
+      // and es.onerror never reached the polling fallback.
+      if (typeof (e as MessageEvent).data !== "string") return;
       const raw = (e as MessageEvent).data as string;
       let data: unknown = raw;
       try {
