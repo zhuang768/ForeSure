@@ -40,11 +40,11 @@ const SEG = "inline-flex items-center rounded-md border border-border bg-surface
 const SEG_ON = "bg-primary text-white shadow-xs";
 const SEG_OFF = "text-muted hover:text-text";
 
-/** Shared top bar: logo, page links, chain status, language / theme / presentation toggles, primary CTA. */
+/** Shared top bar: logo, page links, chain status, language / theme toggles, primary CTA. */
 export default function AppHeader({ chain }: { chain: ChainStatus | null | undefined }) {
   const t = useT();
   const { lang, setLang } = useLang();
-  const { theme, setTheme, present, setPresent } = usePrefs();
+  const { theme, setTheme } = usePrefs();
   const pathname = usePathname() ?? "/";
   const [open, setOpen] = useState(false);
 
@@ -114,25 +114,6 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
     </div>
   );
 
-  const presentToggle = (withLabel: boolean) => (
-    <button
-      type="button"
-      onClick={() => setPresent(!present)}
-      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-all ${
-        present ? "border-primary bg-primary-soft text-primary-ink" : "border-border bg-surface-2 text-muted hover:text-text"
-      }`}
-      aria-pressed={present}
-      aria-label={t("header.present")}
-      title={t("header.present")}
-    >
-      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
-        <rect x="3" y="4" width="18" height="12" rx="2" />
-        <path strokeLinecap="round" d="M8 20h8M12 16v4" />
-      </svg>
-      {withLabel ? <StableLabel k="header.present" lang={lang} /> : null}
-    </button>
-  );
-
   // Always rendered so the right-hand group keeps the same width on every page; on the generator
   // page it is invisible (the page has its own start button) but still takes up its space.
   const cta = (
@@ -178,7 +159,6 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
           {chainPill}
           {langToggle}
           {themeToggle}
-          {presentToggle(false)}
           {cta}
         </div>
 
@@ -220,7 +200,6 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
               {chainPill}
               {langToggle}
               {themeToggle}
-              {presentToggle(true)}
             </div>
             {onGenerator ? null : <div className="flex">{cta}</div>}
           </div>
