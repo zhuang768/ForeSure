@@ -33,6 +33,7 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
   const { theme, setTheme, present, setPresent } = usePrefs();
   const pathname = usePathname();
   const onOverview = pathname?.startsWith("/overview");
+  const onHistory = pathname?.startsWith("/history");
 
   // Show connected status for both real sepolia and mock (offline demo) mode
   const chainPill =
@@ -76,14 +77,12 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
               <StableLabel k="header.theme.light" lang={lang} prefix="☀ " />
             )}
           </button>
-          <button
-            type="button"
-            className={`btn px-2 py-1 text-xs ${present ? "btn-primary" : "btn-secondary"}`}
-            onClick={() => setPresent(!present)}
-            aria-pressed={present}
+          <Link
+            href="/history"
+            className={`btn px-2.5 py-1 text-xs ${onHistory ? "btn-primary" : "btn-secondary"}`}
           >
-            <StableLabel k="header.present" lang={lang} />
-          </button>
+            <StableLabel k="header.history" lang={lang} />
+          </Link>
           {onOverview ? (
             <Link href="/" className="btn btn-primary">
               <StableLabel k="header.run" lang={lang} prefix="▶ " />
