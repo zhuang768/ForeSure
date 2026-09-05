@@ -44,7 +44,7 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             aria-label="theme"
           >
-            {theme === "dark" ? "淺色" : "淺色"}
+            {theme === "dark" ? "☾ " + t("header.theme.dark") : "☀ " + t("header.theme.light")}
           </button>
           <button
             type="button"
@@ -60,7 +60,7 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
             </Link>
           ) : (
             <Link href="/generator" className="btn btn-primary">
-              {t("header.run")}
+              ▶ {t("header.run")}
             </Link>
           )}
         </div>
