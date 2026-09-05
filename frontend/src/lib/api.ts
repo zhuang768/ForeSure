@@ -178,44 +178,35 @@ export async function startRun(): Promise<{ run_id: string; status: string }> {
   });
 }
 
+/** Shown with an offline verification: the panel must not present a simulated result as a chain check. */
+export const OFFLINE_VERIFY_REASON = "離線模擬結果，未與鏈上紀錄比對 / offline simulation, not checked against the chain";
+
 export async function verifyRun(id: string, tampered?: Record<string, unknown>): Promise<VerifyResult> {
-  try {
-    const online = await checkOnline();
-    if (!online) {
-      // Return a plausible mock verification result
-      const rec = MOCK_RUN_RECORDS.find((r) => r.decision_id === id) ?? MOCK_RUN_RECORDS[0];
-      return {
-        decision_id: id,
-        matched: true,
-        is_mock: rec.blockchain_receipt.is_mock,
-        tampered_fields: [],
-        payload: rec.blockchain_receipt.payload,
-        stored_hash: rec.blockchain_receipt.data_hash,
-        tx_hash: rec.blockchain_receipt.blockchain_tx_hash,
-        verification_url: rec.blockchain_receipt.verification_url,
-        local_hash_hex: rec.blockchain_receipt.data_hash,
-        onchain_timestamp: Date.now() / 1000 - 300,
-        submitter: MOCK_CHAIN_STATUS.submitter,
-      };
-    }
-    return await request<VerifyResult>(`/api/v1/runs/${encodeURIComponent(id)}/verify`, {
-      method: "POST",
-      headers: auth,
-      body: JSON.stringify(tampered ? { tampered } : {}),
-    });
-  } catch {
+  const online = await checkOnline();
+  if (!online) {
+    // No backend: simulate honestly. A tampered payload never "matches", and the result says it is simulated.
     const rec = MOCK_RUN_RECORDS.find((r) => r.decision_id === id) ?? MOCK_RUN_RECORDS[0];
+    const tamperedFields = Object.keys(tampered ?? {}).sort();
     return {
       decision_id: id,
-      matched: true,
-      is_mock: rec.blockchain_receipt.is_mock,
-      tampered_fields: [],
-      payload: {},
+      matched: tamperedFields.length === 0,
+      is_mock: true,
+      reason: OFFLINE_VERIFY_REASON,
+      tampered_fields: tamperedFields,
+      payload: { ...rec.blockchain_receipt.payload, ...(tampered ?? {}) },
       stored_hash: rec.blockchain_receipt.data_hash,
       tx_hash: rec.blockchain_receipt.blockchain_tx_hash,
       verification_url: rec.blockchain_receipt.verification_url,
+      onchain_timestamp: null,
+      submitter: null,
     };
   }
+  // Backend reachable: a failed request is an error the caller shows; never fabricate a match.
+  return request<VerifyResult>(`/api/v1/runs/${encodeURIComponent(id)}/verify`, {
+    method: "POST",
+    headers: auth,
+    body: JSON.stringify(tampered ? { tampered } : {}),
+  });
 }
 
 const ALL_STAGES: readonly string[] = [...STAGES, "error"];

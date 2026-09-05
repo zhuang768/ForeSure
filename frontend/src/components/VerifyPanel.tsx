@@ -111,6 +111,7 @@ export default function VerifyPanel({ record }: { record: RunRecord }) {
           <div className={`mb-2 font-bold ${result.matched ? "text-primary-ink" : "text-danger"}`}>
             {result.matched ? "✓ " + t("verify.matched") : "✕ " + t("verify.notMatched")}
           </div>
+          {result.reason ? <p className="mb-2 text-xs text-warn">{result.reason}</p> : null}
           <div className="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1">
             <span className="text-muted">{t("verify.local")}</span>
             <span className="mono break-all">{result.local_hash_hex ?? "—"}</span>
