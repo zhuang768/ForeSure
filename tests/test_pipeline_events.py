@@ -59,3 +59,19 @@ def test_run_pipeline_works_without_emit_callback(monkeypatch):
     record = main.run_pipeline()
 
     assert record["report_path"] == "reports/x.docx"
+
+
+def test_run_pipeline_hands_title_and_summary_to_the_actuarial_engine(monkeypatch):
+    saved, seen = [], {}
+    _wire_fakes(monkeypatch, saved)
+
+    def _capture(summary, gap):
+        seen["summary"], seen["gap"] = summary, gap
+        return ACTUARIAL
+
+    monkeypatch.setattr(main, "estimate_risk_premium", _capture)
+
+    main.run_pipeline()
+
+    assert "n1" in seen["summary"] and "s1" in seen["summary"]
+    assert seen["gap"] == "p"

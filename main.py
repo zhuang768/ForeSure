@@ -48,7 +48,8 @@ def run_pipeline(emit=None) -> dict | None:
     gap_analysis = find_market_gap(selected_news)
     _emit("kb_matched", gap_analysis["matched_products"])
 
-    actuarial_data = estimate_risk_premium(selected_news.get("summary", ""), gap_analysis["gap_analysis_prompt"])
+    news_text = f"{selected_news.get('title', '')} {selected_news.get('summary', '')}".strip()
+    actuarial_data = estimate_risk_premium(news_text, gap_analysis["gap_analysis_prompt"])
     _emit("actuarial", actuarial_data)
 
     proposal_data = generate_product_proposal(selected_news, gap_analysis, actuarial_data, on_stage=_emit)
