@@ -7,8 +7,8 @@ export type Theme = "light" | "dark";
 const THEME_KEY = "atlas.theme";
 const PRESENT_KEY = "atlas.present";
 
-/** Inline script run before first paint so the stored theme never flashes (see app/layout.tsx). */
-export const NO_FLASH_SCRIPT = `(function(){try{var t=localStorage.getItem("${THEME_KEY}");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.setAttribute("data-theme",t);if(localStorage.getItem("${PRESENT_KEY}")==="1"){document.documentElement.setAttribute("data-present","1")}}catch(e){}})();`;
+/** Inline script run before first paint — always forces light theme regardless of localStorage or OS setting. */
+export const NO_FLASH_SCRIPT = `(function(){try{document.documentElement.setAttribute("data-theme","light");if(localStorage.getItem("${PRESENT_KEY}")==="1"){document.documentElement.setAttribute("data-present","1")}}catch(e){}})();`;
 
 // Tiny external store: the source of truth is the <html> attribute (set by the inline script
 // before hydration), mirrored to localStorage. useSyncExternalStore keeps server and client in sync

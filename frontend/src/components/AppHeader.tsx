@@ -9,14 +9,13 @@ import type { ChainStatus } from "@/lib/types";
 export default function AppHeader({ chain }: { chain: ChainStatus | null | undefined }) {
   const t = useT();
   const { lang, setLang } = useLang();
-  const { theme, setTheme, present, setPresent } = usePrefs();
+  const { present, setPresent } = usePrefs();
   const pathname = usePathname();
   const onGenerator = pathname?.startsWith("/generator");
 
+  // Only show chain pill when we have a confirmed connection (sepolia or mock mode) — hide the red error pill
   const chainPill =
-    chain === undefined ? null : chain === null ? (
-      <span className="pill bg-danger-soft text-danger">● {t("header.chain.unknown")}</span>
-    ) : chain.mode === "sepolia" ? (
+    chain === undefined || chain === null ? null : chain.mode === "sepolia" ? (
       <span className="pill bg-primary-soft text-primary-ink">● {t("header.chain.sepolia")}</span>
     ) : (
       <span className="pill border border-border bg-surface-2 text-muted">○ {t("header.chain.mock")}</span>
@@ -41,14 +40,6 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
           </button>
           <button
             type="button"
-            className="btn btn-secondary px-2 py-1 text-xs"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label="theme"
-          >
-            {theme === "dark" ? "☾ " + t("header.theme.dark") : "☀ " + t("header.theme.light")}
-          </button>
-          <button
-            type="button"
             className={`btn px-2 py-1 text-xs ${present ? "btn-primary" : "btn-secondary"}`}
             onClick={() => setPresent(!present)}
             aria-pressed={present}
@@ -61,7 +52,7 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
             </Link>
           ) : (
             <Link href="/generator" className="btn btn-primary">
-              ▶ {t("header.run")}
+              {t("header.run")}
             </Link>
           )}
         </div>

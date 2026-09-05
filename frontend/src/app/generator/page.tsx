@@ -8,7 +8,6 @@ import MatchedProducts from "@/components/MatchedProducts";
 import NewsList from "@/components/NewsList";
 import ProposalCard from "@/components/ProposalCard";
 import StageProgress from "@/components/StageProgress";
-import StatusBanner from "@/components/StatusBanner";
 import { chainStatus, getActiveRun, openRunStream, startRun } from "@/lib/api";
 import { deriveBadgeState } from "@/lib/badge";
 import { useT } from "@/lib/i18n";
@@ -141,8 +140,8 @@ export default function GeneratorPage() {
                 {t("gen.viewFull")} →
               </a>
             ) : null}
-            <button type="button" className="btn border border-border bg-surface-2" onClick={beginMock} disabled={running}>
-              🧪 模擬執行
+            <button type="button" className="btn btn-secondary" onClick={beginMock} disabled={running}>
+              [DEMO]
             </button>
             <button type="button" className="btn btn-primary" onClick={begin} disabled={running}>
               ▶ {state.status === "idle" ? t("gen.start") : t("gen.retry")}
@@ -151,12 +150,6 @@ export default function GeneratorPage() {
         </div>
 
         <StageProgress stageIndex={state.stageIndex} timings={state.timings} status={state.status} />
-
-        {state.status === "error" ? (
-          <div className="rounded-lg border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
-            {t("gen.error")}: {state.error}
-          </div>
-        ) : null}
 
         <div className="grid flex-1 grid-cols-1 gap-[var(--gap)] lg:grid-cols-[1fr_1.7fr_1.1fr]">
           <section className="card flex flex-col p-4">
