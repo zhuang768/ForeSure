@@ -156,7 +156,23 @@ def audit_proposal_on_chain(proposal_data: dict) -> dict:
     """report_generator 呼叫的包裝：產生 decision_id、組 payload、上鏈，回傳可存進 audit_log 的收據。"""
     decision_id = f"foresure-{time.strftime('%Y%m%d')}-{uuid.uuid4().hex[:8]}"
     payload = build_decision_payload(decision_id, proposal_data)
-    result = record_decision_on_chain(decision_id, payload)
+    chain_error = None
+    try:
+        result = record_decision_on_chain(decision_id, payload)
+    except Exception:
+        # An RPC timeout or nonce clash must not lose a run that already spent LLM quota and produced a
+        # report: keep the payload and hash, mark the receipt as not anchored. The exception text can carry
+        # the RPC URL, so it stays in the server log and only a generic marker reaches the record.
+        logger.exception(f"決策 {decision_id} 上鏈失敗，改存未存證收據")
+        result = {"content_hash_hex": compute_hash(payload).hex(), "tx_hash": None, "block_number": None,
+                  "etherscan_url": None, "is_mock": True}
+        chain_error = "chain write failed; see server log"
+    if chain_error:
+        network = "上鏈失敗（未存證）"
+    elif result["is_mock"]:
+        network = "本地模擬（未上鏈）"
+    else:
+        network = "Ethereum Sepolia Testnet"
     return {
         "decision_id": decision_id,
         "payload": payload,
@@ -164,7 +180,8 @@ def audit_proposal_on_chain(proposal_data: dict) -> dict:
         "blockchain_tx_hash": result["tx_hash"],
         "block_number": result["block_number"],
         "verification_url": result["etherscan_url"],
-        "network": "本地模擬（未上鏈）" if result["is_mock"] else "Ethereum Sepolia Testnet",
+        "network": network,
         "is_mock": result["is_mock"],
+        "chain_error": chain_error,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }

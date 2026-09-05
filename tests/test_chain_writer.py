@@ -70,3 +70,30 @@ def test_changing_the_grounding_verdict_changes_the_hash():
     laundered = dict(sealed, grounding_status="pass", grounding_flag_count=0)
 
     assert chain_writer.compute_hash(sealed) != chain_writer.compute_hash(laundered)
+
+
+def test_audit_wrapper_survives_a_chain_write_failure(monkeypatch):
+    """An RPC timeout or nonce clash must not lose the run: the receipt records the failure instead."""
+    import json
+
+    def boom(decision_id, payload):
+        raise RuntimeError("nonce too low at https://rpc.example/secret-key")
+
+    monkeypatch.setattr(chain_writer, "record_decision_on_chain", boom)
+
+    receipt = chain_writer.audit_proposal_on_chain({"proposal": {"product_name": "X"}, "actuarial_data": {}})
+
+    assert receipt["is_mock"] is True
+    assert receipt["blockchain_tx_hash"] is None and receipt["verification_url"] is None
+    assert receipt["chain_error"]                                   # marks the failed write for the UI and the log
+    assert "secret-key" not in json.dumps(receipt, ensure_ascii=False)  # raw exception text stays in the server log
+    assert receipt["data_hash"] == chain_writer.compute_hash(receipt["payload"]).hex()
+    assert "Sepolia" not in receipt["network"]
+
+
+def test_successful_write_has_no_chain_error(monkeypatch):
+    _force_mock(monkeypatch)
+
+    receipt = chain_writer.audit_proposal_on_chain({"proposal": {"product_name": "X"}, "actuarial_data": {}})
+
+    assert receipt["chain_error"] is None

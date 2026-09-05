@@ -53,6 +53,7 @@ POST 端點每個 IP 每分鐘限 30 次。
 ```
 
 **徽章規則**：`is_mock === false` 才顯示綠色「已上鏈 Sepolia」並連到 `verification_url`；`is_mock === true` 顯示灰色「模擬模式」且不放任何連結。`tx_hash` 為 `null` 時同樣視為模擬。
+上鏈失敗（RPC 逾時、nonce 衝突）時執行不會中斷：收據仍有 `payload` 與 `data_hash`，但 `is_mock` 為 `true`、`network` 為「上鏈失敗（未存證）」、`chain_error` 為非空字串（成功時為 `null`）。
 
 ## 歷史紀錄
 
