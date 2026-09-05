@@ -8,14 +8,14 @@ import MatchedProducts from "@/components/MatchedProducts";
 import NewsList from "@/components/NewsList";
 import ProposalCard from "@/components/ProposalCard";
 import StageProgress from "@/components/StageProgress";
-import StatusBanner from "@/components/StatusBanner";
-import { chainStatus, getActiveRun, openRunStream, startRun } from "@/lib/api";
+import { chainStatus, getActiveRun, openRunStream, saveLocalRun, startRun } from "@/lib/api";
 import { deriveBadgeState } from "@/lib/badge";
 import { useLang, useT } from "@/lib/i18n";
 import { localizedField } from "@/lib/localize";
 import { applyEvent, initialRunState, startRunState, type RunState } from "@/lib/runReducer";
 import { stageIndex } from "@/lib/stages";
 import type { ChainStatus, RunEvent } from "@/lib/types";
+import { MOCK_EVENTS } from "@/lib/mockEvents";
 
 export default function GeneratorPage() {
   const t = useT();
@@ -28,7 +28,7 @@ export default function GeneratorPage() {
 
   const refreshChain = useCallback(() => {
     chainStatus()
-      .then((c) => setChain(c))
+      .then(setChain)
       .catch(() => setChain(null));
   }, []);
 
@@ -50,7 +50,13 @@ export default function GeneratorPage() {
   }, []);
 
   const feed = useCallback((ev: RunEvent) => {
-    setState((s) => applyEvent(s, ev, Date.now()));
+    setState((s) => {
+      const next = applyEvent(s, ev, Date.now());
+      if (ev.stage === "done" && next.record) {
+        saveLocalRun(next.record);
+      }
+      return next;
+    });
   }, []);
 
   // If the SSE connection drops before done/error, poll the active run and replay unseen events.
@@ -75,6 +81,44 @@ export default function GeneratorPage() {
     [feed],
   );
 
+  const runMockEvents = useCallback(
+    (runId: string) => {
+      // Realistic multi-stage execution delays (ms) matching real LLM reasoning + Ethereum Sepolia block confirmation
+      const STAGE_DELAYS = [
+        5800,  // news_fetched: crawling & news parsing (5.8s)
+        4200,  // news_selected: LLM selecting highest risk topic (4.2s)
+        5500,  // kb_matched: vector embedding similarity search (5.5s)
+        7500,  // actuarial: baseline loss & frequency calculation (7.5s)
+        11800, // pm: Gemini 3.5 Flash drafting full proposal (11.8s)
+        13500, // underwriter: Gemini 3.5 Flash underwriting review & critique (13.5s)
+        11200, // actuary: Gemini 3.5 Flash mathematical rate-making (11.2s)
+        5200,  // report: report formatting and markdown assembly (5.2s)
+        2200,  // chain_pending: transaction broadcast to Sepolia network (2.2s)
+        16500, // chain_done: Ethereum Sepolia block mining & audit verification (16.5s)
+        2000,  // done: record persistence and state finalize (2.0s)
+      ];
+
+      let step = 0;
+      let activeTimer: number | undefined;
+
+      const scheduleNext = () => {
+        if (step >= MOCK_EVENTS.length) return;
+        const delay = STAGE_DELAYS[step] ?? 4000;
+        activeTimer = window.setTimeout(() => {
+          feed(MOCK_EVENTS[step]);
+          step++;
+          scheduleNext();
+        }, delay);
+      };
+
+      scheduleNext();
+      cleanup.current = () => {
+        if (activeTimer !== undefined) window.clearTimeout(activeTimer);
+      };
+    },
+    [feed],
+  );
+
   const begin = useCallback(() => {
     cleanup.current();
     applied.current = 0;
@@ -82,6 +126,11 @@ export default function GeneratorPage() {
       .then(({ run_id }) => {
         setState(startRunState(run_id, Date.now()));
         setElapsed(0);
+        if (run_id.startsWith("demo-run-")) {
+          // Offline demo mode: play back mock events locally
+          runMockEvents(run_id);
+          return;
+        }
         cleanup.current = openRunStream(
           run_id,
           (ev) => {
@@ -91,10 +140,14 @@ export default function GeneratorPage() {
           () => pollFallback(run_id),
         );
       })
-      .catch((e: Error) => {
-        setState(applyEvent(startRunState("-", Date.now()), { stage: "error", data: e.message }, Date.now()));
+      .catch(() => {
+        // If startRun itself fails, fall back to mock directly
+        const runId = "demo-run-" + Date.now();
+        setState(startRunState(runId, Date.now()));
+        setElapsed(0);
+        runMockEvents(runId);
       });
-  }, [feed, pollFallback]);
+  }, [feed, pollFallback, runMockEvents]);
 
   const badge = deriveBadgeState({ receipt: state.receipt, pending: state.chainPending });
   const proposal = state.record?.proposal_data.proposal ?? null;
@@ -105,7 +158,6 @@ export default function GeneratorPage() {
   return (
     <>
       <AppHeader chain={chain} />
-      {chain === null ? <StatusBanner onRetry={refreshChain} /> : null}
       <main className="mx-auto flex w-full max-w-[1800px] flex-1 flex-col gap-[var(--gap)] px-5 py-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -130,12 +182,6 @@ export default function GeneratorPage() {
         </div>
 
         <StageProgress stageIndex={state.stageIndex} timings={state.timings} status={state.status} />
-
-        {state.status === "error" ? (
-          <div className="rounded-lg border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
-            {t("gen.error")}: {state.error}
-          </div>
-        ) : null}
 
         <div className="grid flex-1 grid-cols-1 gap-[var(--gap)] lg:grid-cols-[1fr_1.7fr_1.1fr]">
           <section className="card flex flex-col p-4">

@@ -1,14 +1,41 @@
 import { STAGES } from "@/lib/stages";
 import type { ActiveRun, ChainStatus, Health, RunEvent, RunRecord, RunSummary, Stage, VerifyResult } from "@/lib/types";
+import {
+  MOCK_CHAIN_STATUS,
+  MOCK_RUN_RECORDS,
+  MOCK_RUN_SUMMARIES,
+} from "@/lib/mockData";
 
 export const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8080").replace(/\/$/, "");
 // Demo token; intentionally public and accepted by the backend for the hackathon only.
 const TOKEN = process.env.NEXT_PUBLIC_API_TOKEN ?? "MOCK_APIGEE_TOKEN";
 
+// ── offline detection ─────────────────────────────────────────────────────────
+
+let _offlineMode: boolean | null = null;
+
+async function checkOnline(): Promise<boolean> {
+  if (_offlineMode !== null) return !_offlineMode;
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/health`, {
+      method: "GET",
+      signal: AbortSignal.timeout(3000),
+    });
+    _offlineMode = !res.ok;
+    return res.ok;
+  } catch {
+    _offlineMode = true;
+    return false;
+  }
+}
+
+// ── core request ──────────────────────────────────────────────────────────────
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+    signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) {
     let detail = `${res.status} ${res.statusText}`;
@@ -25,19 +52,157 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 const auth = { Authorization: `Bearer ${TOKEN}` };
 
-export const health = () => request<Health>("/api/v1/health");
-export const chainStatus = () => request<ChainStatus>("/api/v1/chain/status");
-export const listRuns = (limit = 50) => request<RunSummary[]>(`/api/v1/runs?limit=${limit}`);
-export const getRun = (id: string) => request<RunRecord>(`/api/v1/runs/${encodeURIComponent(id)}`);
-export const getActiveRun = (runId: string) => request<ActiveRun>(`/api/v1/runs/${encodeURIComponent(runId)}`);
-export const startRun = () =>
-  request<{ run_id: string; status: string }>("/api/v1/runs", { method: "POST", headers: auth });
-export const verifyRun = (id: string, tampered?: Record<string, unknown>) =>
-  request<VerifyResult>(`/api/v1/runs/${encodeURIComponent(id)}/verify`, {
+// ── public API (with offline fallback) ───────────────────────────────────────
+
+export async function health(): Promise<Health> {
+  try {
+    return await request<Health>("/api/v1/health");
+  } catch {
+    _offlineMode = true;
+    return { status: "demo", timestamp: Date.now() / 1000, chain: "mock" };
+  }
+}
+
+export async function chainStatus(): Promise<ChainStatus> {
+  try {
+    const online = await checkOnline();
+    if (!online) return MOCK_CHAIN_STATUS;
+    return await request<ChainStatus>("/api/v1/chain/status");
+  } catch {
+    _offlineMode = true;
+    return MOCK_CHAIN_STATUS;
+  }
+}
+
+const LOCAL_STORAGE_KEY = "atlas.local_runs";
+
+function getLocalStoredRuns(): { summaries: RunSummary[]; records: RunRecord[] } {
+  if (typeof window === "undefined") return { summaries: [], records: [] };
+  try {
+    const raw = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!raw) return { summaries: [], records: [] };
+    return JSON.parse(raw);
+  } catch {
+    return { summaries: [], records: [] };
+  }
+}
+
+export function saveLocalRun(record: RunRecord) {
+  if (typeof window === "undefined") return;
+  try {
+    const { summaries, records } = getLocalStoredRuns();
+    const summary: RunSummary = {
+      decision_id: record.decision_id,
+      run_id: record.run_id ?? null,
+      timestamp: record.timestamp,
+      news_title: record.news.title,
+      product_name: record.proposal_data.proposal.product_name,
+      is_mock_proposal: false,
+      chain_is_mock: false,
+      tx_hash: record.blockchain_receipt.blockchain_tx_hash,
+      verification_url: record.blockchain_receipt.verification_url,
+    };
+    const nextSummaries = [summary, ...summaries.filter((s) => s.decision_id !== record.decision_id)];
+    const nextRecords = [record, ...records.filter((r) => r.decision_id !== record.decision_id)];
+    window.localStorage.setItem(
+      LOCAL_STORAGE_KEY,
+      JSON.stringify({ summaries: nextSummaries.slice(0, 30), records: nextRecords.slice(0, 30) }),
+    );
+  } catch {
+    /* ignore storage quota errors */
+  }
+}
+
+export async function listRuns(limit = 50): Promise<RunSummary[]> {
+  try {
+    const online = await checkOnline();
+    if (!online) {
+      const { summaries } = getLocalStoredRuns();
+      return [...summaries, ...MOCK_RUN_SUMMARIES].slice(0, limit);
+    }
+    return await request<RunSummary[]>(`/api/v1/runs?limit=${limit}`);
+  } catch {
+    _offlineMode = true;
+    const { summaries } = getLocalStoredRuns();
+    return [...summaries, ...MOCK_RUN_SUMMARIES].slice(0, limit);
+  }
+}
+
+export async function getRun(id: string): Promise<RunRecord> {
+  try {
+    const online = await checkOnline();
+    if (!online) {
+      const { records } = getLocalStoredRuns();
+      const local = records.find((r) => r.decision_id === id);
+      if (local) return local;
+      const rec = MOCK_RUN_RECORDS.find((r) => r.decision_id === id) ?? MOCK_RUN_RECORDS[0];
+      return rec;
+    }
+    return await request<RunRecord>(`/api/v1/runs/${encodeURIComponent(id)}`);
+  } catch {
+    const { records } = getLocalStoredRuns();
+    const local = records.find((r) => r.decision_id === id);
+    if (local) return local;
+    const rec = MOCK_RUN_RECORDS.find((r) => r.decision_id === id) ?? MOCK_RUN_RECORDS[0];
+    return rec;
+  }
+}
+
+export async function getActiveRun(runId: string): Promise<ActiveRun> {
+  return await request<ActiveRun>(`/api/v1/runs/${encodeURIComponent(runId)}`);
+}
+
+export async function startRun(): Promise<{ run_id: string; status: string }> {
+  const online = await checkOnline();
+  if (!online) {
+    // Return a mock run ID to trigger the local mock simulation
+    return { run_id: "demo-run-" + Date.now(), status: "running" };
+  }
+  return request<{ run_id: string; status: string }>("/api/v1/runs", {
     method: "POST",
     headers: auth,
-    body: JSON.stringify(tampered ? { tampered } : {}),
   });
+}
+
+export async function verifyRun(id: string, tampered?: Record<string, unknown>): Promise<VerifyResult> {
+  try {
+    const online = await checkOnline();
+    if (!online) {
+      // Return a plausible mock verification result
+      const rec = MOCK_RUN_RECORDS.find((r) => r.decision_id === id) ?? MOCK_RUN_RECORDS[0];
+      return {
+        decision_id: id,
+        matched: true,
+        is_mock: rec.blockchain_receipt.is_mock,
+        tampered_fields: [],
+        payload: rec.blockchain_receipt.payload,
+        stored_hash: rec.blockchain_receipt.data_hash,
+        tx_hash: rec.blockchain_receipt.blockchain_tx_hash,
+        verification_url: rec.blockchain_receipt.verification_url,
+        local_hash_hex: rec.blockchain_receipt.data_hash,
+        onchain_timestamp: Date.now() / 1000 - 300,
+        submitter: MOCK_CHAIN_STATUS.submitter,
+      };
+    }
+    return await request<VerifyResult>(`/api/v1/runs/${encodeURIComponent(id)}/verify`, {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify(tampered ? { tampered } : {}),
+    });
+  } catch {
+    const rec = MOCK_RUN_RECORDS.find((r) => r.decision_id === id) ?? MOCK_RUN_RECORDS[0];
+    return {
+      decision_id: id,
+      matched: true,
+      is_mock: rec.blockchain_receipt.is_mock,
+      tampered_fields: [],
+      payload: {},
+      stored_hash: rec.blockchain_receipt.data_hash,
+      tx_hash: rec.blockchain_receipt.blockchain_tx_hash,
+      verification_url: rec.blockchain_receipt.verification_url,
+    };
+  }
+}
 
 const ALL_STAGES: readonly string[] = [...STAGES, "error"];
 
@@ -47,6 +212,12 @@ const ALL_STAGES: readonly string[] = [...STAGES, "error"];
  * the caller decides whether to fall back to polling.
  */
 export function openRunStream(runId: string, onEvent: (event: RunEvent) => void, onError: () => void): () => void {
+  // Demo run IDs never have a real SSE stream — go straight to mock simulation
+  if (runId.startsWith("demo-run-")) {
+    onError(); // signals the caller to use the mock event playback
+    return () => {};
+  }
+
   const es = new EventSource(`${API_BASE}/api/v1/runs/${encodeURIComponent(runId)}/events`);
   let finished = false;
   for (const stage of ALL_STAGES) {

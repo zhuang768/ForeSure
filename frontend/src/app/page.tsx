@@ -67,7 +67,6 @@ export default function HomePage() {
   return (
     <>
       <AppHeader chain={loaded === null ? undefined : loaded.chain} />
-      {loaded?.offline ? <StatusBanner onRetry={load} /> : null}
       <main className="mx-auto flex w-full max-w-[1800px] flex-1 flex-col gap-[var(--gap)] px-5 py-5">
         <KpiBar runs={runs} newsCount={null} />
         <div className="grid min-h-[70vh] flex-1 grid-cols-1 gap-[var(--gap)] lg:grid-cols-[minmax(280px,1fr)_2.2fr]">

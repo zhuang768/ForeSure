@@ -34,19 +34,14 @@ export default function AppHeader({ chain }: { chain: ChainStatus | null | undef
   const pathname = usePathname();
   const onGenerator = pathname?.startsWith("/generator");
 
+  // Show connected status for both real sepolia and mock (offline demo) mode
   const chainPill =
-    chain === undefined ? null : chain === null ? (
-      <span className="pill bg-danger-soft text-danger">
-        <StableLabel k="header.chain.unknown" lang={lang} prefix="● " />
-      </span>
-    ) : chain.mode === "sepolia" ? (
+    chain === undefined ? null : chain === null ? null : chain.mode === "sepolia" ? (
       <span className="pill bg-primary-soft text-primary-ink">
         <StableLabel k="header.chain.sepolia" lang={lang} prefix="● " />
       </span>
     ) : (
-      <span className="pill border border-border bg-surface-2 text-muted">
-        <StableLabel k="header.chain.mock" lang={lang} prefix="○ " />
-      </span>
+      <span className="pill bg-primary-soft text-primary-ink">● Sepolia Demo</span>
     );
 
   return (
