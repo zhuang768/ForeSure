@@ -192,8 +192,8 @@ docker compose up --build         # 同時起排程與 API 兩個容器
 
 | 姓名 | 分工 |
 | --- | --- |
-| **莊子進 (TZU-CHIN CHUANG)** | 專案架構設計、三代理人博弈辯論引擎 (`strategy_agent.py`)、消防署 67 年巨災經驗數據泊松精算模型 (`actuarial_engine.py`)、純規則非 LLM 確定性防幻覺審計 (`grounding_check.py`)、以太坊 Sepolia 智能合約存證 (`AuditRegistry.sol`)、Apigee 安全閘道、紅隊測試台 (`redteam.py`) 與後端 137 項單元測試。 |
-| **李文涵 (WEN-HAN LEE)** | 次世代金融級前端戰情室架構 (`frontend/`)、Next.js 16 + React 19 全球邊緣部署 (Cloudflare Pages)、全響應式深淺色與繁中/英文多語系系統、前端 71 項 Vitest 單元測試、Three.js 葉子動態 (`LeafHero.tsx`)、AMD ROCm 硬體張量加速與多模態電腦視覺核保整合 (`scripts/amd_rocm_*.py`)。 |
+| **莊子進 (TZU-CHIN CHUANG)** | 專案架構設計、三代理人博弈辯論引擎 (`strategy_agent.py`)、消防署 67 年巨災經驗數據泊松精算模型 (`actuarial_engine.py`)、以太坊 Sepolia 智能合約存證 (`AuditRegistry.sol`)、Apigee 安全閘道、AMD ROCm 硬體張量加速與多模態電腦視覺核保整合 (`scripts/amd_rocm_*.py`)、路演簡報與 Gamma 文案。 |
+| **李文涵 (WEN-HAN LEE)** | 次世代金融級前端戰情室架構 (`frontend/`)、Next.js 16 + React 19 全球邊緣部署 (Cloudflare Pages)、全響應式深淺色與繁中/英文多語系系統、Three.js 葉子動態、純規則非 LLM 確定性防幻覺審計 (`grounding_check.py`)、紅隊測試台 (`redteam.py`)、後端 137 項與前端 71 項單元測試、品牌識別與 README。 |
 
 ---
 
