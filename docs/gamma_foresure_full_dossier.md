@@ -4,7 +4,7 @@
 > **核心定位**：精算師與核保團隊的智能決策副駕駛 (The Actuary's AI Decision Co-Pilot)  
 > **所屬賽事**：FUTUREMODE x SITCON BUILDMODE GEN-AI HACKATHON 2026 國泰金控 AI AGENT 賽道專屬解決方案  
 > **線上生產網址**：https://atlas-insurance-dashboard.pages.dev/  
-> **團隊成員**：TZU-CHIN CHUANG (莊子進) · WEN-HAN LEE (李文瀚)  
+> **團隊成員**：TZU-CHIN CHUANG (莊子進) · WEN-HAN LEE (李文涵)  
 
 ---
 

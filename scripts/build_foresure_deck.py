@@ -566,7 +566,7 @@ p.font.bold = True
 p.font.color.rgb = C_DARK_GREEN
 
 items7_r = [
-    "· Team Members: TZU-CHIN CHUANG (莊子進) · WEN-HAN LEE (李文瀚)",
+    "· Team Members: TZU-CHIN CHUANG (莊子進) · WEN-HAN LEE (李文涵)",
     "· Event: FUTUREMODE x SITCON BUILDMODE Hackathon 2026",
     "· Core Philosophy: We do NOT replace actuaries. We empower them to start from a rigorous, data-backed draft rather than a blank sheet.",
     "· Regulatory Alignment: Strictly complies with Taiwan Insurance Bureau filing norms; human appointed actuaries retain final sign-off authority.",
