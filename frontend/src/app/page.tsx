@@ -350,18 +350,8 @@ export default function IntroPage() {
         </section>
       </main>
 
-      {/* floating actions, like the reference's LINE / phone buttons */}
+      {/* floating back-to-top; the header already carries the run CTA, so no second one down here */}
       <div className="fixed bottom-6 right-5 z-30 flex flex-col gap-3">
-        <Link
-          href="/generator"
-          className="flex h-13 w-13 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-105"
-          aria-label={t("intro.ctaLive")}
-          title={t("intro.ctaLive")}
-        >
-          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-            <path d="M8 5v14l11-7z" />
-          </svg>
-        </Link>
         <button
           type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
