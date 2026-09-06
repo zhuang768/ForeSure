@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { deriveBadgeState } from "@/lib/badge";
 import { MOCK_RUN_RECORDS, MOCK_RUN_SUMMARIES } from "@/lib/mockData";
 
@@ -29,5 +29,32 @@ describe("offline generator simulation", () => {
     expect(receipt.is_mock).toBe(true);
     expect(receipt.blockchain_tx_hash).toBeNull();
     expect(receipt.verification_url).toBeNull();
+  });
+});
+
+/**
+ * The history page renders these constants during SSR and again on the client. If the module's
+ * output depends on the wall clock or on randomness, the two renders disagree and React reports a
+ * hydration mismatch, so the demo data must be identical no matter when the module is evaluated.
+ */
+describe("offline demo data is stable across module evaluations", () => {
+  it("does not depend on the wall clock or on randomness", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.resetModules();
+      vi.setSystemTime(new Date("2026-09-06T01:30:00Z"));
+      const a = await import("@/lib/mockData");
+      vi.resetModules();
+      vi.setSystemTime(new Date("2026-09-07T13:45:00Z"));
+      const b = await import("@/lib/mockData");
+
+      const shape = (m: typeof a) => ({
+        summaries: m.MOCK_RUN_SUMMARIES.map((s) => [s.decision_id, s.run_id, s.timestamp]),
+        published: m.MOCK_RUN_RECORDS.map((r) => r.news.published),
+      });
+      expect(shape(b)).toEqual(shape(a));
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

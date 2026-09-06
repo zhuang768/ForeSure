@@ -8,18 +8,34 @@ import type { RunRecord, RunSummary } from "./types";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-function ts(minutesAgo: number): string {
-  const d = new Date(Date.now() - minutesAgo * 60 * 1000);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+/**
+ * Fixed anchor for the demo timeline (rendered as 2026-09-05 12:00). The history page renders these
+ * rows during SSR/static export and again in the browser, so nothing here may read the wall clock,
+ * the machine's timezone or a random source; otherwise React reports a hydration mismatch.
+ */
+const ANCHOR_UTC_MS = Date.UTC(2026, 8, 5, 12, 0, 0);
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+function anchorDate(minutesAgo: number): Date {
+  return new Date(ANCHOR_UTC_MS - minutesAgo * 60 * 1000);
 }
 
-function stampId(minutesAgo: number): string {
-  const d = new Date(Date.now() - minutesAgo * 60 * 1000);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `foresure-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${
-    Math.random().toString(36).slice(2, 10)
-  }`;
+/** Backend-shaped "YYYYMMDD_HHMMSS" stamp, computed in UTC so it is byte-identical everywhere. */
+function ts(minutesAgo: number): string {
+  const d = anchorDate(minutesAgo);
+  return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}_${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}`;
+}
+
+/** FNV-1a over the row's own fields: an 8-hex-char suffix shaped like the backend's ids, without randomness. */
+function stampId(minutesAgo: number, seed: string): string {
+  const d = anchorDate(minutesAgo);
+  let h = 0x811c9dc5;
+  for (const ch of `${minutesAgo}:${seed}`) {
+    h ^= ch.codePointAt(0)!;
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return `foresure-${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}-${h.toString(16).padStart(8, "0")}`;
 }
 
 // ── run records ──────────────────────────────────────────────────────────────
@@ -557,7 +573,7 @@ const RUN_DATA: Array<{
 const DATA_20 = RUN_DATA.slice(0, 20);
 
 export const MOCK_RUN_SUMMARIES: RunSummary[] = DATA_20.map((d, i) => {
-  const id = i === 0 ? "foresure-20260905-2e27fc30" : stampId(d.minutesAgo);
+  const id = i === 0 ? "foresure-20260905-2e27fc30" : stampId(d.minutesAgo, d.productName);
   return {
     decision_id: id,
     run_id: `run-${id}`,

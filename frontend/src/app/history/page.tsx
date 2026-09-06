@@ -6,7 +6,7 @@ import AppHeader from "@/components/AppHeader";
 import SiteFooter from "@/components/SiteFooter";
 import DebateFeed from "@/components/DebateFeed";
 import GroundingBadge from "@/components/GroundingBadge";
-import { chainStatus, getLocalStoredRuns, getRun, listRuns } from "@/lib/api";
+import { chainStatus, getRun, listRuns } from "@/lib/api";
 import { fmtPct, fmtStamp, fmtUsdCompact, fmtUsdRangeCompact, shortHash } from "@/lib/format";
 import { useLang, useT } from "@/lib/i18n";
 import { localizedField } from "@/lib/localize";
@@ -17,17 +17,10 @@ export default function HistoryPage() {
   const t = useT();
   const { lang } = useLang();
   const [chain, setChain] = useState<ChainStatus | null | undefined>(undefined);
-  const [runs, setRuns] = useState<RunSummary[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const { summaries } = getLocalStoredRuns();
-        if (summaries && summaries.length > 0) {
-          return [...summaries, ...MOCK_RUN_SUMMARIES].slice(0, 100);
-        }
-      } catch {}
-    }
-    return MOCK_RUN_SUMMARIES;
-  });
+  // Initial state must be identical on the server and in the browser, so it holds only the
+  // deterministic demo rows. Runs saved in localStorage are not read here: listRuns/getRun already
+  // return them (merged with the demo rows) whenever the backend is unreachable.
+  const [runs, setRuns] = useState<RunSummary[]>(MOCK_RUN_SUMMARIES);
   const [loading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "onchain" | "mock">("all");
@@ -38,16 +31,6 @@ export default function HistoryPage() {
     MOCK_RUN_RECORDS.forEach((r) => {
       map[r.decision_id] = r;
     });
-    if (typeof window !== "undefined") {
-      try {
-        const { records } = getLocalStoredRuns();
-        if (records) {
-          records.forEach((r) => {
-            map[r.decision_id] = r;
-          });
-        }
-      } catch {}
-    }
     return map;
   });
   const [loadingRecords, setLoadingRecords] = useState<Set<string>>(new Set());
