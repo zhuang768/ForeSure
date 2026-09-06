@@ -4,6 +4,7 @@
 > **國泰金控 AI AGENT 賽道專屬解決方案**  
 > **線上生產環境**: [https://atlas-insurance-dashboard.pages.dev/](https://atlas-insurance-dashboard.pages.dev/)  
 > **以太坊 Sepolia 智能合約**: [`0xAf8CA554c540526452B0B53bE7e203A5754363ac`](https://sepolia.etherscan.io/address/0xAf8CA554c540526452B0B53bE7e203A5754363ac)  
+> **評選展示影片**: [https://youtu.be/vJ1e9_ar1PQ](https://youtu.be/vJ1e9_ar1PQ)  
 > **核心團隊**: 莊子進 (TZU-CHIN CHUANG) · 李文涵 (WEN-HAN LEE)  
 
 ---
@@ -145,7 +146,7 @@ docker compose up --build         # 同時起排程與 API 兩個容器
 
 - **作品展示網址（選填）**：[https://atlas-insurance-dashboard.pages.dev/](https://atlas-insurance-dashboard.pages.dev/)
 - **以太坊 Sepolia 智能合約瀏覽器 (Etherscan)**：[`0xAf8CA554c540526452B0B53bE7e203A5754363ac`](https://sepolia.etherscan.io/address/0xAf8CA554c540526452B0B53bE7e203A5754363ac)
-- **評選影片**：`[評選展示影片已備妥，將於大會規定表單中提交]`
+- **評選影片**：[https://youtu.be/vJ1e9_ar1PQ](https://youtu.be/vJ1e9_ar1PQ)
 - **黑客松路演 7 頁簡報檔**：[`ForeSure未然_Completed.pptx`](ForeSure未然_Completed.pptx) 與 Gamma 精煉文案 [`docs/gamma_input_7slides.md`](docs/gamma_input_7slides.md)
 - **正式報審示範公文產物**：每次執行自動產生於 `reports/`（含中英並列段落、可點擊的新聞連結與精算依據標籤；該目錄未納入版本庫，demo 機上現場開啟）
 
